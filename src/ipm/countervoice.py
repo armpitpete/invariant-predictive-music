@@ -185,15 +185,20 @@ def evaluate_candidate(
     beats_per_bar: int = 4,
     policy: CountervoicePolicy = CountervoicePolicy(),
 ) -> CandidateScore:
-    """Evaluate one subsidiary action without mutating the main or accepted voices."""
+    """Evaluate one subsidiary action without mutating the main or accepted voices.
+
+    NOTE candidates may occupy any positive sub-window inside the decision window.
+    Harmonic compatibility is evaluated only where notes actually overlap; rhythmic
+    alignment with the main voice is not required.
+    """
 
     desired_density = target_density(phase)
     candidate_voice = _copy_voice(target_voice)
 
     if candidate.action is CandidateAction.NOTE:
         assert candidate.note is not None
-        if candidate.note.onset != start or candidate.note.end != end:
-            return CandidateScore(candidate, 0.0, 0.0, 0.0, 0.0, False, "note must span decision window")
+        if candidate.note.onset < start or candidate.note.end > end:
+            return CandidateScore(candidate, 0.0, 0.0, 0.0, 0.0, False, "note must lie within decision window")
         try:
             candidate_voice.add(candidate.note)
         except VoiceOverlapError:
