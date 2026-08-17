@@ -27,6 +27,14 @@ from .main_voice import (
 from .midi import render_midi
 from .model import IPMConfig, NoteEvent, Voice, VoiceOverlapError
 from .randomness import SeededRandom
+from .rhythm import (
+    RhythmPolicy,
+    RhythmicPartition,
+    choose_rhythmic_partition,
+    euclidean_partition,
+    realise_partition,
+    rhythmic_partitions,
+)
 from .sonority import (
     ActiveNote,
     SonoritySlice,
@@ -42,6 +50,7 @@ from .sonority import (
     slice_active_sonorities,
 )
 from .study import StudyResult, compose_study, seed_motif, write_study_files
+from .study002 import Study002Result, compose_study_002, seed_motif_002, write_study_002_files
 
 __all__ = [
     "ActiveNote",
@@ -56,9 +65,12 @@ __all__ = [
     "MainFutureScore",
     "MainVoicePolicy",
     "NoteEvent",
+    "RhythmPolicy",
+    "RhythmicPartition",
     "SeededRandom",
     "SonoritySlice",
     "StructuralPhase",
+    "Study002Result",
     "StudyResult",
     "SubsidiaryCandidate",
     "SubsidiaryRole",
@@ -69,21 +81,28 @@ __all__ = [
     "calibrated_surprise",
     "choose_candidate",
     "choose_main_future",
+    "choose_rhythmic_partition",
     "compose_study",
+    "compose_study_002",
     "contextual_pair_score",
+    "euclidean_partition",
     "evaluate_candidate",
     "evaluate_main_futures",
     "invariant_similarity",
     "interval_class",
     "interval_prior",
     "metrical_strength",
+    "realise_partition",
     "render_midi",
+    "rhythmic_partitions",
     "score_sonority",
     "score_texture",
     "seed_motif",
+    "seed_motif_002",
     "set_coherence",
     "slice_active_sonorities",
     "surprise_bits",
     "target_density",
+    "write_study_002_files",
     "write_study_files",
 ]
