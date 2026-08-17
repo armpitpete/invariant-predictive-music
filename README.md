@@ -36,6 +36,20 @@ The same high-level configuration can generate three experimental conditions:
 
 That makes the central claim testable rather than merely aesthetic.
 
+## Listening Experiment 1
+
+The current project gate is human testing, not more composer features.
+
+[`EXPERIMENT.md`](EXPERIMENT.md) defines a mechanism-isolation pilot using matched, blinded Predictable / IPM / Unstructured-Surprise sets. The first experiment disables Bass and Rhythm through their existing activity governors so accompaniment cannot explain a Tune-condition effect. A later replication can restore the full default texture if the central mechanism survives.
+
+Build the prequalified pilot set with:
+
+```bash
+ipm-experiment --output listening-pilot
+```
+
+The builder rejects seed sets that fail the pre-listening matching contract, writes opaque stimulus IDs, preserves the researcher condition key separately, and produces three counterbalancing schedules. GitHub Actions additionally renders the admitted MIDI through one fixed soundfont and records renderer and stimulus hashes.
+
 ## Musical controls
 
 Bass and Rhythm are instrument parameters, not hard-coded Study behaviour.
