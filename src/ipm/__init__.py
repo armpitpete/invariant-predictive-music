@@ -24,6 +24,7 @@ from .main_voice import (
     invariant_similarity,
     surprise_bits,
 )
+from .midi import render_midi
 from .model import IPMConfig, NoteEvent, Voice, VoiceOverlapError
 from .randomness import SeededRandom
 from .sonority import (
@@ -40,6 +41,7 @@ from .sonority import (
     set_coherence,
     slice_active_sonorities,
 )
+from .study import StudyResult, compose_study, seed_motif, write_study_files
 
 __all__ = [
     "ActiveNote",
@@ -57,6 +59,7 @@ __all__ = [
     "SeededRandom",
     "SonoritySlice",
     "StructuralPhase",
+    "StudyResult",
     "SubsidiaryCandidate",
     "SubsidiaryRole",
     "TextureScore",
@@ -66,6 +69,7 @@ __all__ = [
     "calibrated_surprise",
     "choose_candidate",
     "choose_main_future",
+    "compose_study",
     "contextual_pair_score",
     "evaluate_candidate",
     "evaluate_main_futures",
@@ -73,10 +77,13 @@ __all__ = [
     "interval_class",
     "interval_prior",
     "metrical_strength",
+    "render_midi",
     "score_sonority",
     "score_texture",
+    "seed_motif",
     "set_coherence",
     "slice_active_sonorities",
     "surprise_bits",
     "target_density",
+    "write_study_files",
 ]
