@@ -1,5 +1,12 @@
 """Invariant Predictive Music reference engine."""
 
+from .countertime import (
+    TimedCandidateScore,
+    TimedDecision,
+    choose_timed_candidate,
+    evaluate_timed_candidate,
+    note_candidate,
+)
 from .countervoice import (
     CandidateAction,
     CandidateDecision,
@@ -27,6 +34,7 @@ from .main_voice import (
 from .midi import render_midi
 from .model import IPMConfig, NoteEvent, Voice, VoiceOverlapError
 from .randomness import SeededRandom
+from .rhythm import rhythmic_invariant_similarity
 from .sonority import (
     ActiveNote,
     SonoritySlice,
@@ -63,21 +71,27 @@ __all__ = [
     "SubsidiaryCandidate",
     "SubsidiaryRole",
     "TextureScore",
+    "TimedCandidateScore",
+    "TimedDecision",
     "VerticalScore",
     "Voice",
     "VoiceOverlapError",
     "calibrated_surprise",
     "choose_candidate",
     "choose_main_future",
+    "choose_timed_candidate",
     "compose_study",
     "contextual_pair_score",
     "evaluate_candidate",
     "evaluate_main_futures",
+    "evaluate_timed_candidate",
     "invariant_similarity",
     "interval_class",
     "interval_prior",
     "metrical_strength",
+    "note_candidate",
     "render_midi",
+    "rhythmic_invariant_similarity",
     "score_sonority",
     "score_texture",
     "seed_motif",
