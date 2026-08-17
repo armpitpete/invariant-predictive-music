@@ -57,6 +57,7 @@ from .sonority import (
     slice_active_sonorities,
 )
 from .study import StudyResult, compose_study, seed_motif, write_study_files
+from .study2 import compose_study_002, seed_motif_002, write_study_002_files
 
 __all__ = [
     "ActiveNote",
@@ -89,6 +90,7 @@ __all__ = [
     "choose_main_future",
     "choose_timed_candidate",
     "compose_study",
+    "compose_study_002",
     "contextual_pair_score",
     "euclidean_onsets",
     "euclidean_pattern",
@@ -107,9 +109,11 @@ __all__ = [
     "score_sonority",
     "score_texture",
     "seed_motif",
+    "seed_motif_002",
     "set_coherence",
     "slice_active_sonorities",
     "surprise_bits",
     "target_density",
+    "write_study_002_files",
     "write_study_files",
 ]
