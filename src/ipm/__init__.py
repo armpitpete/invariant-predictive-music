@@ -12,6 +12,18 @@ from .countervoice import (
     evaluate_candidate,
     target_density,
 )
+from .main_voice import (
+    MainBranchKind,
+    MainDecision,
+    MainFuture,
+    MainFutureScore,
+    MainVoicePolicy,
+    calibrated_surprise,
+    choose_main_future,
+    evaluate_main_futures,
+    invariant_similarity,
+    surprise_bits,
+)
 from .model import IPMConfig, NoteEvent, Voice, VoiceOverlapError
 from .randomness import SeededRandom
 from .sonority import (
@@ -36,6 +48,11 @@ __all__ = [
     "CandidateScore",
     "CountervoicePolicy",
     "IPMConfig",
+    "MainBranchKind",
+    "MainDecision",
+    "MainFuture",
+    "MainFutureScore",
+    "MainVoicePolicy",
     "NoteEvent",
     "SeededRandom",
     "SonoritySlice",
@@ -46,9 +63,13 @@ __all__ = [
     "VerticalScore",
     "Voice",
     "VoiceOverlapError",
+    "calibrated_surprise",
     "choose_candidate",
+    "choose_main_future",
     "contextual_pair_score",
     "evaluate_candidate",
+    "evaluate_main_futures",
+    "invariant_similarity",
     "interval_class",
     "interval_prior",
     "metrical_strength",
@@ -56,5 +77,6 @@ __all__ = [
     "score_texture",
     "set_coherence",
     "slice_active_sonorities",
+    "surprise_bits",
     "target_density",
 ]
