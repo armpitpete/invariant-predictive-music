@@ -38,7 +38,7 @@ These laws sit above numerical weights and style heuristics.
 
 > **Prediction is the baseline. Surprise must improve on it.**
 
-At every significant Tune decision, an expected continuation is retained as the control. A surprising continuation may replace it only when its full IPM score is better.
+At every significant Tune decision, an expected continuation remains available as the control. A surprising continuation may replace it only when its full IPM score is better.
 
 ### Law 2 — Tune defines the musical world
 
@@ -50,23 +50,25 @@ Generation order for v0.2 is:
 TUNE \rightarrow BASS \rightarrow RHYTHM
 \]
 
-Pattern-lock transformations may subsequently re-realise a subsidiary pattern, but they must remain accountable to the already accepted musical context.
+Pattern-lock transformations may subsequently re-realise a subsidiary pattern, but they remain accountable to the already accepted musical context.
 
-### Law 3 — Every subsidiary event competes with silence
+### Law 3 — Every subsidiary note competes with silence
 
-> **Every Bass or Rhythm event must justify sounding rather than remaining silent.**
+> **Every sounding Bass or Rhythm note must justify sounding rather than remaining silent.**
 
-For a candidate `x`:
+For candidate event `x`:
 
 \[
 Q(x) > Q(\varnothing)
 \]
 
-Activity controls may alter the silence threshold, but activity is a governor rather than a quota. Low occupancy never forces a weak event to sound.
+A lane's activity setting governs whether that lane receives an opportunity to propose material. It never forces a weak proposal to sound.
+
+For a multi-attack Rhythm or locked pattern, a strong average may not conceal a weak individual attack: every sounding attack must clear its silence test.
 
 ### Law 4 — Every note must justify the time it occupies
 
-Pitch, onset, duration, gate and rest are musical decisions rather than post-processing decoration.
+Pitch, onset, duration, gate and rest are musical decisions rather than post-processing decoration. Longer subsidiary durations carry a greater burden against silence.
 
 ---
 
@@ -120,7 +122,7 @@ For scale world `W`, degree `d`, and lane `L`:
 p = project_W(d,L)
 \]
 
-Changing the tonic moves all lanes together while preserving the degree relationship.
+Changing the tonic moves all lanes together while preserving degree relationships.
 
 The default world is Aeolian:
 
@@ -142,7 +144,7 @@ o_{i+1} \ge o_i+d_i
 
 Self-overlap is a hard rejection.
 
-Different lanes may overlap. Their actual overlap intervals form the vertical texture.
+Different lanes may overlap. Their actual overlap intervals form the polyphonic texture.
 
 ---
 
@@ -179,9 +181,7 @@ A base musical score estimates local expectation using current-history features 
 - non-repetition;
 - cadence.
 
-The candidate scores are converted to a local probability distribution.
-
-The highest-probability candidate is the **Expected** baseline.
+Candidate scores are converted to a local probability distribution. The highest-probability candidate is the **Expected** baseline.
 
 This probability model is an explicit design prior. It is not yet an empirically fitted human listener model.
 
@@ -224,7 +224,7 @@ Invariant scoring remains experimental and replaceable.
 
 ## 10. Retrospective coherence and necessity
 
-A candidate receives a retrospective-coherence estimate from:
+A Tune candidate receives a retrospective-coherence estimate from:
 
 - invariant preservation;
 - phrase integration;
@@ -236,7 +236,7 @@ For local probability `P(x)` and retrospective coherence `C_R`:
 N(x)=[1-P(x)]C_R
 \]
 
-A low-probability event receives credit only when it also integrates strongly.
+A low-probability event therefore receives credit only when it also integrates strongly.
 
 The Tune trace must record probability, surprise, invariant similarity, retrospective coherence and retrospective necessity.
 
@@ -280,7 +280,7 @@ Allows Revealing/Exploratory continuations to replace Expected only when the IPM
 
 Selects a surprising continuation approximately matched to the IPM condition's surprise burden while preferring weaker invariant continuity.
 
-The control need not be intentionally ugly; it should remain musically legal enough that the comparison tests the proposed mechanism rather than obvious corruption.
+The control should remain musically legal enough that the comparison tests the proposed mechanism rather than obvious corruption.
 
 Listener tests should compare at least:
 
@@ -293,19 +293,36 @@ Listener tests should compare at least:
 
 ---
 
-## 13. Bass controls
+## 13. Activity is a density governor
 
-Bass behaviour is parameterised rather than encoded as a numbered Study.
+`activity` is not a quota and is not a direct musical-quality score.
 
-All controls are in `[0,1]`.
+For Bass and Rhythm it controls the probability that the lane receives a legitimate opportunity to propose material. The mapping is phase-sensitive:
 
-- `activity` — lowers/raises the burden for Bass to beat silence.
-- `sustain` — biases toward longer/shorter structural cells.
-- `movement` — biases static support versus degree movement.
-- `pattern_complexity` — biases simple versus mixed bar partitions.
+- openings and endings are thinned;
+- development and climax are more permissive;
+- `activity = 0` gives no opportunities;
+- `activity = 1` gives every opportunity.
+
+A supplied random seed makes these opportunity decisions deterministic.
+
+After an opportunity is granted, the proposed material still has to beat silence. Density permission and musical acceptance are therefore separate decisions.
+
+This separation is permanent for v0.2.
+
+---
+
+## 14. Bass controls
+
+Bass exposes five `[0,1]` controls:
+
+- `activity` — frequency of Bass opportunities;
+- `sustain` — bias toward longer/shorter structural cells;
+- `movement` — static support versus degree movement;
+- `pattern_complexity` — simple versus mixed bar partitions;
 - `gate` — fraction of an allocated Bass span that actually sounds.
 
-A Bass pattern owns a four-beat time budget. Typical available shapes include:
+A Bass bar owns a four-beat time budget. Typical available shapes include:
 
 - `4`
 - `2+2`
@@ -315,31 +332,39 @@ A Bass pattern owns a four-beat time budget. Typical available shapes include:
 
 These are vocabulary options, not quotas.
 
----
+For each granted Bass segment opportunity:
 
-## 14. Rhythm controls
-
-Rhythm is generated per bar from short pitched figures.
-
-Controls:
-
-- `activity`
-- `complexity`
-- `syncopation`
-- `gate`
-
-There is no fixed set of mandatory active bars in the v0.2 engine.
-
-For every bar:
-
-1. generate legal rhythmic candidates;
-2. score them against active Tune/Bass context;
-3. compare the strongest figure against silence;
-4. sound it only if it wins.
+1. generate scale/legal candidates;
+2. score vertical fit, continuity/movement and structural usefulness;
+3. calculate a silence score for the same span;
+4. increase the silence burden for longer spans;
+5. sound only if the strongest candidate beats silence.
 
 ---
 
-## 15. Pattern memory and locks
+## 15. Rhythm controls
+
+Rhythm exposes four `[0,1]` controls:
+
+- `activity` — frequency of Rhythm-bar opportunities;
+- `complexity` — breadth of available figure/contour vocabulary;
+- `syncopation` — preference within legal rhythmic candidates;
+- `gate` — sounding fraction of each short attack.
+
+There is no fixed set of mandatory active bars.
+
+For each bar:
+
+1. the phase-shaped activity governor decides whether Rhythm gets an opportunity;
+2. if it does, generate legal short pitched figures;
+3. score them against active Tune/Bass context;
+4. compare every attack with silence;
+5. reject the whole figure if any sounding attack fails;
+6. otherwise accept the strongest legal figure.
+
+---
+
+## 16. Pattern memory and locks
 
 A reusable pattern stores:
 
@@ -351,13 +376,15 @@ It does **not** store absolute MIDI pitches.
 
 A pattern may therefore be captured, named, locked and re-realised against a new harmonic anchor while preserving its recognisable geometry.
 
-v0.2 engine-level lock windows are supported for the subsidiary BASS and RHYTHM lanes. Tune pattern memory remains a research extension because forcing Tune repetition can bypass the prediction experiment.
+v0.2 engine-level lock windows are supported for subsidiary BASS and RHYTHM lanes. Tune pattern memory remains a research extension because forcing Tune repetition can bypass the prediction experiment.
+
+A lock is an explicit structural decision and may override normal density opportunities inside its requested window, but it does **not** override Law 3: each re-anchored attack is re-screened against silence. If no anchor makes every attack acceptable, the locked lane remains silent for that application.
 
 Lock state must be explicit and must be released after its configured window.
 
 ---
 
-## 16. Vertical compatibility
+## 17. Vertical compatibility
 
 Simultaneous music is evaluated over real overlap intervals.
 
@@ -367,33 +394,38 @@ Vertical compatibility must never permit a pitch to escape its scale or lane.
 
 ---
 
-## 17. Density
+## 18. Texture occupancy
 
-There are no occupancy quotas.
+Occupancy is a **measurement and governor problem, never a quota-filling problem**.
 
-Bass and Rhythm activity controls alter their opportunity/burden to sound, while silence remains a legal competitor.
+While Tune is sounding, v0.2 records the shares of:
 
-The desirable qualitative tendency remains:
+- `TUNE`
+- `TUNE+BASS`
+- `TUNE+RHYTHM`
+- `TUNE+BASS+RHYTHM`
 
-- Tune alone should be common;
-- two-part texture should be ordinary;
-- all three parts should not become an unexamined default.
+For the default instrument configuration:
 
-If listening evidence later contradicts this tendency, the tendency may change without changing the central IPM hypothesis.
+> **Tune alone must be the single most common texture. Three simultaneous parts must remain exceptional rather than the permanent surface.**
+
+This is a regression requirement for the default sound, not a prohibition on deliberately choosing dense user settings.
+
+No weak Bass/Rhythm event may be added merely to hit an occupancy target.
 
 ---
 
-## 18. Determinism
+## 19. Determinism
 
 A supplied random seed must reproduce the same result for the same implementation and configuration.
 
-Every stochastic choice is made through the seeded randomness layer.
+All compositional and density-governor stochastic choices use the seeded randomness layer.
 
 Cross-Python-version bit-for-bit RNG identity is not claimed unless separately tested.
 
 ---
 
-## 19. Decision trace
+## 20. Decision trace
 
 The trace is part of the product.
 
@@ -409,8 +441,11 @@ It must contain:
 - surprise;
 - invariant score;
 - retrospective coherence/necessity;
+- Bass/Rhythm opportunity probabilities and outcomes;
 - Bass/Rhythm silence scores;
-- accepted events;
+- accepted/rejected events;
+- pattern-lock silence margins;
+- actual texture occupancy;
 - lane/register validation;
 - vertical metrics.
 
@@ -418,7 +453,7 @@ A rendered MIDI without its decision trace is incomplete as a research artefact.
 
 ---
 
-## 20. Historical studies
+## 21. Historical studies
 
 Studies #001–#011 are experimental records.
 
@@ -431,11 +466,11 @@ They preserve:
 
 They are not the v0.2 production call graph.
 
-The current engine must be able to run without calling any numbered Study module.
+The current engine must run without calling any numbered Study module.
 
 ---
 
-## 21. Acceptance boundary for v0.2
+## 22. Acceptance boundary for v0.2
 
 Required implementation properties:
 
@@ -448,7 +483,10 @@ Required implementation properties:
 - [ ] predictable/IPM/unstructured-surprise modes;
 - [ ] Bass controls;
 - [ ] Rhythm controls;
-- [ ] subsidiary silence competition;
+- [ ] phase-shaped subsidiary density opportunities;
+- [ ] subsidiary silence competition after opportunity gating;
+- [ ] every sounding Rhythm/locked attack individually beats silence;
+- [ ] default Tune-alone texture is the single most common texture;
 - [ ] pattern memory and explicit subsidiary lock/unlock;
 - [ ] no self-overlap;
 - [ ] actual vertical texture scoring;
@@ -462,7 +500,7 @@ Theory acceptance requires controlled listener evidence and cannot be inferred f
 
 ---
 
-## 22. Known research debt
+## 23. Known research debt
 
 Still not claimed complete:
 
@@ -480,7 +518,7 @@ These omissions must remain visible rather than being silently re-described as s
 
 ---
 
-## 23. Permanent project distinction
+## 24. Permanent project distinction
 
 Three concepts must remain separate:
 

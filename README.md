@@ -55,7 +55,11 @@ Rhythm exposes:
 - `syncopation`
 - `gate`
 
-Every Bass/Rhythm decision records a **silence score**. A subsidiary event sounds only when its best candidate beats silence.
+`activity` is a real **density governor**. It controls how often that lane receives an opportunity to propose an event, with openings/endings naturally sparser and development/climax naturally more permissive. The endpoints are exact: `0` gives no opportunities and `1` gives every opportunity.
+
+An opportunity is not permission to sound. Bass candidates still compete with a duration-sensitive silence score. A Rhythm motif is accepted only when **every attack** beats silence, so an attractive average cannot hide one unjustified note. Pattern locks are re-screened the same way when re-anchored.
+
+The default density is deliberately sparse enough for **Tune alone to remain the single most common texture**; three simultaneous parts are exceptional rather than the permanent surface.
 
 Patterns are scale-degree-relative rather than fixed MIDI phrases. Subsidiary patterns can be captured, named, locked over a bar window, harmonically re-anchored, and explicitly unlocked.
 
@@ -71,10 +75,10 @@ Useful controls:
 ```bash
 ipm \
   --mode ipm \
-  --bass-activity 0.72 \
+  --bass-activity 0.46 \
   --bass-sustain 0.62 \
   --bass-movement 0.30 \
-  --rhythm-activity 0.68
+  --rhythm-activity 0.40
 ```
 
 Output:
@@ -82,7 +86,7 @@ Output:
 - `examples/ipm-v0.2.mid`
 - `examples/ipm-v0.2.trace.json`
 
-The trace is part of the research object. It records the decision evidence as well as the selected music.
+The trace is part of the research object. It records the decision evidence as well as the selected music, including density opportunities, silence decisions and actual texture occupancy.
 
 ## Historical studies
 

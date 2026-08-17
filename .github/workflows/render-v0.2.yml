@@ -3,6 +3,17 @@ name: render-v0.2
 on:
   push:
     branches: [main]
+  pull_request:
+    paths:
+      - 'src/ipm/engine.py'
+      - 'src/ipm/lanes.py'
+      - 'src/ipm/sequential_bar.py'
+      - 'src/ipm/micro_rhythm.py'
+      - 'src/ipm/patterns.py'
+      - 'src/ipm/sonority.py'
+      - 'src/ipm/model.py'
+      - 'src/ipm/midi.py'
+      - '.github/workflows/render-v0.2.yml'
   workflow_dispatch:
 
 jobs:
