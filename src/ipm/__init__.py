@@ -41,7 +41,7 @@ from .main_voice import (
 from .midi import render_midi
 from .model import IPMConfig, NoteEvent, Voice, VoiceOverlapError
 from .randomness import SeededRandom
-from .register import FEMALE_LEAD_C4_C5, PitchRegister
+from .register import FEMALE_LEAD_C4_B4, PitchRegister, midi_octave_number
 from .rhythm import rhythmic_invariant_similarity
 from .sonority import (
     ActiveNote,
@@ -68,7 +68,7 @@ __all__ = [
     "CandidateScore",
     "CountervoicePolicy",
     "EuclideanPattern",
-    "FEMALE_LEAD_C4_C5",
+    "FEMALE_LEAD_C4_B4",
     "IPMConfig",
     "MainBranchKind",
     "MainDecision",
@@ -107,6 +107,7 @@ __all__ = [
     "interval_prior",
     "least_aligned_rotation",
     "metrical_strength",
+    "midi_octave_number",
     "note_candidate",
     "render_midi",
     "rhythmic_invariant_similarity",

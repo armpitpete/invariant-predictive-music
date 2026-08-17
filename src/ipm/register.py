@@ -13,6 +13,14 @@ from typing import Sequence
 from .model import NoteEvent
 
 
+def midi_octave_number(pitch: int) -> int:
+    """Return the conventional MIDI note-name octave number (C4 == MIDI 60)."""
+
+    if not 0 <= pitch <= 127:
+        raise ValueError("pitch must be a MIDI note number in 0..127")
+    return pitch // 12 - 1
+
+
 @dataclass(frozen=True, slots=True)
 class PitchRegister:
     """Inclusive MIDI pitch window with a preferred centre."""
@@ -37,11 +45,22 @@ class PitchRegister:
     def span(self) -> int:
         return self.high - self.low
 
+    @property
+    def is_single_named_octave(self) -> bool:
+        """Whether both register bounds belong to the same C-to-B named octave."""
+
+        return midi_octave_number(self.low) == midi_octave_number(self.high)
+
     def contains_pitch(self, pitch: int) -> bool:
         return self.low <= pitch <= self.high
 
     def contains_events(self, events: Sequence[NoteEvent]) -> bool:
         return all(self.contains_pitch(event.pitch) for event in events)
+
+    def events_share_named_octave(self, events: Sequence[NoteEvent]) -> bool:
+        """Return True when every event has the same conventional octave number."""
+
+        return len({midi_octave_number(event.pitch) for event in events}) <= 1
 
     def ambitus(self, events: Sequence[NoteEvent]) -> int:
         if not events:
@@ -114,7 +133,6 @@ class PitchRegister:
             )
 
 
-# Current C-major listening-study lead: deliberately conservative and exactly
-# one octave. This is an artistic target for the study, not a universal claim
-# about female singers' ranges.
-FEMALE_LEAD_C4_C5 = PitchRegister(low=60, high=72, centre=66)
+# Current C-major listening-study lead: every note is in octave 4, C4 through B4.
+# This is an artistic target for the study, not a universal claim about female singers.
+FEMALE_LEAD_C4_B4 = PitchRegister(low=60, high=71, centre=66)
