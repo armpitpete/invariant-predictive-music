@@ -68,6 +68,7 @@ def test_study_010_transposes_without_lane_leakage() -> None:
         tonic_midi=62,
     )
     world = ScaleWorld(62)
+    assert result.trace["validation"]["passed"]
     assert all(TUNE_LANE.contains(event.pitch, tonic_midi=62) for event in result.tune.events)
     assert all(BASS_LANE.contains(event.pitch, tonic_midi=62) for event in result.bass.events)
     assert all(RHYTHM_LANE.contains(event.pitch, tonic_midi=62) for event in result.rhythm.events)
