@@ -649,7 +649,7 @@ def _rhythm_candidate(
     contour: Sequence[int],
     start_offset: Beat,
     controls: RhythmControls,
-) -> tuple[float, tuple[NoteEvent, ...], int]:
+) -> tuple[float, float, tuple[NoteEvent, ...], int]:
     bar_start = Fraction(bar * 4)
     start = bar_start + start_offset
     bass_pitch = _active_pitch(bass, start)
@@ -686,7 +686,7 @@ def _rhythm_candidate(
         + 0.18 * variety
         + 0.12 * ((1.0 - controls.syncopation) * (1.0 - sync) + controls.syncopation * sync)
     )
-    return score, tuple(events), anchor
+    return score, min(verticals), tuple(events), anchor
 
 
 def _compose_rhythm(
@@ -702,7 +702,7 @@ def _compose_rhythm(
 
     for bar in range(config.bars):
         phase = _phase_for_bar(bar, config.bars)
-        candidates: list[tuple[float, tuple[NoteEvent, ...], int, int, int, Beat]] = []
+        candidates: list[tuple[float, float, tuple[NoteEvent, ...], int, int, int, Beat]] = []
         pattern_count = max(2, min(len(_RHYTHM_PATTERNS), 2 + round(3 * config.rhythm.complexity)))
         for pattern_index, pattern in enumerate(_RHYTHM_PATTERNS[:pattern_count]):
             pattern_end = max(pattern) + Fraction(1, 4)
@@ -711,7 +711,7 @@ def _compose_rhythm(
                 if offset + pattern_end > 4:
                     continue
                 for contour_index, contour in enumerate(_RHYTHM_CONTOURS[:pattern_count]):
-                    score, events, anchor = _rhythm_candidate(
+                    score, minimum_attack, events, anchor = _rhythm_candidate(
                         world=world,
                         tune=tune,
                         bass=bass,
@@ -723,15 +723,26 @@ def _compose_rhythm(
                     )
                     score += rng.random() * 0.004
                     candidates.append(
-                        (score, events, anchor, pattern_index, contour_index, offset)
+                        (
+                            score,
+                            minimum_attack,
+                            events,
+                            anchor,
+                            pattern_index,
+                            contour_index,
+                            offset,
+                        )
                     )
 
-        best = max(candidates, key=lambda item: item[0])
         phase_bias = 0.06 if phase in {"development", "climax"} else 0.0
         silence_score = 0.88 - 0.34 * config.rhythm.activity - phase_bias
-        accepted = best[0] > silence_score
+        eligible = [item for item in candidates if item[1] > silence_score]
+        best = max(eligible, key=lambda item: item[0]) if eligible else max(
+            candidates, key=lambda item: item[0]
+        )
+        accepted = bool(eligible) and best[0] > silence_score
         if accepted:
-            for event in best[1]:
+            for event in best[2]:
                 rhythm.add(event)
         trace.append(
             {
@@ -739,14 +750,16 @@ def _compose_rhythm(
                 "phase": phase,
                 "silence_score": silence_score,
                 "best_note_score": best[0],
+                "minimum_attack_score": best[1],
+                "every_attack_beats_silence": accepted,
                 "accepted": accepted,
                 "selected": (
                     {
-                        "anchor_degree": best[2],
-                        "pattern_index": best[3],
-                        "contour_index": best[4],
-                        "start_offset": _fraction_json(best[5]),
-                        "events": [_event_json(event) for event in best[1]],
+                        "anchor_degree": best[3],
+                        "pattern_index": best[4],
+                        "contour_index": best[5],
+                        "start_offset": _fraction_json(best[6]),
+                        "events": [_event_json(event) for event in best[2]],
                     }
                     if accepted
                     else None
@@ -756,11 +769,11 @@ def _compose_rhythm(
     return rhythm, trace
 
 
-def _pattern_anchor_score(
+def _pattern_event_scores(
     events: Sequence[NoteEvent],
     *,
     other_voices: Sequence[Voice],
-) -> float:
+) -> tuple[float, ...]:
     values: list[float] = []
     for event in events:
         active = [
@@ -769,7 +782,16 @@ def _pattern_anchor_score(
             if pitch is not None
         ]
         values.append(set_coherence((*active, event.pitch)) if active else 1.0)
-    return sum(values) / len(values)
+    return tuple(values)
+
+
+def _pattern_anchor_score(
+    events: Sequence[NoteEvent],
+    *,
+    other_voices: Sequence[Voice],
+) -> tuple[float, float]:
+    values = _pattern_event_scores(events, other_voices=other_voices)
+    return sum(values) / len(values), min(values)
 
 
 def _apply_locks(
@@ -810,9 +832,14 @@ def _apply_locks(
         ]
         applications: list[dict[str, Any]] = []
         other = [tune, rhythm if spec.lane == BASS_LANE.name else bass]
+        silence_score = (
+            0.86 - 0.32 * config.bass.activity
+            if spec.lane == BASS_LANE.name
+            else 0.88 - 0.34 * config.rhythm.activity
+        )
         for bar in range(spec.start_bar, spec.end_bar + 1):
             bar_start = Fraction(bar * 4)
-            choices: list[tuple[float, int, tuple[NoteEvent, ...]]] = []
+            choices: list[tuple[float, float, int, tuple[NoteEvent, ...]]] = []
             for anchor in range(world.degrees_per_octave):
                 realised = realise_pattern(
                     pattern,
@@ -822,17 +849,27 @@ def _apply_locks(
                     anchor_degree=anchor,
                     velocity=57,
                 )
-                choices.append(
-                    (_pattern_anchor_score(realised, other_voices=other), anchor, realised)
+                average, minimum = _pattern_anchor_score(
+                    realised, other_voices=other
                 )
-            score, anchor, realised = max(choices, key=lambda item: (item[0], -item[1]))
-            kept.extend(realised)
+                choices.append((average, minimum, anchor, realised))
+            eligible = [item for item in choices if item[1] > silence_score]
+            chosen = max(eligible, key=lambda item: (item[0], -item[2])) if eligible else max(
+                choices, key=lambda item: (item[0], -item[2])
+            )
+            score, minimum, anchor, realised = chosen
+            accepted = bool(eligible)
+            if accepted:
+                kept.extend(realised)
             applications.append(
                 {
                     "bar": bar,
-                    "anchor_degree": anchor,
+                    "anchor_degree": anchor if accepted else None,
                     "vertical_score": score,
-                    "events": [_event_json(event) for event in realised],
+                    "minimum_attack_score": minimum,
+                    "silence_score": silence_score,
+                    "accepted": accepted,
+                    "events": [_event_json(event) for event in realised] if accepted else [],
                 }
             )
         bank.unlock(lane)
@@ -891,7 +928,10 @@ def compose(config: InstrumentConfig | None = None) -> InstrumentResult:
             "silence_score" in decision
             for bar in bass_trace
             for decision in bar["decisions"]
-        ) and all("silence_score" in bar for bar in rhythm_trace),
+        ) and all(
+            "silence_score" in bar and "minimum_attack_score" in bar
+            for bar in rhythm_trace
+        ),
         "vertical_floor": texture.minimum >= 0.30,
     }
 
