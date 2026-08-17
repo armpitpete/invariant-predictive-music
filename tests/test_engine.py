@@ -1,5 +1,3 @@
-from fractions import Fraction
-
 import pytest
 
 from ipm.engine import (
@@ -29,6 +27,10 @@ def test_default_v02_is_a_valid_three_lane_instrument():
     assert result.trace["architecture"]["experiment_mode"] == "ipm"
     assert len(result.trace["tune_decisions"]) == 16
     assert all("silence_score" in bar for bar in result.trace["rhythm_decisions"])
+    assert all(
+        not bar["accepted"] or bar["minimum_attack_score"] > bar["silence_score"]
+        for bar in result.trace["rhythm_decisions"]
+    )
 
 
 def test_bass_controls_are_real_parameters_not_study_constants():
@@ -69,7 +71,7 @@ def test_all_three_falsification_conditions_share_high_level_config():
         assert len(result.trace["tune_decisions"]) == 8
 
 
-def test_pattern_lock_preserves_geometry_but_can_reanchor():
+def test_pattern_lock_preserves_geometry_and_still_respects_silence():
     result = compose(
         InstrumentConfig(
             bars=8,
@@ -88,6 +90,11 @@ def test_pattern_lock_preserves_geometry_but_can_reanchor():
     assert lock["lane"] == "BASS"
     assert len(lock["applications"]) == 3
     assert lock["signature"]
+    assert all(
+        not application["accepted"]
+        or application["minimum_attack_score"] > application["silence_score"]
+        for application in lock["applications"]
+    )
 
 
 def test_transposition_moves_every_lane_without_leakage():
