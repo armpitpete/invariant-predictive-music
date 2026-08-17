@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from fractions import Fraction
+from functools import lru_cache
 from math import exp
 
 from .bar_rhythm import BarCellKind, BarPattern, BarRhythmPolicy, bar_patterns
@@ -59,6 +60,13 @@ class SurfaceRhythmPolicy:
         )
 
 
+@lru_cache(maxsize=32)
+def _legal_patterns(span: Beat, grammar_policy: BarRhythmPolicy) -> tuple[BarPattern, ...]:
+    """Enumerate a grammar once; repeated stochastic choices reuse the same family."""
+
+    return bar_patterns(span, policy=grammar_policy)
+
+
 def choose_surface_pattern(
     *,
     rng: SeededRandom,
@@ -79,7 +87,7 @@ def choose_surface_pattern(
     if not 0 <= rest_target <= policy.max_rest_fraction:
         raise ValueError("rest_target exceeds policy")
 
-    candidates = bar_patterns(span, policy=policy.grammar_policy())
+    candidates = _legal_patterns(span, policy.grammar_policy())
     weights: list[float] = []
     for pattern in candidates:
         attack_fit = exp(
