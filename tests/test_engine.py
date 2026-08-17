@@ -20,37 +20,94 @@ def _accepted_bass(result):
     )
 
 
-def test_default_v02_is_a_valid_three_lane_instrument():
+def _accepted_rhythm(result):
+    return sum(bar["accepted"] for bar in result.trace["rhythm_decisions"])
+
+
+def test_default_v02_is_a_valid_sparse_three_lane_instrument():
     result = compose()
     assert result.trace["validation"]["passed"]
     assert [voice.name for voice in result.voices] == ["TUNE", "BASS", "RHYTHM"]
     assert result.trace["architecture"]["experiment_mode"] == "ipm"
     assert len(result.trace["tune_decisions"]) == 16
-    assert all("silence_score" in bar for bar in result.trace["rhythm_decisions"])
+
+    bass_decisions = [
+        decision
+        for bar in result.trace["bass_decisions"]
+        for decision in bar["decisions"]
+    ]
+    rhythm_decisions = result.trace["rhythm_decisions"]
+    assert any(not decision["opportunity"] for decision in bass_decisions)
+    assert any(not bar["opportunity"] for bar in rhythm_decisions)
+    assert any(not decision["accepted"] for decision in bass_decisions)
+    assert any(not bar["accepted"] for bar in rhythm_decisions)
     assert all(
-        not bar["accepted"] or bar["minimum_attack_score"] > bar["silence_score"]
-        for bar in result.trace["rhythm_decisions"]
+        not bar["accepted"]
+        or bar["minimum_attack_score"] > bar["silence_score"]
+        for bar in rhythm_decisions
     )
 
+    occupancy = result.trace["metrics"]["texture_occupancy"]
+    assert occupancy["TUNE"] == max(occupancy.values())
+    assert occupancy["TUNE+BASS+RHYTHM"] < occupancy["TUNE"]
 
-def test_bass_controls_are_real_parameters_not_study_constants():
-    low = compose(
+
+def test_activity_is_a_real_density_governor():
+    low_bass = compose(
         InstrumentConfig(
             bars=8,
             bass=BassControls(activity=0.05, sustain=0.90, movement=0.05),
         )
     )
-    high = compose(
+    high_bass = compose(
         InstrumentConfig(
             bars=8,
             bass=BassControls(activity=0.95, sustain=0.20, movement=0.85),
         )
     )
-    assert _accepted_bass(high) >= _accepted_bass(low)
+    assert _accepted_bass(high_bass) > _accepted_bass(low_bass)
 
-    low_segments = sum(len(bar["pattern"]) for bar in low.trace["bass_decisions"])
-    high_segments = sum(len(bar["pattern"]) for bar in high.trace["bass_decisions"])
+    low_segments = sum(len(bar["pattern"]) for bar in low_bass.trace["bass_decisions"])
+    high_segments = sum(len(bar["pattern"]) for bar in high_bass.trace["bass_decisions"])
     assert high_segments > low_segments
+
+    low_rhythm = compose(
+        InstrumentConfig(bars=8, rhythm=RhythmControls(activity=0.05))
+    )
+    high_rhythm = compose(
+        InstrumentConfig(bars=8, rhythm=RhythmControls(activity=0.95))
+    )
+    assert _accepted_rhythm(high_rhythm) > _accepted_rhythm(low_rhythm)
+
+
+def test_activity_endpoints_have_exact_opportunity_semantics():
+    silent = compose(
+        InstrumentConfig(
+            bars=8,
+            bass=BassControls(activity=0.0),
+            rhythm=RhythmControls(activity=0.0),
+        )
+    )
+    assert not any(
+        decision["opportunity"]
+        for bar in silent.trace["bass_decisions"]
+        for decision in bar["decisions"]
+    )
+    assert not any(bar["opportunity"] for bar in silent.trace["rhythm_decisions"])
+
+    full = compose(
+        InstrumentConfig(
+            bars=8,
+            bass=BassControls(activity=1.0),
+            rhythm=RhythmControls(activity=1.0),
+        )
+    )
+    assert all(
+        decision["opportunity"]
+        for bar in full.trace["bass_decisions"]
+        for decision in bar["decisions"]
+    )
+    assert all(bar["opportunity"] for bar in full.trace["rhythm_decisions"])
 
 
 def test_predictable_mode_never_replaces_expected_baseline():
@@ -75,6 +132,7 @@ def test_pattern_lock_preserves_geometry_and_still_respects_silence():
     result = compose(
         InstrumentConfig(
             bars=8,
+            bass=BassControls(activity=1.0),
             pattern_locks=(
                 PatternLockSpec(
                     lane="BASS",
@@ -92,7 +150,7 @@ def test_pattern_lock_preserves_geometry_and_still_respects_silence():
     assert lock["signature"]
     assert all(
         not application["accepted"]
-        or application["minimum_attack_score"] > application["silence_score"]
+        or application["minimum_silence_margin"] > 0.0
         for application in lock["applications"]
     )
 
