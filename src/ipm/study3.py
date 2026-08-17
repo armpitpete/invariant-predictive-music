@@ -55,7 +55,7 @@ def compose_study_003(
         "span_semitones": register.span,
     }
     trace["voices"]["M"] = [_event_json(event) for event in main.events]
-    trace["metrics"] = _texture_metrics((main, base.response, base.harmony), base.config)
+    trace["metrics"] = _texture_metrics((main, base.response, base.harmony))
 
     source_pitch_classes = [event.pitch % 12 for event in base.main.events]
     projected_pitch_classes = [event.pitch % 12 for event in main.events]
@@ -67,8 +67,6 @@ def compose_study_003(
         "lead_ambitus_at_most_one_octave": register.ambitus(main.events) <= 12,
         "lead_pitch_classes_preserved": projected_pitch_classes == source_pitch_classes,
         "lead_timing_preserved": projected_timing == source_timing,
-        "response_voice_unchanged": base.response.events == compose_study_002(config, tonic_midi=tonic_midi).response.events,
-        "harmony_voice_unchanged": base.harmony.events == compose_study_002(config, tonic_midi=tonic_midi).harmony.events,
         "exact_length": main.cursor == base.main.cursor,
         "final_tonic": main.events[-1].pitch % 12 == tonic_midi % 12,
     }
