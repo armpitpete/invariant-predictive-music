@@ -1,0 +1,33 @@
+name: render-study-005
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/ipm/study5.py"
+      - "src/ipm/study4.py"
+      - "src/ipm/register.py"
+      - ".github/workflows/render-study-005.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: python -m pip install -e .
+      - name: Generate Study 005
+        run: python -m ipm.study5 --output artifacts
+      - name: Upload Study 005
+        uses: actions/upload-artifact@v7
+        with:
+          name: ipm-study-005
+          path: artifacts/
+          if-no-files-found: error
