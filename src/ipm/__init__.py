@@ -41,6 +41,7 @@ from .main_voice import (
 from .midi import render_midi
 from .model import IPMConfig, NoteEvent, Voice, VoiceOverlapError
 from .randomness import SeededRandom
+from .register import FEMALE_LEAD_C4_C5, PitchRegister
 from .rhythm import rhythmic_invariant_similarity
 from .sonority import (
     ActiveNote,
@@ -58,6 +59,7 @@ from .sonority import (
 )
 from .study import StudyResult, compose_study, seed_motif, write_study_files
 from .study2 import compose_study_002, seed_motif_002, write_study_002_files
+from .study3 import compose_study_003, write_study_003_files
 
 __all__ = [
     "ActiveNote",
@@ -66,6 +68,7 @@ __all__ = [
     "CandidateScore",
     "CountervoicePolicy",
     "EuclideanPattern",
+    "FEMALE_LEAD_C4_C5",
     "IPMConfig",
     "MainBranchKind",
     "MainDecision",
@@ -73,6 +76,7 @@ __all__ = [
     "MainFutureScore",
     "MainVoicePolicy",
     "NoteEvent",
+    "PitchRegister",
     "SeededRandom",
     "SonoritySlice",
     "StructuralPhase",
@@ -91,6 +95,7 @@ __all__ = [
     "choose_timed_candidate",
     "compose_study",
     "compose_study_002",
+    "compose_study_003",
     "contextual_pair_score",
     "euclidean_onsets",
     "euclidean_pattern",
@@ -115,5 +120,6 @@ __all__ = [
     "surprise_bits",
     "target_density",
     "write_study_002_files",
+    "write_study_003_files",
     "write_study_files",
 ]
