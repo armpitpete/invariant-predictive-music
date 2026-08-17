@@ -1,0 +1,28 @@
+name: render-study-011
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/ipm/patterns.py"
+      - "src/ipm/study11.py"
+      - ".github/workflows/render-study-011.yml"
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: pip install -e .
+      - name: Generate Study 011
+        run: python -m ipm.study11 --output artifacts
+      - name: Upload Study 011
+        uses: actions/upload-artifact@v7
+        with:
+          name: ipm-study-011
+          path: artifacts/
