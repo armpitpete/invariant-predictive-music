@@ -1,8 +1,8 @@
 """Study #010: explicit tune, bass and rhythm lanes.
 
 Study #009 established a musically viable short-note/arpeggio surface, but its two
-subsidiary branches still represented historical response/harmony roles.  Study #010
-turns the instrument into three explicit parts: TUNE, BASS and RHYTHM.  Every pitch is
+subsidiary branches still represented historical response/harmony roles. Study #010
+turns the instrument into three explicit parts: TUNE, BASS and RHYTHM. Every pitch is
 expressed as an Aeolian scale degree and projected into a tonic-relative lane, so the
 same abstract note can move to a new key without leaking out of its role's register.
 """
@@ -25,7 +25,6 @@ from .model import Beat, IPMConfig, NoteEvent, Voice
 from .randomness import SeededRandom
 from .sonority import interval_prior, score_texture, set_coherence
 from .study import _event_json
-from .study8 import compose_study_008
 from .study9 import compose_study_009
 
 
@@ -66,6 +65,29 @@ def _circular_degree_distance(left: int, right: int, size: int = 7) -> int:
     return min(raw, size - raw)
 
 
+def _project_accepted_tune(
+    source: Voice,
+    *,
+    source_world: ScaleWorld,
+    target_world: ScaleWorld,
+) -> Voice:
+    """Move Study #009's accepted tune by degree, not by historical MIDI ancestry."""
+
+    events = tuple(
+        NoteEvent(
+            onset=event.onset,
+            duration=event.duration,
+            pitch=target_world.project_degree(
+                source_world.degree_from_pitch(event.pitch),
+                TUNE_LANE,
+            ),
+            velocity=event.velocity,
+        )
+        for event in source.events
+    )
+    return Voice.from_events("TUNE", events)
+
+
 def _bass_candidate_score(
     *,
     degree: int,
@@ -81,7 +103,10 @@ def _bass_candidate_score(
         weights = [_overlap_weight(event, start, end) for event in tune_events]
         total_weight = sum(weights)
         vertical = (
-            sum(weight * interval_prior(pitch, event.pitch) for event, weight in zip(tune_events, weights, strict=True))
+            sum(
+                weight * interval_prior(pitch, event.pitch)
+                for event, weight in zip(tune_events, weights, strict=True)
+            )
             / total_weight
             if total_weight > 0
             else 1.0
@@ -116,7 +141,8 @@ def _compose_bass(
         bar_index = int(bar["bar"])
         phase = str(bar["phase"])
         decisions: list[dict[str, Any]] = []
-        for segment_index, (offset, span) in enumerate(_phase_bass_segments(phase)):
+        segments = _phase_bass_segments(phase)
+        for segment_index, (offset, span) in enumerate(segments):
             start = Fraction(bar_index * 4) + offset
             end = start + span
             tune_events = _overlapping(tune.events, start, end)
@@ -135,7 +161,7 @@ def _compose_bass(
                     4,
                 }
             )
-            final_segment = bar_index == 15 and segment_index == len(_phase_bass_segments(phase)) - 1
+            final_segment = bar_index == 15 and segment_index == len(segments) - 1
             scored: list[tuple[float, int, int]] = []
             for degree in candidates:
                 pitch = world.project_degree(degree, BASS_LANE)
@@ -153,7 +179,14 @@ def _compose_bass(
             if final_segment:
                 selected = next(item for item in scored if item[1] == 0)
             else:
-                selected = max(scored, key=lambda item: (item[0], -_circular_degree_distance(item[1], anchor_degree), -item[1]))
+                selected = max(
+                    scored,
+                    key=lambda item: (
+                        item[0],
+                        -_circular_degree_distance(item[1], anchor_degree),
+                        -item[1],
+                    ),
+                )
             score, degree, pitch = selected
             event = NoteEvent(
                 onset=start,
@@ -172,7 +205,11 @@ def _compose_bass(
                     "selected_pitch": pitch,
                     "selected_score": score,
                     "candidates": [
-                        {"degree": candidate_degree, "pitch": candidate_pitch, "score": candidate_score}
+                        {
+                            "degree": candidate_degree,
+                            "pitch": candidate_pitch,
+                            "score": candidate_score,
+                        }
                         for candidate_score, candidate_degree, candidate_pitch in scored
                     ],
                 }
@@ -220,7 +257,10 @@ def _rhythm_candidate(
     motif_start = bar_start + start_offset
     bass_pitch = _active_pitch(bass, motif_start)
     if bass_pitch is None:
-        bass_pitch = min(bass.events, key=lambda event: abs(float(event.onset - motif_start))).pitch
+        bass_pitch = min(
+            bass.events,
+            key=lambda event: abs(float(event.onset - motif_start)),
+        ).pitch
     base_degree = world.lane_degree(bass_pitch, BASS_LANE)
 
     events: list[NoteEvent] = []
@@ -228,7 +268,11 @@ def _rhythm_candidate(
     for relative_onset, degree_offset in zip(pattern, contour, strict=True):
         onset = motif_start + relative_onset
         pitch = world.project_degree(base_degree + degree_offset, RHYTHM_LANE)
-        active = [candidate for candidate in (_active_pitch(tune, onset), _active_pitch(bass, onset)) if candidate is not None]
+        active = [
+            candidate
+            for candidate in (_active_pitch(tune, onset), _active_pitch(bass, onset))
+            if candidate is not None
+        ]
         vertical = set_coherence((*active, pitch)) if active else 1.0
         scores.append(vertical)
         events.append(
@@ -263,7 +307,9 @@ def _compose_rhythm(
             trace.append({"bar": bar_index, "phase": phase, "selected": None})
             continue
 
-        candidates: list[tuple[float, tuple[NoteEvent, ...], int, int, int, Fraction]] = []
+        candidates: list[
+            tuple[float, tuple[NoteEvent, ...], int, int, int, Fraction]
+        ] = []
         for pattern_index, pattern in enumerate(_RHYTHM_PATTERNS):
             pattern_end = max(pattern) + Fraction(1, 4)
             for start_offset in (Fraction(0), Fraction(1), Fraction(2)):
@@ -280,7 +326,16 @@ def _compose_rhythm(
                         contour=contour,
                     )
                     score += rng.random() * 0.008
-                    candidates.append((score, events, base_degree, pattern_index, contour_index, start_offset))
+                    candidates.append(
+                        (
+                            score,
+                            events,
+                            base_degree,
+                            pattern_index,
+                            contour_index,
+                            start_offset,
+                        )
+                    )
 
         selected = max(candidates, key=lambda item: item[0])
         score, events, base_degree, pattern_index, contour_index, start_offset = selected
@@ -312,12 +367,20 @@ def compose_study_010(
     """Compose explicit tune, bass and rhythm lanes from one scalable pitch world."""
 
     requested = config or IPMConfig(seed=2026081704, tempo_bpm=58)
-    parent = compose_study_009(requested, tonic_midi=tonic_midi)
-    structural_parent = compose_study_008(requested, tonic_midi=tonic_midi)
-    bar_trace = structural_parent.trace["sequential_bar_decisions"]
+
+    # Study #009 is the accepted listening source, but its ancestry contains an old
+    # C-only Study #004 experiment. Compose the accepted source once in C, recover its
+    # scale degrees, and project those degrees into the requested new pitch world.
+    source_world = ScaleWorld(60)
+    parent = compose_study_009(requested, tonic_midi=60)
+    bar_trace = parent.trace["sequential_bar_decisions"]
     world = ScaleWorld(tonic_midi)
 
-    tune = Voice.from_events("TUNE", parent.main.events)
+    tune = _project_accepted_tune(
+        parent.main,
+        source_world=source_world,
+        target_world=world,
+    )
     bass, bass_trace = _compose_bass(tune, bar_trace, world=world)
     rhythm, rhythm_trace = _compose_rhythm(
         tune,
@@ -330,6 +393,7 @@ def compose_study_010(
     trace = copy.deepcopy(parent.trace)
     trace["study"] = "010"
     trace["parent_study"] = "009"
+    trace["source_tonic_midi"] = 60
     trace["architecture"] = {
         "parts": ["TUNE", "BASS", "RHYTHM"],
         "scale": "Aeolian",
@@ -364,27 +428,61 @@ def compose_study_010(
     bass_durations = [event.duration for event in bass.events]
     rhythm_durations = [event.duration for event in rhythm.events]
     no_self_overlap = all(
-        all(right.onset >= left.end for left, right in zip(voice.events, voice.events[1:], strict=False))
+        all(
+            right.onset >= left.end
+            for left, right in zip(voice.events, voice.events[1:], strict=False)
+        )
         for voice in (tune, bass, rhythm)
+    )
+    tune_projection_ok = len(tune.events) == len(parent.main.events) and all(
+        target.onset == source.onset
+        and target.duration == source.duration
+        and target.velocity == source.velocity
+        and world.lane_degree(target.pitch, TUNE_LANE)
+        == source_world.lane_degree(source.pitch, TUNE_LANE)
+        for source, target in zip(parent.main.events, tune.events, strict=True)
     )
 
     checks = {
-        "parent_study_passed": parent.trace["validation"]["passed"],
-        "exactly_three_explicit_parts": [voice.name for voice in (tune, bass, rhythm)] == ["TUNE", "BASS", "RHYTHM"],
-        "tune_surface_from_accepted_study_009_is_preserved": tune.events == parent.main.events,
-        "all_tune_notes_fit_tune_lane": all(tune_low <= event.pitch <= tune_high for event in tune.events),
-        "all_bass_notes_fit_bass_lane": all(bass_low <= event.pitch <= bass_high for event in bass.events),
-        "all_rhythm_notes_fit_rhythm_lane": all(rhythm_low <= event.pitch <= rhythm_high for event in rhythm.events),
-        "every_note_belongs_to_shared_scale": all(world.pitch_is_in_scale(event.pitch) for voice in (tune, bass, rhythm) for event in voice.events),
+        "accepted_source_study_passed": parent.trace["validation"]["passed"],
+        "exactly_three_explicit_parts": [voice.name for voice in (tune, bass, rhythm)]
+        == ["TUNE", "BASS", "RHYTHM"],
+        "accepted_tune_degrees_and_timing_are_preserved": tune_projection_ok,
+        "all_tune_notes_fit_tune_lane": all(
+            tune_low <= event.pitch <= tune_high for event in tune.events
+        ),
+        "all_bass_notes_fit_bass_lane": all(
+            bass_low <= event.pitch <= bass_high for event in bass.events
+        ),
+        "all_rhythm_notes_fit_rhythm_lane": all(
+            rhythm_low <= event.pitch <= rhythm_high for event in rhythm.events
+        ),
+        "every_note_belongs_to_shared_scale": all(
+            world.pitch_is_in_scale(event.pitch)
+            for voice in (tune, bass, rhythm)
+            for event in voice.events
+        ),
         "same_degree_maps_cleanly_across_lanes": all(
-            world.project_degree(degree, TUNE_LANE) - world.project_degree(degree, RHYTHM_LANE) == 12
-            and world.project_degree(degree, TUNE_LANE) - world.project_degree(degree, BASS_LANE) == 24
+            world.project_degree(degree, TUNE_LANE)
+            - world.project_degree(degree, RHYTHM_LANE)
+            == 12
+            and world.project_degree(degree, TUNE_LANE)
+            - world.project_degree(degree, BASS_LANE)
+            == 24
             for degree in range(7)
         ),
-        "bass_is_slow_structural_part": len(bass.events) >= 16 and bool(bass_durations) and median(bass_durations) >= Fraction(15, 8),
-        "bass_finishes_on_tonic_degree": world.lane_degree(bass.events[-1].pitch, BASS_LANE) == 0,
-        "rhythm_is_distributed_through_form": len(rhythm_bars) >= 10 and min(rhythm_bars) <= 2 and max(rhythm_bars) >= 12,
-        "rhythm_uses_short_attacks": bool(rhythm_durations) and all(duration <= Fraction(3, 16) for duration in rhythm_durations),
+        "bass_is_slow_structural_part": len(bass.events) >= 16
+        and bool(bass_durations)
+        and median(bass_durations) >= Fraction(15, 8),
+        "bass_finishes_on_tonic_degree": world.lane_degree(
+            bass.events[-1].pitch, BASS_LANE
+        )
+        == 0,
+        "rhythm_is_distributed_through_form": len(rhythm_bars) >= 10
+        and min(rhythm_bars) <= 2
+        and max(rhythm_bars) >= 12,
+        "rhythm_uses_short_attacks": bool(rhythm_durations)
+        and all(duration <= Fraction(3, 16) for duration in rhythm_durations),
         "rhythm_figures_are_arpeggiated": all(
             item["selected"] is None
             or len({event["pitch"] for event in item["selected"]["events"]}) >= 3
@@ -392,7 +490,8 @@ def compose_study_010(
         ),
         "no_lane_overlaps_itself": no_self_overlap,
         "overall_vertical_floor_is_tolerable": texture.minimum >= 0.35,
-        "final_tune_is_tonic": bool(tune.events) and world.degree_class(world.degree_from_pitch(tune.events[-1].pitch)) == 0,
+        "final_tune_is_tonic": bool(tune.events)
+        and world.degree_class(world.degree_from_pitch(tune.events[-1].pitch)) == 0,
     }
     trace["metrics"] = {
         "tune_events": len(tune.events),
@@ -425,7 +524,13 @@ def write_study_010_files(
     output.mkdir(parents=True, exist_ok=True)
     midi_path = output / "ipm-study-010.mid"
     trace_path = output / "ipm-study-010.trace.json"
-    midi_path.write_bytes(render_midi(result.voices, tempo_bpm=result.config.tempo_bpm, beats_per_bar=result.config.beats_per_bar))
+    midi_path.write_bytes(
+        render_midi(
+            result.voices,
+            tempo_bpm=result.config.tempo_bpm,
+            beats_per_bar=result.config.beats_per_bar,
+        )
+    )
     trace_path.write_text(json.dumps(result.trace, indent=2) + "\n", encoding="utf-8")
     return midi_path, trace_path
 
@@ -438,7 +543,11 @@ def main() -> None:
     args = parser.parse_args()
     config = IPMConfig(seed=args.seed, tempo_bpm=58)
     result = compose_study_010(config, tonic_midi=args.tonic_midi)
-    for path in write_study_010_files(args.output, config, tonic_midi=args.tonic_midi):
+    for path in write_study_010_files(
+        args.output,
+        config,
+        tonic_midi=args.tonic_midi,
+    ):
         print(path)
     print(json.dumps(result.trace["architecture"], indent=2))
     print(json.dumps(result.trace["metrics"], indent=2))
