@@ -1,78 +1,18 @@
-# Invariant Predictive Music (IPM) — Formal Specification
+# Invariant Predictive Music (IPM) — v0.2 Specification
 
-**Status:** v0.1 design specification  
-**Scope:** deterministic reference generator for a short tonal/modal polyphonic study  
-**Primary goal:** test whether prediction, controlled surprise, invariant preservation, retrospective integration, and disciplined silence can generate music that listeners prefer to simpler controls.
-
----
-
-## 1. Governing laws
-
-These laws sit above all heuristics, weights, style tables, and implementation choices.
-
-### Law 1 — Prediction is the baseline
-
-> **Prediction is the baseline. Surprise must improve on it.**
-
-The main melody always has an expected continuation available as a control. A surprising continuation is accepted only when its projected musical value exceeds the expected branch.
-
-For an expected branch `E` and a surprising branch `S`:
-
-\[
-Q(S) > Q(E)
-\]
-
-Surprise therefore carries a burden of proof.
-
-### Law 2 — The main voice defines the world
-
-> **The main voice defines the musical world. Counter-voices may enrich or challenge it, but must remain structurally accountable to it and to one another.**
-
-Voice generation order is strict:
-
-\[
-M \rightarrow B_R \rightarrow B_H
-\]
-
-where:
-
-- `M` — main predictive melody;
-- `B_R` — responsive stochastic counter-voice;
-- `B_H` — sparse harmonic/colour counter-voice.
-
-A subsidiary voice never forces an already accepted main note to change. It must adapt, regenerate, continue, or remain silent.
-
-### Law 3 — Every additional note competes with silence
-
-> **Every additional note must justify why it is better than silence.**
-
-For every subsidiary candidate event `x`, silence is evaluated over the same interval:
-
-\[
-Q(x) > Q(\varnothing)
-\]
-
-If this condition is not met, silence wins.
-
-### Law 4 — Every note must justify the time it occupies
-
-A musical event is not merely a pitch. Its onset and duration are part of its musical claim.
-
-\[
-Q(p,o,d) > Q(\text{silence over the same interval})
-\]
-
-Pitch, onset, and duration are therefore generated and evaluated jointly.
+**Status:** active design specification  
+**Scope:** deterministic Tune/Bass/Rhythm reference instrument plus falsifiable listening controls  
+**Supersedes:** the v0.1 `M → B_R → B_H` implementation architecture. Historical studies remain preserved in the repository.
 
 ---
 
-## 2. Central hypothesis
+## 1. Central hypothesis
 
-IPM tests the following compositional hypothesis:
+IPM tests this proposition:
 
-> **Listeners should tend to prefer moderately surprising events that preserve latent structural invariants and receive strong subsequent musical justification over both highly predictable continuations and equally surprising but structurally unrelated continuations.**
+> Listeners should tend to prefer moderately surprising musical continuations that preserve learned structural invariants and become strongly justified by what follows over both highly predictable continuations and similarly surprising continuations with weaker structural continuity.
 
-The intended process is:
+The intended causal chain is:
 
 \[
 \text{learnable structure}
@@ -81,739 +21,268 @@ The intended process is:
 \rightarrow
 \text{controlled violation}
 \rightarrow
+\text{invariant continuity}
+\rightarrow
 \text{retrospective integration}
 \]
 
-A compact formulation is:
-
-> **Make the next event difficult enough to predict to remain interesting, recognisable at a deeper level, and retrospectively justified by what follows.**
+This is a hypothesis to test, not a definition of musical quality.
 
 ---
 
-## 3. Event representation
+## 2. Governing laws
 
-Each note event in voice `v` is:
+These laws sit above numerical weights and style heuristics.
 
-\[
-x_i^{(v)}=(p_i,o_i,d_i,a_i,h_i)
-\]
+### Law 1 — Prediction is the baseline
 
-where:
+> **Prediction is the baseline. Surprise must improve on it.**
 
-- `p_i` — pitch, preferably represented scale-relatively internally;
-- `o_i` — onset time;
-- `d_i` — duration;
-- `a_i` — accent / metrical strength;
-- `h_i` — harmonic context.
+At every significant Tune decision, an expected continuation is retained as the control. A surprising continuation may replace it only when its full IPM score is better.
 
-A rest is a first-class event:
+### Law 2 — Tune defines the musical world
+
+> **The Tune establishes the primary predictive and melodic world. Bass and Rhythm are conditional on it.**
+
+Generation order for v0.2 is:
 
 \[
-x=\varnothing
+TUNE \rightarrow BASS \rightarrow RHYTHM
 \]
 
-A sounding note may also be continued rather than re-attacked.
+Pattern-lock transformations may subsequently re-realise a subsidiary pattern, but they must remain accountable to the already accepted musical context.
 
-For subsidiary voices, the action set is therefore:
+### Law 3 — Every subsidiary event competes with silence
+
+> **Every Bass or Rhythm event must justify sounding rather than remaining silent.**
+
+For a candidate `x`:
 
 \[
-\{\text{attack},\text{continue},\text{rest}\}
+Q(x) > Q(\varnothing)
 \]
+
+Activity controls may alter the silence threshold, but activity is a governor rather than a quota. Low occupancy never forces a weak event to sound.
+
+### Law 4 — Every note must justify the time it occupies
+
+Pitch, onset, duration, gate and rest are musical decisions rather than post-processing decoration.
 
 ---
 
-## 4. Hard monophonic voice constraint
+## 3. Instrument architecture
 
-Each individual voice owns one timeline and may not overlap itself.
+The current instrument has exactly three functional lanes.
 
-For all adjacent events in voice `v`:
-
-\[
-o_{i+1}^{(v)} \ge o_i^{(v)} + d_i^{(v)}
-\]
-
-Equality means an immediate continuation to the next event. A strict inequality creates a rest.
-
-Self-overlap is a hard rejection, not a soft penalty.
-
-Different voices may overlap each other; those overlaps form the polyphonic texture and must be evaluated explicitly.
-
----
-
-## 5. Voice hierarchy and roles
-
-### 5.1 Main voice — `M`
+### TUNE
 
 Purpose:
 
-- establish melodic identity;
-- teach motifs and invariants;
+- teach melodic and rhythmic vocabulary;
 - establish phrase direction;
-- imply or participate in harmony;
-- carry the principal prediction / surprise process.
+- carry the prediction/surprise experiment;
+- remain the principal perceptual identity.
 
-The main voice is generated first and frozen before subsidiary voices are generated around it.
+Reference register at tonic MIDI 60: `C4–B4`.
 
-### 5.2 Responsive counter-voice — `B_R`
-
-Purpose:
-
-- answer or reinterpret the main voice;
-- use contrary or oblique motion;
-- introduce passing motion;
-- quote or transform motif fragments;
-- provide delayed imitation;
-- create controlled, resolvable tension.
-
-`B_R` has moderate stochastic freedom, but all candidates are conditional on the frozen main voice and current structural state.
-
-### 5.3 Harmonic/colour counter-voice — `B_H`
+### BASS
 
 Purpose:
 
-- stabilise or clarify sonority;
-- provide roots, thirds, fifths, sixths, or other contextually useful tones;
-- sustain support tones;
-- introduce sparse colour or suspensions with clear resolution;
-- avoid competing with the main melodic identity.
+- provide slow structural support;
+- reinforce or redirect harmonic interpretation;
+- move less frequently than Tune/Rhythm by default;
+- remain independently tweakable.
 
-`B_H` should normally use fewer attacks, longer durations, and more silence than `B_R`.
+Reference register at tonic MIDI 60: `C2–B2`.
 
----
+### RHYTHM
 
-## 6. Texture and occupancy
+Purpose:
 
-Sub-branch occupancy is a **density governor, never a quota**.
+- provide short pitched/arpeggiated activity;
+- create local pulse, syncopation and recurrence;
+- remain subordinate to Tune and compatible with Bass.
 
-The main voice alone should normally be the single most common texture. Three simultaneously active voices should be exceptional enough to feel structurally significant.
+Reference register at tonic MIDI 60: `C3–B3`.
 
-Initial reference ranges:
-
-| Texture | Approximate share of main-voice time |
-|---|---:|
-| Main alone | 45–60% |
-| Main + `B_R` | 20–30% |
-| Main + `B_H` | 10–20% |
-| All three voices | 5–15% |
-
-Indicative individual occupancy governors:
-
-- `B_R`: about 25–40%;
-- `B_H`: about 15–25%.
-
-These values are not targets that must be filled. If candidate events fail to beat silence, the voice remains silent even if occupancy is below the governor.
-
-### Structural density curve
-
-Define active voice count:
-
-\[
-D(t)=|A(t)|
-\]
-
-where `A(t)` is the set of sounding pitches at time `t`.
-
-A typical density tendency may be:
-
-\[
-1 \rightarrow 2 \rightarrow 2 \rightarrow 3 \rightarrow 2 \rightarrow 1
-\]
-
-corresponding loosely to establishment, development, climax, release, and ending.
+Rhythm is pitched; v0.2 does not require drums.
 
 ---
 
-## 7. Main-voice candidate branches
+## 4. Scale-degree-first pitch model
 
-At significant main-melody decisions, generate three candidate continuation classes.
+Musical pitch identity is represented as an abstract scale degree before MIDI projection.
 
-### `E` — Expected
-
-The continuation most supported by the listener model.
+For scale world `W`, degree `d`, and lane `L`:
 
 \[
-E=\arg\max_x P_t(x)
+p = project_W(d,L)
 \]
 
-This is the baseline/control branch.
+Changing the tonic moves all lanes together while preserving the degree relationship.
 
-### `R` — Revealing
+The default world is Aeolian:
 
-A less-predictable continuation that preserves important latent invariants and can be strongly integrated by the near future.
+\[
+(0,2,3,5,7,8,10)
+\]
 
-### `X` — Exploratory
-
-A constrained stochastic continuation sampled from a wider but still musically legal candidate region.
-
-Exploratory does **not** mean unconstrained random pitch selection.
-
-Each candidate grows a short lookahead continuation before scoring. The selected branch may be expected, revealing, or exploratory, but prediction remains the default and surprise must earn replacement.
+A lane may never leak outside its tonic-relative register.
 
 ---
 
-## 8. Listener / predictive model
+## 5. Hard timing invariant
 
-At time `t`, the system maintains an explicit approximation of listener expectation:
-
-\[
-P_t(x)=P(x_{t+1}=x\mid x_{1:t})
-\]
-
-An initial reference implementation may combine several predictors:
-
-- tonal / modal stability;
-- interval continuation;
-- motif continuation;
-- rhythmic continuation;
-- contour continuation;
-- harmonic compatibility;
-- phrase position.
-
-A weighted log combination is acceptable:
+Each lane is monophonic with respect to itself:
 
 \[
-\log P_t(x)=\sum_k \alpha_k \log P_k(x)
+o_{i+1} \ge o_i+d_i
 \]
 
-The exact weights are implementation parameters and must be recorded in traces.
+Self-overlap is a hard rejection.
+
+Different lanes may overlap. Their actual overlap intervals form the vertical texture.
 
 ---
 
-## 9. Surprise
+## 6. Tune decision unit
 
-Prediction error for candidate event `x` is:
+The v0.2 Tune makes sequential whole-bar decisions.
 
-\[
-S_t(x)=-\log_2 P_t(x)
-\]
+A candidate bar jointly proposes:
 
-IPM does not maximise surprise. It seeks useful, calibrated surprise.
+- pitch sequence;
+- note count;
+- NOTE/REST time budget;
+- onset positions;
+- durations;
+- phrase direction.
 
-A simple initial utility curve may be:
+The selected structural bar may then receive micro-rhythmic subdivision while preserving the structural time budget.
 
-\[
-U(S)=S e^{-kS}
-\]
-
-This penalises both trivial predictability and extreme arbitrariness.
-
-### Surprise budget across dimensions
-
-A note may be surprising through pitch, duration, onset, or a combination.
-
-\[
-S_E=\alpha S_p + \beta S_d + \gamma S_o
-\]
-
-When one dimension consumes a large part of the surprise budget, the others should normally become more conservative.
-
-In particular:
-
-\[
-S_p\uparrow \Rightarrow S_d\downarrow
-\]
-
-and conversely, unless formal position explicitly justifies a compound surprise.
+Accepted history updates the next decision state.
 
 ---
 
-## 10. Duration
+## 7. Predictive probability
 
-Duration is not attached after pitch generation.
+For each Tune bar, generate a pool of competing complete-bar candidates.
 
-Generate:
+A base musical score estimates local expectation using current-history features such as:
 
-\[
-P(p,d,o\mid S_t)
-\]
+- entry continuity;
+- rhythmic continuity;
+- recently learned interval vocabulary;
+- phrase direction;
+- internal variety;
+- non-repetition;
+- cadence.
 
-or an equivalent structured approximation.
+The candidate scores are converted to a local probability distribution.
 
-Define a local rhythmic norm:
+The highest-probability candidate is the **Expected** baseline.
 
-\[
-\bar d_t
-\]
-
-and relative duration:
-
-\[
-r_t=\frac{d_t}{\bar d_t}
-\]
-
-Typical interpretation:
-
-- `r = 0.5` — short;
-- `r = 1` — locally expected;
-- `r = 2` — held;
-- `r = 4` — exceptional sustain.
-
-Long duration increases structural importance and increases the burden on dissonant events to justify themselves.
+This probability model is an explicit design prior. It is not yet an empirically fitted human listener model.
 
 ---
 
-## 11. Invariants
+## 8. Surprise
 
-A motif or phrase is represented both by surface events and by extracted structural features:
+For candidate probability `P(x)`:
 
 \[
-\phi(m)=
-(\phi_{interval},\phi_{contour},\phi_{duration},\phi_{accent},\phi_{harmonic})
+S(x)=-\log_2P(x)
 \]
 
-Possible invariants include:
+IPM does not maximise surprise.
 
-- interval relations;
+Calibrated surprise uses an inverted-U utility:
+
+\[
+U(S)=k e S e^{-kS}
+\]
+
+so both trivial prediction and extreme unpredictability can score poorly.
+
+---
+
+## 9. Invariants
+
+The current bar-level invariant estimate deliberately ignores absolute pitch and considers recoverable structural relationships including:
+
 - contour direction;
-- rhythmic ratios;
-- accent pattern;
-- phrase shape;
-- harmonic trajectory;
-- recurring resolution behaviour.
+- recently learned interval-size vocabulary;
+- attack-count shape;
+- rest-density shape.
 
-Each invariant receives a preservation weight:
+This allows transformations and transposition to preserve identity without literal repetition.
 
-\[
-w_j\in[0,1]
-\]
-
-Invariant similarity between motif `m` and transformation `m'` may be represented as:
-
-\[
-C_I(m,m')=
-\frac{\sum_j w_j\,sim(\phi_j(m),\phi_j(m'))}{\sum_j w_j}
-\]
-
-The goal is not literal repetition. Surface features may change substantially while important invariants remain recoverable.
-
-### Transformation quality
-
-Let:
-
-- `D_S(m,m')` — surface difference;
-- `C_I(m,m')` — invariant similarity.
-
-Then:
-
-\[
-T_Q=D_S\times C_I
-\]
-
-This favours transformations that are noticeably different yet structurally recognisable.
+Invariant scoring remains experimental and replaceable.
 
 ---
 
-## 12. Active-sonority evaluation
+## 10. Retrospective coherence and necessity
 
-Polyphonic compatibility is evaluated over **actual overlap intervals**, not merely note pairs in isolation.
+A candidate receives a retrospective-coherence estimate from:
 
-At time `t`, define the active pitch set:
+- invariant preservation;
+- phrase integration;
+- cadence/formal usefulness.
 
-\[
-A(t)=\{p_v(t)\mid v\text{ is sounding at }t\}
-\]
-
-Every attack, release, or pitch change creates a new interval over which the active sonority is evaluated.
-
-### Pairwise compatibility
-
-For all simultaneous voice pairs, calculate contextual interval compatibility `C_ij`.
-
-A conservative aggregate is:
+For local probability `P(x)` and retrospective coherence `C_R`:
 
 \[
-C_{pair}=\min_{i\ne j} C_{ij}
+N(x)=[1-P(x)]C_R
 \]
 
-so one severe collision cannot be hidden by averaging.
+A low-probability event receives credit only when it also integrates strongly.
 
-### Whole-set compatibility
-
-Also calculate:
-
-\[
-C_{set}(A(t))
-\]
-
-which judges the complete simultaneous pitch set rather than only independent intervals.
-
-Overall vertical compatibility may begin as:
-
-\[
-C_V=w_p C_{pair}+w_s C_{set}
-\]
-
-subject to any hard collision filters.
+The Tune trace must record probability, surprise, invariant similarity, retrospective coherence and retrospective necessity.
 
 ---
 
-## 13. Dissonance, duration, metre, and resolution
+## 11. Expected / Revealing / Exploratory gate
 
-Consonance/dissonance tables are priors, not absolute laws.
+From the Tune candidate pool:
 
-The cost of a dissonance must depend on at least:
+### Expected
 
-- interval / pitch-set context;
-- duration of overlap;
-- metrical strength;
-- voice-leading;
-- whether a credible resolution follows.
+Highest local predictive probability.
 
-An initial duration weighting may use:
+### Revealing
 
-\[
-D_{duration}=1-e^{-\lambda d}
-\]
+Lower-probability candidate with strong invariant continuity.
 
-Let metrical strength be:
+### Exploratory
 
-\[
-m(t)\in[0,1]
-\]
+Lower-probability candidate from a wider invariant region, still structurally legal.
 
-Then an initial dissonance cost may be approximated by:
+In `ipm` mode, a surprising branch may replace Expected only when its full IPM score exceeds the Expected baseline.
 
-\[
-D^*=D_{interval}\,D_{duration}\,m(t)
-\]
-
-If future continuation provides a resolution score:
-
-\[
-R(x,X)\in[0,1]
-\]
-
-then:
-
-\[
-D_{effective}=D^*(1-R)
-\]
-
-Therefore a brief weak-beat passing clash or well-resolved suspension may outperform a static consonance.
-
-> **Dissonance must have a destination or another explicit structural justification.**
+The branch classification and gate outcome must be recorded.
 
 ---
 
-## 14. Voice-leading and register
+## 12. Falsification conditions
 
-Each voice receives a preferred register function `R_v(p)`.
+The same high-level instrument configuration supports three conditions.
 
-Repeated or purposeless voice crossing is penalised, but crossing is not categorically forbidden.
+### A — `predictable`
 
-Successive relative motion between voices may be classified as:
+Always selects the Expected Tune baseline.
 
-- contrary;
-- oblique;
-- similar;
-- parallel.
+### B — `ipm`
 
-Use a contextual score `C_motion`, with a moderate default preference for contrary and oblique motion in `B_R`, without turning historical counterpoint conventions into universal hard laws.
+Allows Revealing/Exploratory continuations to replace Expected only when the IPM gate is passed.
 
-Awkward leaps and persistent mechanical copying are penalised.
+### C — `unstructured-surprise`
 
----
+Selects a surprising continuation approximately matched to the IPM condition's surprise burden while preferring weaker invariant continuity.
 
-## 15. Structural promises and debt
+The control need not be intentionally ugly; it should remain musically legal enough that the comparison tests the proposed mechanism rather than obvious corruption.
 
-Maintain a set of unresolved expectations:
-
-\[
-\Pi_t=\{\pi_1,\ldots,\pi_n\}
-\]
-
-Each promise may record:
-
-\[
-\pi_i=(q_i,s_i,a_i,r_i)
-\]
-
-where:
-
-- `q_i` — expected event or resolution class;
-- `s_i` — promise strength;
-- `a_i` — age;
-- `r_i` — expected resolution window or deadline.
-
-Examples include:
-
-- leading tone expecting tonic;
-- dominant implication expecting resolution;
-- unfinished motif expecting completion;
-- sequence expecting continuation;
-- unresolved suspension;
-- call expecting a counter-voice answer;
-- phrase expecting closure.
-
-Structural debt can be represented as:
-
-\[
-D_\Pi(t)=\sum_i s_i g(a_i)
-\]
-
-Development may deliberately accumulate debt. Cadential and final regions should reduce strong outstanding debt.
-
----
-
-## 16. Lookahead
-
-Lookahead is mandatory for significant surprise and dissonance decisions.
-
-For candidate event `x`, generate a short continuation:
-
-\[
-X=(x_t,x_{t+1},\ldots,x_{t+H})
-\]
-
-The horizon `H` may initially be a small number of events or one short phrase segment.
-
-The engine must be able to ask:
-
-> If this event is selected now, can what follows make it musically worthwhile?
-
-Immediate local score alone is insufficient for accepting a surprising or dissonant event.
-
----
-
-## 17. Retrospective coherence
-
-For event `x` and its planned continuation `X`, define retrospective coherence:
-
-\[
-C_R(x,X)=
-\beta_I C_I+
-\beta_H C_H+
-\beta_\Pi C_\Pi+
-\beta_F C_F+
-\beta_V C_V
-\]
-
-where components may include:
-
-- invariant continuity;
-- harmonic integration;
-- promise resolution;
-- formal usefulness;
-- voice-leading / vertical integration.
-
-Normalise as practical to:
-
-\[
-C_R\in[0,1]
-\]
-
-### Retrospective necessity
-
-A useful diagnostic is:
-
-\[
-N(x,X)=[1-P_t(x)]C_R(x,X)
-\]
-
-This favours events that were not obvious beforehand but become strongly justified by their continuation.
-
----
-
-## 18. Subsidiary stochastic generation
-
-Counter-voices are stochastic only **inside the set of structurally legal and contextually scored possibilities**.
-
-For subsidiary voice `v`:
-
-\[
-P(
- x^{(v)}
- \mid
- M,
- B_{<v},
- A(t),
- H_t,
- I_t,
- \Pi_t,
- D^*(t),
- F_t
-)
-\]
-
-The generator must never sample subsidiary pitches uniformly from an unconstrained pitch set.
-
-`B_H` is generated after `B_R` and is conditioned on both the main voice and accepted `B_R` state.
-
----
-
-## 19. Candidate scoring
-
-Exact weights are experimental parameters, not theory claims.
-
-A subsidiary candidate continuation may initially use a score of the form:
-
-\[
-Q_B(x,X)=
- w_1C_V+
- w_2C_{motion}+
- w_3C_I+
- w_4C_R+
- w_5R_\Pi+
- w_6C_{density}+
- w_7U(S)-
- w_8A
-\]
-
-where `A` may include:
-
-- voice crossing penalty;
-- range penalty;
-- unresolved dissonance penalty;
-- register crowding;
-- awkward leaps;
-- mechanical copying;
-- excessive density.
-
-Self-overlap remains a hard rejection outside the numerical score.
-
-Silence receives its own complete score `Q_B(∅)` and competes directly.
-
----
-
-## 20. Selection
-
-The reference engine should not always choose the absolute highest-scoring valid candidate.
-
-Among valid candidates, a temperature-controlled softmax may be used:
-
-\[
-P(X)=\frac{e^{Q(X)/\tau}}{\sum_j e^{Q(X_j)/\tau}}
-\]
-
-A supplied random seed must make generation reproducible.
-
-Temperature may vary by formal position, increasing through development and reducing toward resolution, but this behaviour must be traceable.
-
----
-
-## 21. Formal position
-
-Maintain a formal state `F_t` so generation does not collapse into local note-by-note optimisation.
-
-Minimum useful regions for v0.1:
-
-1. establishment;
-2. development;
-3. climax;
-4. resolution.
-
-The formal state may govern:
-
-- target surprise;
-- target density;
-- permissible transformation distance;
-- structural debt tolerance;
-- expected phrase closure;
-- counter-voice occupancy.
-
----
-
-## 22. Reference generation cycle
-
-```text
-1. Choose deterministic run configuration:
-   - random seed
-   - key / mode
-   - tempo
-   - metre
-   - length
-   - seed motif
-
-2. Extract initial motif invariants.
-
-3. Establish a formal plan.
-
-4. For each main-melody decision:
-   a. Generate Expected continuation.
-   b. Generate Revealing continuation.
-   c. Generate constrained Exploratory continuation.
-   d. Grow short lookahead futures for candidates.
-   e. Score prediction, useful surprise, invariants,
-      duration, promises, form, and retrospective coherence.
-   f. Select the main continuation.
-   g. Freeze accepted main events.
-
-5. For responsive counter-voice B_R:
-   a. Enumerate note / continue / silence candidates.
-   b. Reject self-overlap.
-   c. Evaluate actual overlaps against M.
-   d. Score vertical sonority, duration-weighted dissonance,
-      metre, voice-leading, invariants, future resolution,
-      density, and silence.
-   e. Accept/sample only from valid candidates that beat silence.
-   f. Freeze accepted events.
-
-6. For harmonic/colour voice B_H:
-   a. Repeat against both M and accepted B_R.
-   b. Prefer sparse activity, stable sonorities,
-      longer support notes, useful suspensions, and silence.
-   c. Accept/sample only from valid candidates that beat silence.
-   d. Freeze accepted events.
-
-7. Update:
-   - listener model
-   - invariant state
-   - structural promises / debt
-   - rhythmic norm
-   - formal state
-   - density state
-
-8. Export events and complete decision trace.
-```
-
----
-
-## 23. Decision trace requirement
-
-Every generated note must be explainable after the run.
-
-The machine-readable trace must record at least:
-
-- run seed;
-- voice;
-- pitch;
-- onset;
-- duration;
-- action type (`attack`, `continue`, `rest`);
-- formal position;
-- relevant candidate set;
-- predictive probability / surprise contribution;
-- vertical compatibility;
-- invariant score where applicable;
-- density contribution;
-- retrospective / lookahead contribution where applicable;
-- silence score for subsidiary events;
-- final candidate score;
-- selection reason / stochastic draw state.
-
-The trace is part of the product, not debug-only output.
-
----
-
-## 24. Experimental controls
-
-For the same seed material and high-level configuration, the reference system should be able to produce at least three comparable conditions:
-
-### A — Predictable control
-
-Primarily uses expected main continuations and conservative counter-voice behaviour.
-
-### B — IPM
-
-Uses the full expected / revealing / exploratory architecture with invariant-preserving surprise and retrospective integration.
-
-### C — Unstructured-surprise control
-
-Matches surprise approximately where practical, but weakens or removes invariant preservation / retrospective integration.
-
-This allows the central claim to be tested rather than merely asserted.
-
-Candidate listener measures include:
+Listener tests should compare at least:
 
 - preference;
 - coherence;
@@ -824,87 +293,199 @@ Candidate listener measures include:
 
 ---
 
-## 25. v0.1 acceptance target
+## 13. Bass controls
 
-**Milestone:** generate one deterministic 16-bar, three-voice MIDI study from a seed motif, with every generated event traceable to this specification.
+Bass behaviour is parameterised rather than encoded as a numbered Study.
 
-### Required
+All controls are in `[0,1]`.
 
-- [ ] deterministic output from a supplied random seed;
-- [ ] 16-bar reference form;
-- [ ] main voice with Expected / Revealing / Exploratory candidate generation;
-- [ ] responsive counter-voice `B_R`;
-- [ ] sparse harmonic/colour counter-voice `B_H`;
-- [ ] no voice may overlap itself;
-- [ ] pitch, onset, and duration treated as joint musical decisions;
-- [ ] all actual inter-voice overlap intervals evaluated;
-- [ ] pairwise and whole-active-set vertical evaluation;
-- [ ] duration- and metre-sensitive dissonance treatment;
-- [ ] lookahead for significant surprise / dissonance decisions;
-- [ ] silence competes against every subsidiary event;
-- [ ] main-alone remains the most common texture unless the generated evidence strongly justifies otherwise;
-- [ ] three-voice texture remains exceptional rather than default;
+- `activity` — lowers/raises the burden for Bass to beat silence.
+- `sustain` — biases toward longer/shorter structural cells.
+- `movement` — biases static support versus degree movement.
+- `pattern_complexity` — biases simple versus mixed bar partitions.
+- `gate` — fraction of an allocated Bass span that actually sounds.
+
+A Bass pattern owns a four-beat time budget. Typical available shapes include:
+
+- `4`
+- `2+2`
+- `1+1+2`
+- `2+1+1`
+- `1+1+1+1`
+
+These are vocabulary options, not quotas.
+
+---
+
+## 14. Rhythm controls
+
+Rhythm is generated per bar from short pitched figures.
+
+Controls:
+
+- `activity`
+- `complexity`
+- `syncopation`
+- `gate`
+
+There is no fixed set of mandatory active bars in the v0.2 engine.
+
+For every bar:
+
+1. generate legal rhythmic candidates;
+2. score them against active Tune/Bass context;
+3. compare the strongest figure against silence;
+4. sound it only if it wins.
+
+---
+
+## 15. Pattern memory and locks
+
+A reusable pattern stores:
+
+- relative onset geometry;
+- duration geometry;
+- relative scale-degree contour.
+
+It does **not** store absolute MIDI pitches.
+
+A pattern may therefore be captured, named, locked and re-realised against a new harmonic anchor while preserving its recognisable geometry.
+
+v0.2 engine-level lock windows are supported for the subsidiary BASS and RHYTHM lanes. Tune pattern memory remains a research extension because forcing Tune repetition can bypass the prediction experiment.
+
+Lock state must be explicit and must be released after its configured window.
+
+---
+
+## 16. Vertical compatibility
+
+Simultaneous music is evaluated over real overlap intervals.
+
+The engine retains interval and complete-set sonority priors. These are compositional priors, not universal claims about consonance.
+
+Vertical compatibility must never permit a pitch to escape its scale or lane.
+
+---
+
+## 17. Density
+
+There are no occupancy quotas.
+
+Bass and Rhythm activity controls alter their opportunity/burden to sound, while silence remains a legal competitor.
+
+The desirable qualitative tendency remains:
+
+- Tune alone should be common;
+- two-part texture should be ordinary;
+- all three parts should not become an unexamined default.
+
+If listening evidence later contradicts this tendency, the tendency may change without changing the central IPM hypothesis.
+
+---
+
+## 18. Determinism
+
+A supplied random seed must reproduce the same result for the same implementation and configuration.
+
+Every stochastic choice is made through the seeded randomness layer.
+
+Cross-Python-version bit-for-bit RNG identity is not claimed unless separately tested.
+
+---
+
+## 19. Decision trace
+
+The trace is part of the product.
+
+It must contain:
+
+- engine version;
+- random seed;
+- experiment mode;
+- lane controls;
+- pattern locks;
+- Tune candidate probabilities;
+- selected Tune branch;
+- surprise;
+- invariant score;
+- retrospective coherence/necessity;
+- Bass/Rhythm silence scores;
+- accepted events;
+- lane/register validation;
+- vertical metrics.
+
+A rendered MIDI without its decision trace is incomplete as a research artefact.
+
+---
+
+## 20. Historical studies
+
+Studies #001–#011 are experimental records.
+
+They preserve:
+
+- failed listening controls;
+- bugs and corrections;
+- controlled musical experiments;
+- the path by which Tune/Bass/Rhythm and pattern memory emerged.
+
+They are not the v0.2 production call graph.
+
+The current engine must be able to run without calling any numbered Study module.
+
+---
+
+## 21. Acceptance boundary for v0.2
+
+Required implementation properties:
+
+- [ ] one direct configurable Tune/Bass/Rhythm engine;
+- [ ] no runtime ancestry through numbered Studies;
+- [ ] scale-degree-first lane projection;
+- [ ] deterministic seeded output;
+- [ ] explicit Tune predictive baseline;
+- [ ] recorded surprise/invariant/retrospective scores;
+- [ ] predictable/IPM/unstructured-surprise modes;
+- [ ] Bass controls;
+- [ ] Rhythm controls;
+- [ ] subsidiary silence competition;
+- [ ] pattern memory and explicit subsidiary lock/unlock;
+- [ ] no self-overlap;
+- [ ] actual vertical texture scoring;
 - [ ] MIDI export;
-- [ ] machine-readable decision trace;
-- [ ] predictable, full-IPM, and unstructured-surprise control modes from the same seed/configuration.
+- [ ] machine-readable trace;
+- [ ] Python 3.11 and 3.13 CI.
 
-### Not required for v0.1
+Musical acceptance remains listening-dependent.
 
+Theory acceptance requires controlled listener evidence and cannot be inferred from passing software tests.
+
+---
+
+## 22. Known research debt
+
+Still not claimed complete:
+
+- empirically fitted listener probabilities;
+- formal structural-promise/debt ledger;
+- full future-resolution modelling for dissonance;
+- universal numerical weights;
+- production instrumentation;
 - realtime generation;
-- DAW plugin integration;
-- production-quality instrumentation;
-- orchestration;
+- GUI/DAW integration;
 - drums;
-- GUI;
-- machine-learned listener model;
-- claim that any numerical weight is universal;
-- claim that the system mathematically defines beauty.
+- proof that IPM improves listener preference.
+
+These omissions must remain visible rather than being silently re-described as solved.
 
 ---
 
-## 26. Non-goals and epistemic limits
+## 23. Permanent project distinction
 
-IPM does **not** assume that:
+Three concepts must remain separate:
 
-- consonance is universally good;
-- dissonance is universally bad;
-- Western tonal conventions are universal musical laws;
-- a single scoring function can measure beauty;
-- maximum surprise produces maximum interest;
-- theoretical elegance is evidence that listeners will prefer the result.
+1. **Instrument roles:** `TUNE / BASS / RHYTHM`.
+2. **Tune prediction branches:** `EXPECTED / REVEALING / EXPLORATORY`.
+3. **Experimental conditions:** `predictable / ipm / unstructured-surprise`.
 
-Numerical tables and weights used by the reference implementation are experimental priors. They must remain separable from the governing laws and must be testable and replaceable.
-
----
-
-## 27. Permanent design locks for v0.1
-
-1. Prediction is the baseline; surprise must improve on it.
-2. The main voice defines the musical world.
-3. Subsidiary voices are constrained stochastic counter-voices, never unconstrained random melodies.
-4. Voice generation order is `M → B_R → B_H`.
-5. No voice may overlap itself.
-6. Every subsidiary note competes directly with silence.
-7. Every note must justify the time it occupies.
-8. Simultaneous voices are judged over their real temporal overlaps.
-9. Vertical evaluation considers both pairwise intervals and the complete active pitch set.
-10. Dissonance evaluation is duration-, metre-, context-, and resolution-sensitive.
-11. Significant surprise requires lookahead.
-12. Important invariants must remain recoverable through transformation.
-13. Counter-voice occupancy is governed, not quota-filled.
-14. Main-alone should normally be the most common texture.
-15. Three simultaneous voices should be exceptional enough to carry structural significance.
-16. A supplied random seed must make the reference run reproducible.
-17. Every accepted event must be represented in a machine-readable decision trace.
-
----
-
-## 28. First implementation boundary
-
-The next implementation step after this specification is accepted is **not** a full composer or plugin.
-
-Build the smallest reference engine capable of proving or falsifying the v0.1 mechanism:
-
-> **one deterministic 16-bar MIDI study + complete decision trace + three controlled generation modes.**
-
-Anything that does not contribute directly to that milestone should be deferred.
+Conflating these layers recreates the architectural confusion v0.2 is intended to remove.
