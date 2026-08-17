@@ -210,10 +210,13 @@ def test_stochastic_choice_is_reproducible_and_main_texture_is_not_mutated() -> 
     assert branch.events == []
 
 
-def test_note_must_span_exact_decision_window() -> None:
-    main = voice("M", (0, 1, 60))
+def test_note_may_start_late_and_end_early_inside_decision_window() -> None:
+    main = voice("M", (0, 2, 60))
     branch = Voice("B_R")
-    candidate = SubsidiaryCandidate(CandidateAction.NOTE, NoteEvent(Fraction(0), Fraction(1, 2), 67))
+    candidate = SubsidiaryCandidate(
+        CandidateAction.NOTE,
+        NoteEvent(Fraction(1, 2), Fraction(1), 67),
+    )
 
     score = evaluate_candidate(
         candidate,
@@ -221,12 +224,48 @@ def test_note_must_span_exact_decision_window() -> None:
         target_voice=branch,
         frozen_voices=[main],
         start=Fraction(0),
-        end=Fraction(1),
+        end=Fraction(2),
         phase=StructuralPhase.DEVELOPMENT,
     )
 
-    assert not score.valid
-    assert score.reason == "note must span decision window"
+    assert score.valid
+
+
+def test_note_cannot_escape_decision_window() -> None:
+    main = voice("M", (0, 2, 60))
+    branch = Voice("B_R")
+    early = SubsidiaryCandidate(
+        CandidateAction.NOTE,
+        NoteEvent(Fraction(0), Fraction(1), 67),
+    )
+    late = SubsidiaryCandidate(
+        CandidateAction.NOTE,
+        NoteEvent(Fraction(3, 2), Fraction(1), 67),
+    )
+
+    early_score = evaluate_candidate(
+        early,
+        role=SubsidiaryRole.RESPONSE,
+        target_voice=branch,
+        frozen_voices=[main],
+        start=Fraction(1, 2),
+        end=Fraction(2),
+        phase=StructuralPhase.DEVELOPMENT,
+    )
+    late_score = evaluate_candidate(
+        late,
+        role=SubsidiaryRole.RESPONSE,
+        target_voice=branch,
+        frozen_voices=[main],
+        start=Fraction(0),
+        end=Fraction(2),
+        phase=StructuralPhase.DEVELOPMENT,
+    )
+
+    assert not early_score.valid
+    assert early_score.reason == "note must lie within decision window"
+    assert not late_score.valid
+    assert late_score.reason == "note must lie within decision window"
 
 
 def test_policy_rejects_invalid_temperature() -> None:
