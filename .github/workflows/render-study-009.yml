@@ -1,0 +1,29 @@
+name: render-study-009
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/ipm/micro_rhythm.py"
+      - "src/ipm/branch_arpeggio.py"
+      - "src/ipm/study9.py"
+      - ".github/workflows/render-study-009.yml"
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: pip install -e .
+      - name: Generate Study 009
+        run: python -m ipm.study9 --output artifacts
+      - name: Upload Study 009
+        uses: actions/upload-artifact@v7
+        with:
+          name: ipm-study-009
+          path: artifacts/
