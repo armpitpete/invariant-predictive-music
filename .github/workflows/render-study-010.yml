@@ -1,0 +1,28 @@
+name: render-study-010
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/ipm/lanes.py"
+      - "src/ipm/study10.py"
+      - ".github/workflows/render-study-010.yml"
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: pip install -e .
+      - name: Generate Study 010
+        run: python -m ipm.study10 --output artifacts
+      - name: Upload Study 010
+        uses: actions/upload-artifact@v7
+        with:
+          name: ipm-study-010
+          path: artifacts/
