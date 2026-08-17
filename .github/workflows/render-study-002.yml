@@ -1,0 +1,37 @@
+name: render-study-002
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/ipm/study2.py"
+      - "src/ipm/euclidean.py"
+      - "src/ipm/countertime.py"
+      - "src/ipm/main_voice.py"
+      - ".github/workflows/render-study-002.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: python -m pip install -e .
+      - name: Generate Study 002
+        run: >-
+          python -m ipm.study2
+          --midi artifacts/ipm-study-002.mid
+          --trace artifacts/ipm-study-002.trace.json
+      - name: Upload Study 002
+        uses: actions/upload-artifact@v7
+        with:
+          name: ipm-study-002
+          path: artifacts/
+          if-no-files-found: error
