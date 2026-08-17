@@ -1,5 +1,20 @@
-"""Invariant Predictive Music reference engine."""
+"""Invariant Predictive Music.
 
+The public v0.2 instrument API lives in :mod:`ipm.engine`. Historical study and
+v0.1 primitives remain exported for reproducibility and regression tests.
+"""
+
+from .engine import (
+    BassControls,
+    ExperimentMode,
+    InstrumentConfig,
+    InstrumentResult,
+    PatternLockSpec,
+    RhythmControls,
+    compose,
+    compose_experiment_bundle,
+    write_files,
+)
 from .countertime import (
     TimedCandidateScore,
     TimedDecision,
@@ -72,21 +87,27 @@ from .study4 import compose_study_004, write_study_004_files
 
 __all__ = [
     "ActiveNote",
+    "BassControls",
     "CandidateAction",
     "CandidateDecision",
     "CandidateScore",
     "CountervoicePolicy",
     "EuclideanPattern",
+    "ExperimentMode",
     "FEMALE_LEAD_C4_B4",
     "IPMConfig",
+    "InstrumentConfig",
+    "InstrumentResult",
     "MainBranchKind",
     "MainDecision",
     "MainFuture",
     "MainFutureScore",
     "MainVoicePolicy",
     "NoteEvent",
+    "PatternLockSpec",
     "PitchRegister",
     "RhythmBudgetPolicy",
+    "RhythmControls",
     "RhythmicPartition",
     "SeededRandom",
     "SonoritySlice",
@@ -105,6 +126,8 @@ __all__ = [
     "choose_main_future",
     "choose_rhythmic_partition",
     "choose_timed_candidate",
+    "compose",
+    "compose_experiment_bundle",
     "compose_study",
     "compose_study_002",
     "compose_study_003",
@@ -136,6 +159,7 @@ __all__ = [
     "slice_active_sonorities",
     "surprise_bits",
     "target_density",
+    "write_files",
     "write_study_002_files",
     "write_study_003_files",
     "write_study_004_files",
