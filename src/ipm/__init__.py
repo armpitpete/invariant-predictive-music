@@ -1,5 +1,17 @@
 """Invariant Predictive Music reference engine."""
 
+from .countervoice import (
+    CandidateAction,
+    CandidateDecision,
+    CandidateScore,
+    CountervoicePolicy,
+    StructuralPhase,
+    SubsidiaryCandidate,
+    SubsidiaryRole,
+    choose_candidate,
+    evaluate_candidate,
+    target_density,
+)
 from .model import IPMConfig, NoteEvent, Voice, VoiceOverlapError
 from .randomness import SeededRandom
 from .sonority import (
@@ -19,15 +31,24 @@ from .sonority import (
 
 __all__ = [
     "ActiveNote",
+    "CandidateAction",
+    "CandidateDecision",
+    "CandidateScore",
+    "CountervoicePolicy",
     "IPMConfig",
     "NoteEvent",
     "SeededRandom",
     "SonoritySlice",
+    "StructuralPhase",
+    "SubsidiaryCandidate",
+    "SubsidiaryRole",
     "TextureScore",
     "VerticalScore",
     "Voice",
     "VoiceOverlapError",
+    "choose_candidate",
     "contextual_pair_score",
+    "evaluate_candidate",
     "interval_class",
     "interval_prior",
     "metrical_strength",
@@ -35,4 +56,5 @@ __all__ = [
     "score_texture",
     "set_coherence",
     "slice_active_sonorities",
+    "target_density",
 ]
