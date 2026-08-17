@@ -42,7 +42,15 @@ from .midi import render_midi
 from .model import IPMConfig, NoteEvent, Voice, VoiceOverlapError
 from .randomness import SeededRandom
 from .register import FEMALE_LEAD_C4_B4, PitchRegister, midi_octave_number
-from .rhythm import rhythmic_invariant_similarity
+from .rhythm import (
+    RhythmBudgetPolicy,
+    RhythmicPartition,
+    choose_rhythmic_partition,
+    euclidean_partition,
+    realise_partition,
+    rhythmic_invariant_similarity,
+    rhythmic_partitions,
+)
 from .sonority import (
     ActiveNote,
     SonoritySlice,
@@ -60,6 +68,7 @@ from .sonority import (
 from .study import StudyResult, compose_study, seed_motif, write_study_files
 from .study2 import compose_study_002, seed_motif_002, write_study_002_files
 from .study3 import compose_study_003, write_study_003_files
+from .study4 import compose_study_004, write_study_004_files
 
 __all__ = [
     "ActiveNote",
@@ -77,6 +86,8 @@ __all__ = [
     "MainVoicePolicy",
     "NoteEvent",
     "PitchRegister",
+    "RhythmBudgetPolicy",
+    "RhythmicPartition",
     "SeededRandom",
     "SonoritySlice",
     "StructuralPhase",
@@ -92,12 +103,15 @@ __all__ = [
     "calibrated_surprise",
     "choose_candidate",
     "choose_main_future",
+    "choose_rhythmic_partition",
     "choose_timed_candidate",
     "compose_study",
     "compose_study_002",
     "compose_study_003",
+    "compose_study_004",
     "contextual_pair_score",
     "euclidean_onsets",
+    "euclidean_partition",
     "euclidean_pattern",
     "evaluate_candidate",
     "evaluate_main_futures",
@@ -109,8 +123,10 @@ __all__ = [
     "metrical_strength",
     "midi_octave_number",
     "note_candidate",
+    "realise_partition",
     "render_midi",
     "rhythmic_invariant_similarity",
+    "rhythmic_partitions",
     "rotation_overlap_count",
     "score_sonority",
     "score_texture",
@@ -122,5 +138,6 @@ __all__ = [
     "target_density",
     "write_study_002_files",
     "write_study_003_files",
+    "write_study_004_files",
     "write_study_files",
 ]
