@@ -1,0 +1,62 @@
+name: render-listening-pilot
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "EXPERIMENT.md"
+      - "src/ipm/experiment.py"
+      - "src/ipm/engine.py"
+      - "src/ipm/midi.py"
+      - "pyproject.toml"
+      - ".github/workflows/render-listening-pilot.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install IPM
+        run: python -m pip install -e '.[dev]'
+      - name: Install fixed audio renderer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fluidsynth fluid-soundfont-gm ffmpeg
+      - name: Build matched blinded pilot set
+        run: ipm-experiment --output listening-pilot
+      - name: Render fixed WAV stimuli
+        shell: bash
+        run: |
+          set -euo pipefail
+          soundfont=/usr/share/sounds/sf2/FluidR3_GM.sf2
+          test -f "$soundfont"
+          for midi in listening-pilot/stimuli/*.mid; do
+            raw="${midi%.mid}.raw.wav"
+            wav="${midi%.mid}.wav"
+            fluidsynth -ni "$soundfont" "$midi" -F "$raw" -r 44100 >/dev/null 2>&1
+            ffmpeg -hide_banner -loglevel error -y -i "$raw" \
+              -af loudnorm=I=-18:TP=-1.5:LRA=11 "$wav"
+            rm "$raw"
+          done
+      - name: Record renderer identity and hashes
+        shell: bash
+        run: |
+          {
+            echo "fluidsynth=$(fluidsynth --version 2>&1 | head -n 1)"
+            echo "ffmpeg=$(ffmpeg -version | head -n 1)"
+            echo "soundfont=/usr/share/sounds/sf2/FluidR3_GM.sf2"
+            sha256sum /usr/share/sounds/sf2/FluidR3_GM.sf2
+          } > listening-pilot/researcher/audio-renderer.txt
+          find listening-pilot/stimuli -type f \( -name '*.mid' -o -name '*.wav' \) -print0 \
+            | sort -z | xargs -0 sha256sum \
+            > listening-pilot/researcher/stimulus-sha256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipm-listening-pilot
+          path: listening-pilot
