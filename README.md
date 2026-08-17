@@ -1,57 +1,117 @@
 # Invariant Predictive Music
 
-Reference implementation of the **Invariant Predictive Music (IPM)** model.
+**Invariant Predictive Music (IPM)** is a falsifiable compositional theory embodied in a deterministic three-part musical instrument.
 
-The project tests a simple claim: a musical system can remain learnable and coherent while producing useful surprise when it preserves deeper invariants, integrates deviations retrospectively, and treats silence as a real alternative to every subsidiary note.
+The current architecture is **v0.2**:
 
-The authoritative design is in [`SPEC.md`](SPEC.md).
+- **TUNE** — the predictive melodic world.
+- **BASS** — a configurable slow structural lane.
+- **RHYTHM** — a configurable short pitched/arpeggiated lane.
 
-## v0.1 target
+All three parts share an abstract scale-degree world and are projected into separate tonic-relative registers. The instrument can therefore transpose without changing the musical identity of a degree or leaking notes between roles.
 
-Generate one deterministic 16-bar, three-voice MIDI study from a seed motif with a complete decision trace.
+The authoritative design is [`SPEC.md`](SPEC.md).
 
-The implementation is built in explicit gates:
+## What IPM is testing
 
-1. hard monophonic timing + deterministic seeded randomness;
-2. active-sonority vertical compatibility;
-3. subsidiary NOTE / CONTINUE / SILENCE competition;
-4. main-voice EXPECTED / REVEALING / EXPLORATORY competition;
-5. end-to-end 16-bar study + trace + MIDI export.
+IPM does not claim that surprise is good by itself. It tests a narrower proposition:
 
-## Study #001
+> A locally surprising continuation should be more successful when it preserves learned structural invariants and becomes strongly justified by what follows.
 
-Study #001 uses a four-note seed with scale-degree shape **1-3-4-2** and duration ratio **1:1:2:4**. Eight two-bar main-voice decisions produce 16 bars in 4/4. The main line is frozen before the responsive (`B_R`) and harmonic/colour (`B_H`) voices are evaluated against it and against silence.
+The Tune engine therefore records, for each bar:
 
-Generate the default deterministic study:
+- an expected/predictable baseline;
+- candidate prediction probabilities;
+- surprise in bits;
+- invariant similarity;
+- retrospective coherence;
+- retrospective necessity;
+- the reason the expected or surprising candidate won.
+
+The same high-level configuration can generate three experimental conditions:
+
+1. `predictable`
+2. `ipm`
+3. `unstructured-surprise`
+
+That makes the central claim testable rather than merely aesthetic.
+
+## Musical controls
+
+Bass and Rhythm are instrument parameters, not hard-coded Study behaviour.
+
+Bass exposes:
+
+- `activity`
+- `sustain`
+- `movement`
+- `pattern_complexity`
+- `gate`
+
+Rhythm exposes:
+
+- `activity`
+- `complexity`
+- `syncopation`
+- `gate`
+
+Every Bass/Rhythm decision records a **silence score**. A subsidiary event sounds only when its best candidate beats silence.
+
+Patterns are scale-degree-relative rather than fixed MIDI phrases. Subsidiary patterns can be captured, named, locked over a bar window, harmonically re-anchored, and explicitly unlocked.
+
+## Generate the current instrument
 
 ```bash
 python -m pip install -e '.[dev]'
-ipm-study
+ipm --output examples
 ```
 
-or directly:
+Useful controls:
 
 ```bash
-python -m ipm.study --midi examples/study-001.mid --trace examples/study-001.trace.json
+ipm \
+  --mode ipm \
+  --bass-activity 0.72 \
+  --bass-sustain 0.62 \
+  --bass-movement 0.30 \
+  --rhythm-activity 0.68
 ```
 
-The trace records all three main futures, their scores, every subsidiary candidate, silence scores, selected events, final texture occupancy, vertical compatibility, and acceptance checks.
+Output:
+
+- `examples/ipm-v0.2.mid`
+- `examples/ipm-v0.2.trace.json`
+
+The trace is part of the research object. It records the decision evidence as well as the selected music.
+
+## Historical studies
+
+Studies #001–#011 are preserved as the experimental path that produced the current instrument. They are **not** the v0.2 production architecture and the current engine does not call through them.
+
+Important listening milestones included:
+
+- #001 — failed control: hymn-like, mechanically aligned, emotionally flat.
+- #005 — fixed counter-register spikes.
+- #008 — whole-bar sequential composition.
+- #009 — first musically viable short-note/arpeggiated direction.
+- #010 — explicit scalable Tune/Bass/Rhythm architecture.
+- #011 — first pattern-lock experiment and shorter Bass vocabulary.
+
+Historical failures remain useful evidence and should not be rewritten to look successful.
 
 ## Development
 
-Python 3.11+ is required.
+Python 3.11+:
 
 ```bash
 python -m pip install -e '.[dev]'
 pytest
 ```
 
-The repository runs the full suite on Python 3.11 and 3.13 in GitHub Actions.
+CI runs the suite on Python 3.11 and 3.13.
 
-## Voice hierarchy
+## Epistemic boundary
 
-- `M` — main predictive melody
-- `B_R` — responsive stochastic counter-voice
-- `B_H` — sparse harmonic/colour counter-voice
+Passing tests proves deterministic implementation properties; it does **not** prove the musical theory.
 
-The main voice defines the musical world. Subsidiary voices are generated conditionally and must justify sounding over silence.
+The IPM hypothesis requires listener comparison of predictable, IPM, and surprise-matched weak-invariant controls. Numerical weights, consonance priors, density settings and default musical controls remain experimental parameters.
