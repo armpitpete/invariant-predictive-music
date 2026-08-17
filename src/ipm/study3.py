@@ -1,9 +1,10 @@
-"""Study #003: controlled one-octave vocal-lead variant of Study #002.
+"""Study #003: controlled same-octave vocal-lead variant of Study #002.
 
 This is deliberately a single-variable listening experiment. Rhythm, formal
 branch decisions, Euclidean attack timing and subsidiary voices are inherited
 from Study #002. Only the lead's octave placement changes, preserving every
-lead pitch class and all event timing while enforcing a C4-C5 hard ambitus.
+lead pitch class and all event timing while enforcing one conventional C-to-B
+named octave. For the default study that means C4 through B4, never C5.
 """
 
 from __future__ import annotations
@@ -15,17 +16,24 @@ from pathlib import Path
 
 from .midi import render_midi
 from .model import IPMConfig, Voice
-from .register import FEMALE_LEAD_C4_C5, PitchRegister
+from .register import FEMALE_LEAD_C4_B4, PitchRegister
 from .study import StudyResult, _event_json, _texture_metrics
 from .study2 import compose_study_002
 
 
 def _register_for_tonic(tonic_midi: int) -> PitchRegister:
+    if not 0 <= tonic_midi <= 127:
+        raise ValueError("tonic_midi must be in 0..127")
     if tonic_midi == 60:
-        return FEMALE_LEAD_C4_C5
-    if not 0 <= tonic_midi <= 115:
-        raise ValueError("tonic_midi must allow a complete one-octave lead register")
-    return PitchRegister(tonic_midi, tonic_midi + 12, tonic_midi + 6)
+        return FEMALE_LEAD_C4_B4
+
+    # MIDI note-name octaves run C..B. Keep every lead pitch inside the single
+    # named octave that contains the tonic rather than using tonic..tonic+12.
+    octave_low = (tonic_midi // 12) * 12
+    octave_high = octave_low + 11
+    if octave_high > 127:
+        raise ValueError("tonic_midi lies in an incomplete top MIDI octave")
+    return PitchRegister(octave_low, octave_high, octave_low + 6)
 
 
 def compose_study_003(
@@ -33,7 +41,7 @@ def compose_study_003(
     *,
     tonic_midi: int = 60,
 ) -> StudyResult:
-    """Compose the controlled one-octave lead variant of Study #002."""
+    """Compose the controlled same-named-octave lead variant of Study #002."""
 
     base = compose_study_002(config, tonic_midi=tonic_midi)
     register = _register_for_tonic(tonic_midi)
@@ -47,7 +55,7 @@ def compose_study_003(
     trace = copy.deepcopy(base.trace)
     trace["study"] = "003"
     trace["parent_study"] = "002"
-    trace["controlled_change"] = "lead register only"
+    trace["controlled_change"] = "lead named octave only"
     trace["lead_register"] = {
         "low": register.low,
         "high": register.high,
@@ -64,7 +72,9 @@ def compose_study_003(
     checks = {
         "parent_study_passed": base.trace["validation"]["passed"],
         "lead_within_hard_register": register.contains_events(main.events),
-        "lead_ambitus_at_most_one_octave": register.ambitus(main.events) <= 12,
+        "lead_register_is_single_named_octave": register.is_single_named_octave,
+        "lead_events_share_named_octave": register.events_share_named_octave(main.events),
+        "lead_ambitus_within_c_to_b_octave": register.ambitus(main.events) <= 11,
         "lead_pitch_classes_preserved": projected_pitch_classes == source_pitch_classes,
         "lead_timing_preserved": projected_timing == source_timing,
         "exact_length": main.cursor == base.main.cursor,
