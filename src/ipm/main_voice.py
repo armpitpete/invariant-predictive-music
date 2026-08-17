@@ -9,6 +9,7 @@ from typing import Sequence
 
 from .model import NoteEvent, Voice
 from .randomness import SeededRandom
+from .rhythm import rhythmic_invariant_similarity
 
 
 class MainBranchKind(str, Enum):
@@ -149,7 +150,12 @@ def invariant_similarity(
     reference: Sequence[NoteEvent],
     candidate: Sequence[NoteEvent],
 ) -> float:
-    """Compare transposition-invariant contour, interval shape, and duration ratios."""
+    """Compare melodic identity while allowing rhythmic transformation.
+
+    Pitch identity remains transposition-invariant through contour and interval
+    shape. Rhythmic identity is evaluated as a transformable invariant rather than
+    an exact duration template.
+    """
 
     if len(reference) != len(candidate) or len(reference) < 2:
         return 0.0
@@ -168,12 +174,9 @@ def invariant_similarity(
         [abs(interval) for interval in reference_intervals],
         [abs(interval) for interval in candidate_intervals],
     )
-    duration_shape = _shape_similarity(
-        [float(event.duration) for event in reference],
-        [float(event.duration) for event in candidate],
-    )
+    rhythm = rhythmic_invariant_similarity(reference, candidate)
 
-    return 0.45 * contour + 0.30 * interval_shape + 0.25 * duration_shape
+    return 0.45 * contour + 0.30 * interval_shape + 0.25 * rhythm
 
 
 def surprise_bits(probability: float) -> float:
