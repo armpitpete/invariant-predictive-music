@@ -92,6 +92,10 @@ jobs:
               assert record["total_trial_count"] == 432
           js = json.loads((Path("listening-pilot/researcher") / "participant-js-dry-run.json").read_text())
           assert "rejected-pre-start-playback-remains-unenrolled" in js["checked"]
+          sample = js["sample_export"]
+          config = json.loads(Path("participant-web/config.json").read_text())
+          assert sample["export_version"] == 2
+          assert sample["participant_interface_source_revision"] == config["participant_interface_source_revision"]
           PY
       - name: Install pinned browser acceptance runtime
         shell: bash
@@ -116,6 +120,7 @@ jobs:
           from pathlib import Path
 
           record = json.loads(Path("participant-browser-acceptance/participant-browser-acceptance.json").read_text())
+          config = json.loads(Path("participant-web/config.json").read_text())
           assert record["passed"] is True
           assert record["synthetic_nonhuman_sessions"] is True
           assert record["real_participants_recruited"] == 0
@@ -134,14 +139,18 @@ jobs:
           assert all(item["wav_sha256_verified_from_browser_audit"] == 12 for item in record["sessions"])
           assert all(item["direct_user_gesture_play_calls"] == 12 for item in record["sessions"])
           assert all(item["direct_user_gesture_gate_passed"] is True for item in record["sessions"])
+          for pid in ("P001", "P002", "P003"):
+              exported = json.loads(Path("participant-browser-acceptance", f"{pid}-synthetic-export.json").read_text())
+              assert exported["export_version"] == 2
+              assert exported["participant_interface_source_revision"] == config["participant_interface_source_revision"]
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: ipm-participant-web-v2
+          name: ipm-participant-web-v3
           path: participant-web
       - uses: actions/upload-artifact@v4
         with:
-          name: participant-interface-gate-v2
+          name: participant-interface-gate-v3
           path: |
             listening-pilot/researcher/participant-interface-dry-run.json
             listening-pilot/researcher/participant-js-dry-run.json
