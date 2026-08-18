@@ -53,6 +53,19 @@ def test_complete_export_validates_against_frozen_schedule(participant_bundle, s
     result = validate_export(participant_bundle, export)
     assert result["participant_id"] == "P001"
     assert result["terminal_state"] == "complete"
+    assert result["participant_interface_source_revision"] == export["participant_interface_source_revision"]
+
+    old_version = deepcopy(export)
+    old_version["export_version"] = 1
+    old_version.pop("participant_interface_source_revision", None)
+    with pytest.raises(ValueError, match="unexpected export version"):
+        validate_export(participant_bundle, old_version)
+
+    wrong_revision = deepcopy(export)
+    wrong_revision["participant_interface_source_revision"] = "0" * 40
+    with pytest.raises(ValueError, match="participant interface revision mismatch"):
+        validate_export(participant_bundle, wrong_revision)
+
     bad = deepcopy(export)
     bad["responses"][0]["stimulus_id"] = "stim-tampered"
     with pytest.raises(ValueError, match="response CSV content|response order"):
