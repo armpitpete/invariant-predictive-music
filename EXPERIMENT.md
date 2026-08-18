@@ -1,6 +1,6 @@
-# IPM Listening Experiment 1 — matched counterfactual episode pilot
+# IPM Listening Experiment 1 — Counterfactual Episode v2
 
-**Status:** pre-listening gate. No human result exists yet.
+**Status:** pre-listening corpus gate. No human result exists yet and recruitment has not started.
 
 ## Question
 
@@ -18,13 +18,13 @@ The unit is an **8-bar Tune-only episode**.
 
 - Bars 1–4: identical learning prefix.
 - Bar 5: the only structural intervention.
-- Bars 6–8: identical suffix.
+- Bars 6–8: one common suffix, generated from the IPM target state and then copied unchanged into every condition.
 
-The three versions of one episode therefore have:
+The three versions therefore have:
 
-> **same past → same target candidate pool → different target bar → same future**
+> **same past → one target-bar intervention → same IPM-conditioned future**
 
-All non-target Tune events must be identical across the three versions.
+All non-target Tune events must be identical across the three variants.
 
 Bass and Rhythm are absent from Experiment 1. This is an experimental isolation choice, not a new composer mode.
 
@@ -32,71 +32,136 @@ At 58 BPM, an 8-bar episode is about 33 seconds. Twelve trials therefore contain
 
 ## Conditions
 
-At the shared target candidate pool:
+Predictable and IPM are defined by the production engine at one frozen target candidate pool generated from the identical pre-target state:
 
 1. **Predictable** — the engine's existing Expected choice.
 2. **IPM** — the engine's existing IPM choice, and it must actually replace Expected.
-3. **Unstructured Surprise** — a control chosen from the **same candidate pool**.
+3. **Unstructured Surprise / Control** — constructed only after the IPM target is fixed.
 
-The control is matched to IPM on target surprise and local base quality, has the same target rhythm pattern as IPM, but must have weaker learned-invariant continuity.
+The Control is **not required to occur naturally in the production candidate pool**. Counterfactual Episode v2 instead:
 
-Listeners never see these labels.
+- freezes the IPM target's structural rhythm pattern;
+- starts from the identical pre-target musical state;
+- uses an independent deterministic experiment RNG stream;
+- generates 64 alternative pitch realisations on that fixed rhythm;
+- scores those alternatives against the frozen original target-pool softmax reference, without renormalising or changing the IPM treatment;
+- requires Control to match IPM on target surprise and local base musical score;
+- requires Control to have weaker learned-invariant similarity.
+
+This removes the v1 requirement to stumble across an exact rhythmic duplicate among the production target candidates.
+
+Listeners never see the condition labels.
+
+## Audible target-rhythm lock
+
+Structural rhythm identity is not sufficient by itself because the production micro-rhythm realiser can consume pitch-dependent random draws.
+
+The experiment layer therefore freezes the IPM target's realised:
+
+- onset/subdivision pattern;
+- note durations;
+- velocities;
+- note count.
+
+Control replays that articulation template while using its own pitch content. IPM and Control therefore differ at the target in pitch, not audible rhythm or accent pattern.
+
+This lock is experiment-only and does not change `micro_rhythm.py` or production composer behaviour.
 
 ## Fixed future
 
-The suffix is generated once from the Predictable reference trajectory and copied verbatim into all three versions.
+The common suffix is generated **once from the state produced by the IPM target**. That exact suffix is then attached to Predictable, IPM and Control.
 
-This is deliberate. If each target event generated its own future, the conditions would immediately become different musical trajectories and the causal comparison would be lost.
+This is deliberate. The later music is therefore capable, by construction, of integrating the IPM surprise while remaining acoustically identical across conditions.
 
-The experiment therefore asks how the **same later music** changes the interpretation of different target events.
+If each target generated its own future, the conditions would immediately become different musical trajectories and the causal comparison would be lost.
+
+The experiment asks how the **same later music** changes the interpretation of three different target events.
 
 ## Future integration
 
-Experiment 1 adds a researcher-side `future_integration` measure.
+Experiment 1 uses a researcher-side `future_integration` measure.
 
-It is computed only after the actual suffix exists. It compares the target's melodic interval structure with interval patterns in the suffix and includes the immediate target→suffix pitch connection.
+It is computed only after the actual common suffix exists. It compares the target's melodic interval structure with interval patterns in the suffix and includes the immediate target→suffix pitch connection.
 
-This is distinct from the engine's current prospective `retrospective_coherence` / `retrospective_necessity` selection fields, which are available before later bars exist.
+This is distinct from the production engine's prospective `retrospective_coherence` / `retrospective_necessity` selection fields, which are available before later bars exist.
 
 `future_integration` is a stimulus-construction measure, not evidence that a human listener experienced retrospective coherence. The human measure below is the empirical test.
 
-## Pre-listening qualification
+## Frozen pre-listening qualification
+
+The thresholds are unchanged from Counterfactual Episode v1:
+
+- IPM target surprise >= **1.50 bits**;
+- IPM/Control target surprise error <= **0.65 bits**;
+- IPM-minus-Control local invariant gap >= **0.10**;
+- IPM/Control target base-score delta <= **0.10**;
+- IPM future integration >= **0.40**;
+- IPM-minus-Control future-integration gap >= **0.10**.
 
 A seed is admitted only if all of the following are true before any listener data exists:
 
-- one shared target candidate pool generated from the identical prefix state;
+- the production target pool is frozen before Control search;
+- Predictable and IPM are scored from the identical pre-target state;
 - the current IPM selector chooses a non-Expected target;
-- the IPM target is sufficiently surprising;
-- a control exists in that same pool;
-- IPM and control use the same target rhythm pattern;
-- IPM and control are close in modelled target surprise;
-- IPM and control are close in local base musical score;
-- control has weaker learned-invariant similarity;
-- IPM reaches a minimum actual-suffix integration score;
-- the identical suffix integrates IPM more strongly than control;
-- generated non-target events are verified identical across all three variants.
+- the IPM target reaches the frozen surprise threshold;
+- Control pitch alternatives are generated from the same pre-target state;
+- IPM and Control have the same structural target rhythm;
+- a target-surprise-matched alternative exists;
+- a sufficiently weaker-invariant alternative exists;
+- a base-quality-matched alternative exists;
+- at least one alternative satisfies all three local matching constraints together;
+- the suffix is generated from the IPM target state;
+- IPM reaches the minimum actual-suffix integration score;
+- the common suffix integrates IPM more strongly than Control by the frozen gap;
+- generated non-target events are identical across all three variants;
+- IPM and Control have identical audible target rhythm/articulation.
 
 Seeds are rejected rather than repaired by ear.
 
 Human ratings are never used to decide which stimuli enter the experiment.
 
-## Selection-funnel requirement
+## Frozen 512-seed corpus gate
 
-Every seed examined must remain in the research record, whether accepted or rejected.
+The frozen corpus window is:
 
-The frozen corpus records:
+- start seed: `2026081800`;
+- seed count: `512`;
+- final seed: `2026082311`;
+- bars: `8`;
+- target: bar `5` (zero-indexed bar `4`).
 
-- starting seed;
-- search limit;
-- final seed examined;
-- every attempted seed;
-- every qualification check and metric;
-- qualified seed list;
-- exact source revision.
+The final articulated v2 constructor is evaluated over **every seed in that window** with no early stop.
 
-This is necessary to show how selective the stimulus filter was.
+Corpus result:
+
+- **213 / 512 seeds qualify**;
+- 12 qualified sets are required for the pilot;
+- therefore the construction gate passes without threshold relaxation.
+
+Selection funnel:
+
+- 284 seeds: IPM actually replaces Expected;
+- all 284 reach fixed-rhythm pitch generation and produce the full 64 alternatives;
+- 268 have at least one fully locally matched Control;
+- all 268 meet the minimum IPM future-integration threshold;
+- 213 also meet the required IPM-minus-Control future-integration gap;
+- all 213 accepted episodes pass non-target identity and audible target-rhythm identity.
+
+First rejection cause among failed seeds:
+
+- IPM does not replace Expected: `228`;
+- no target-surprise-matched pitch alternative: `1`;
+- no sufficiently weaker-invariant pitch alternative: `1`;
+- no alternative satisfies all local matching constraints together: `14`;
+- common IPM-conditioned suffix fails the required IPM integration advantage: `55`.
+
+The full-window diagnostic is a corpus gate, not a mechanism result. It shows that Counterfactual Episode v2 can construct the required causal contrast robustly under the frozen criteria.
 
 ## Pilot corpus
+
+The first 12 qualified seeds remain the frozen pilot set:
+
+`2026081804, 2026081805, 2026081808, 2026081810, 2026081812, 2026081813, 2026081814, 2026081817, 2026081819, 2026081822, 2026081827, 2026081828`
 
 Default build:
 
@@ -111,7 +176,23 @@ Default build:
 - each participant receives an independently shuffled trial order;
 - participant-facing filenames are opaque hashes.
 
-The 36-person figure is a pilot recruitment target, not a powered confirmatory sample size.
+The 36-person figure is a pilot recruitment target, not a powered confirmatory sample size. **Recruitment has not started.**
+
+## Selection-funnel record
+
+Every seed examined must remain in the research record whether accepted or rejected.
+
+The corpus record includes:
+
+- starting seed and final seed;
+- all 512 attempted seeds;
+- every qualification check and metric;
+- qualified seed list;
+- frozen threshold values;
+- exact diagnostic revision;
+- rendered-pilot source revision and asset hashes.
+
+This is necessary to show how selective the stimulus filter was.
 
 ## Human measures
 
@@ -242,6 +323,8 @@ Do not change composer weights after listening begins.
 
 Do not relax stimulus criteria after seeing listener responses.
 
-If the default matching gate cannot produce enough episodes, inspect which **experimental** criterion fails. Change a threshold only with a written scientific reason before recruitment.
+Do not recruit listeners until the pre-listening construction, artifact and review gates are complete.
+
+If the matching gate cannot produce enough episodes in a future revision, inspect which **experimental** criterion fails. Change a threshold only with a written scientific reason before recruitment.
 
 Do not add Tune/Bass/Rhythm composer features merely to make the experiment pass.
