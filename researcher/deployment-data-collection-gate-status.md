@@ -23,7 +23,7 @@ All 36 WAVs and all 36 P001–P036 schedules remain byte-identical to the previo
 
 ## Owner real-device QA finding
 
-An owner-only P001 test on the superseded v1 deployment reached trial 1 but the browser rejected `HTMLMediaElement.play()` with a user-agent/platform permission error before audible experimental playback began.
+An owner-only P001 test on the superseded participant v1 deployment reached trial 1 but the browser rejected `HTMLMediaElement.play()` with a user-agent/platform permission error before audible experimental playback began.
 
 Hostile review found two participant-layer defects in v1:
 
@@ -114,9 +114,9 @@ Do not use for participants:
 
 Only the v3 content-addressed deployment above is authorised for further owner QA.
 
-## Remaining gate: same-context owner retest
+## Current gate verdict: OPEN pending same-context owner retest
 
-Automated participant, collection and deployed-browser v3 gates pass. Because the defect was discovered on an actual user device/context that Chromium CI did not reproduce, the technical gate remains conservatively **open** until the repaired v3 URL is checked again on that same class of real device/browser.
+The automated participant, collection and deployed-browser v3 components are individually **PASS**. The overall technical pre-recruitment gate is deliberately **not yet closed**, because the original defect was discovered in an actual user device/browser context that Chromium CI did not reproduce.
 
 Required owner QA evidence:
 
@@ -124,12 +124,12 @@ Required owner QA evidence:
 - if an export is produced, it has `export_version: 2` and participant interface revision `e6b07579878350c80fb6548107290898b48501ca`;
 - `enrolled_at_utc`, first `main_block_started` and first `playback_started` appear only if actual playback begins.
 
-This is owner QA, not recruitment.
+This is owner QA, not recruitment. Passing it closes the real-device technical regression only; it does not authorize recruitment.
 
 ## Governance / recruitment / merge
 
 The operational privacy/invitation template is `researcher/invitation-template.md`; UK governance scope is recorded in `DATA_COLLECTION.md`.
 
-Even after the same-context owner retest passes, recruitment remains blocked until the owner closes the factual governance checklist: controller/sponsorship context, ICO data-protection-fee assessment, applicable ethics/institutional requirement or independent status, and mailbox MFA/forwarding/delegation state.
+After the same-context owner retest passes, recruitment still remains blocked until the owner closes the factual governance checklist: controller/sponsorship context, ICO data-protection-fee assessment, applicable ethics/institutional requirement or independent status, and mailbox MFA/forwarding/delegation state.
 
 No real participant has been recruited. PR #24 remains draft and unmerged.
