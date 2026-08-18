@@ -331,24 +331,25 @@ where:
 - episode seed has a random intercept;
 - the primary estimand is the model-adjusted **IPM − Control** contrast in retrospective-sense points.
 
-Fit the model by maximum likelihood. Report the point estimate and a two-sided 95% confidence interval, along with convergence and residual diagnostics. This pilot has **no predeclared alpha/significance threshold** for declaring the theory confirmed.
+The primary implementation is **R `lme4::lmer`**, fitted by maximum likelihood with `REML = FALSE`. The primary model is first fitted with the package default optimiser. Report the primary contrast as the fixed-effect IPM-minus-Control estimate with a two-sided **Wald 95% confidence interval** calculated from the fitted fixed-effect estimate and its model-based standard error. Also report convergence, singularity and residual diagnostics. This pilot has **no predeclared alpha/significance threshold** for declaring the theory confirmed.
 
 ### Frozen convergence fallback
 
-Attempt the primary model first. If, after one refit with a high-iteration derivative-free optimiser, the model either:
+Attempt the primary model first. If that default fit emits a convergence warning or is singular under `lme4::isSingular(model, tol = 1e-4)`, refit the **same model once** with:
 
-- emits a convergence warning; or
-- is singular at tolerance `1e-4`,
+- optimiser: `bobyqa`;
+- `optCtrl = list(maxfun = 200000)`;
+- `REML = FALSE`.
 
-then use exactly this fallback model:
+If that single `bobyqa` refit still emits a convergence warning or is singular under `lme4::isSingular(model, tol = 1e-4)`, use exactly this fallback model:
 
 `retrospective_sense_0_100 ~ condition + trial_position_c + (1 | participant_id) + (1 | episode_seed)`
 
-No other random-effects search is permitted. The fixed effects, primary estimand, reference level, nuisance covariate and 95% interval remain unchanged. Report which model was used and why the fallback was triggered.
+Fit the fallback with `lme4::lmer`, `REML = FALSE`; if the default optimiser warns, permit exactly one `bobyqa` refit with `optCtrl = list(maxfun = 200000)`. No other optimiser search or random-effects search is permitted. The fixed effects, primary estimand, reference level, nuisance covariate and Wald 95% interval remain unchanged. Report which model was used and every convergence/singularity trigger.
 
 ### Secondary analyses
 
-Run secondary outcome models using the final random-effects structure selected by the frozen primary/fallback rule and the same fixed condition and centred trial-position terms. Report secondary contrasts with 95% confidence intervals as descriptive estimates. Do not promote a secondary result to primary status.
+Run secondary outcome models using the final random-effects structure selected by the frozen primary/fallback rule and the same fixed condition and centred trial-position terms. Use the same `lme4::lmer` maximum-likelihood and optimiser/fallback rules and report secondary contrasts with Wald 95% confidence intervals as descriptive estimates. Do not promote a secondary result to primary status.
 
 ## Confirmatory study
 
