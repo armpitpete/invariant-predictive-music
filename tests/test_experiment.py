@@ -1,89 +1,118 @@
-from ipm.engine import ExperimentMode, compose_experiment_bundle
+from fractions import Fraction
+from types import SimpleNamespace
+
+import pytest
+
+from ipm.engine import ExperimentMode
 from ipm.experiment import (
     MatchCriteria,
     _blind_id,
-    _counterbalance_rows,
-    audit_bundle,
+    _participant_schedules,
     pilot_config,
-    QualifiedBundle,
+    qualify_episodes,
 )
 
 
-def test_pilot_configuration_is_tune_only_and_predictable_remains_baseline():
-    bundle = compose_experiment_bundle(pilot_config(seed=2026081704, bars=6))
-    assert all(not result.bass.events for result in bundle.values())
-    assert all(not result.rhythm.events for result in bundle.values())
-    assert all(
-        decision["selected_branch"] == "expected"
-        for decision in bundle[ExperimentMode.PREDICTABLE].trace["tune_decisions"]
-    )
-
-
-def test_audit_runs_against_real_bundle_without_human_response_data():
-    bundle = compose_experiment_bundle(pilot_config(seed=2026081704, bars=6))
+@pytest.fixture(scope="module")
+def one_counterfactual_episode():
+    # Structural tests use permissive numeric thresholds, but retain the hard
+    # causal requirements: one shared target pool, an actual IPM deviation,
+    # and an IPM/control pair with identical target rhythm.
     criteria = MatchCriteria(
-        min_ipm_surprise_bars=0,
-        max_mean_bar_surprise_error_bits=100.0,
-        max_global_surprise_error_bits=100.0,
-        min_mean_invariant_gap=-1.0,
-        min_weaker_invariant_fraction=0.0,
-        max_tune_event_count_fraction_delta=1.0,
+        min_ipm_surprise_bits=0.0,
+        max_target_surprise_error_bits=100.0,
+        min_local_invariant_gap=0.0,
+        min_future_integration_gap=0.0,
+        min_ipm_future_integration=0.0,
+        max_target_base_score_delta=100.0,
     )
-    audit = audit_bundle(bundle, criteria)
-    assert audit.checks["same_high_level_configuration"]
-    assert audit.checks["all_engine_validation_passed"]
-    assert audit.checks["predictable_is_expected_baseline"]
-    assert audit.checks["tune_only_mechanism_isolation"]
-    assert audit.passed
+    return qualify_episodes(
+        start_seed=2026081800,
+        count=1,
+        search_limit=192,
+        bars=8,
+        target_bar=4,
+        criteria=criteria,
+    )
+
+
+def test_pilot_is_an_eight_bar_episode_with_a_real_prefix_and_suffix():
+    config = pilot_config(seed=1)
+    assert config.bars == 8
+    with pytest.raises(ValueError):
+        pilot_config(seed=1, bars=5)
+
+
+def test_counterfactual_episode_changes_only_the_target_bar(one_counterfactual_episode):
+    episode = one_counterfactual_episode.qualified[0]
+    start = Fraction(episode.target_bar * 4)
+    end = start + 4
+
+    def outside_target(variant):
+        return tuple(
+            event
+            for event in variant.tune.events
+            if event.onset < start or event.onset >= end
+        )
+
+    outside = {
+        outside_target(variant)
+        for variant in episode.variants.values()
+    }
+    assert len(outside) == 1
+    assert episode.audit.checks["shared_target_candidate_pool"]
+    assert episode.audit.checks["non_target_music_identical"]
+    assert episode.audit.checks["ipm_control_target_rhythm_identical"]
+
+
+def test_target_ipm_and_control_are_distinct_candidates(one_counterfactual_episode):
+    episode = one_counterfactual_episode.qualified[0]
+    ipm = episode.variants[ExperimentMode.IPM].target.candidate
+    control = episode.variants[ExperimentMode.UNSTRUCTURED_SURPRISE].target.candidate
+    assert ipm.pitches != control.pitches
+    assert ipm.pattern.cells == control.pattern.cells
+
+
+def test_qualification_retains_the_complete_selection_funnel(one_counterfactual_episode):
+    run = one_counterfactual_episode
+    assert run.audits
+    assert run.final_seed_examined == run.audits[-1].seed
+    assert any(audit.passed for audit in run.audits)
+    assert run.qualified[0].seed in {audit.seed for audit in run.audits}
 
 
 def test_blind_ids_do_not_reveal_condition_names():
-    ids = {
-        _blind_id(9, 100, mode)
-        for mode in ExperimentMode
-    }
+    ids = {_blind_id(9, 100, mode) for mode in ExperimentMode}
     assert len(ids) == 3
     assert all("predictable" not in value for value in ids)
     assert all("ipm" not in value for value in ids)
     assert all("surprise" not in value for value in ids)
 
 
-def test_three_group_counterbalance_rotates_every_seed_through_every_condition():
-    criteria = MatchCriteria()
-    qualified = []
-    for seed in (10, 11, 12, 13, 14, 15):
-        bundle = compose_experiment_bundle(pilot_config(seed=seed, bars=4))
-        qualified.append(
-            QualifiedBundle(
-                seed=seed,
-                results=bundle,
-                audit=audit_bundle(
-                    bundle,
-                    MatchCriteria(
-                        min_ipm_surprise_bars=0,
-                        max_mean_bar_surprise_error_bits=100.0,
-                        max_global_surprise_error_bits=100.0,
-                        min_mean_invariant_gap=-1.0,
-                        min_weaker_invariant_fraction=0.0,
-                        max_tune_event_count_fraction_delta=1.0,
-                    ),
-                ),
-            )
-        )
+def test_participants_keep_condition_balance_but_receive_individual_orders():
+    qualified = [SimpleNamespace(seed=seed) for seed in range(10, 22)]
+    schedules = _participant_schedules(
+        qualified,
+        blind_seed=77,
+        participant_count=9,
+    )
+    assert [item["group"] for item in schedules] == [1, 2, 3, 1, 2, 3, 1, 2, 3]
+    assert all(len(item["rows"]) == 12 for item in schedules)
 
-    groups = _counterbalance_rows(qualified, blind_seed=77)
-    assert set(groups) == {1, 2, 3}
-    for group_rows in groups.values():
-        assert len(group_rows) == len(qualified)
-        assert len({row["seed"] for row in group_rows}) == len(qualified)
+    # Within a group the condition assignment is fixed, but trial orders should
+    # not collapse to one shared order.
+    group_one_orders = [
+        tuple(row["stimulus_id"] for row in item["rows"])
+        for item in schedules
+        if item["group"] == 1
+    ]
+    assert len(set(group_one_orders)) == len(group_one_orders)
 
-    for seed in (10, 11, 12, 13, 14, 15):
+    for seed in range(10, 22):
         heard_modes = {
             row["mode"]
-            for group_rows in groups.values()
-            for row in group_rows
+            for item in schedules[:3]
+            for row in item["rows"]
             if row["seed"] == seed
         }
         assert heard_modes == set(ExperimentMode)
-
-    del criteria
