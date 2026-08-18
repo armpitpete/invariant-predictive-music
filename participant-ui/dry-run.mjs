@@ -17,8 +17,24 @@ const results = [];
 let sampleExport = null;
 for (const participantId of config.participant_ids) {
   const schedule = JSON.parse(fs.readFileSync(path.join(root, "schedules", `${participantId}.json`), "utf8"));
-  let session = new StudySession({ config, schedule, now });
   const acceptedChecks = Object.fromEntries(config.consent.checks.map((item) => [item.id, true]));
+
+  const rejectedStart = new StudySession({ config, schedule, now });
+  rejectedStart.acceptConsent({
+    checks: acceptedChecks,
+    headphones: true,
+    musicMakingYears: 0,
+    formalTrainingYears: 0,
+  });
+  rejectedStart.completeAudioCheck();
+  rejectedStart.beginMainBlock();
+  rejectedStart.failPlayback("synthetic browser rejection before actual media start");
+  if (rejectedStart.enrolledAt !== null) throw new Error(`${participantId} enrolled after rejected pre-start playback`);
+  if (rejectedStart.audit.some((item) => item.event === "main_block_started" || item.event === "playback_started")) {
+    throw new Error(`${participantId} logged playback start after rejected pre-start playback`);
+  }
+
+  let session = new StudySession({ config, schedule, now });
   mustThrow(() => session.beginMainBlock(), "begin before consent/audio check");
   mustThrow(() => session.acceptConsent({
     checks: acceptedChecks,
@@ -96,6 +112,7 @@ console.log(JSON.stringify({
     "consent-before-main-block",
     "blank-metadata-rejected",
     "audio-check-before-main-block",
+    "rejected-pre-start-playback-remains-unenrolled",
     "enrolment-on-first-playback",
     "single-play state",
     "ratings-after-ended",
