@@ -1,6 +1,6 @@
 # Listening Experiment 1 — Participant Interface Contract
 
-**Status:** pre-recruitment implementation gate. This document does not authorize recruitment by itself.
+**Status:** participant-facing pre-recruitment implementation gate passed at exact head `94fb37ab37077346d6de585df5ee1d69ae23d009`. This does not authorize recruitment by itself.
 
 This is the participant-facing implementation contract for the frozen Counterfactual Episode v2 pilot in `EXPERIMENT.md`.
 
@@ -109,29 +109,46 @@ The interface does not automatically transmit data. At completion, withdrawal or
 
 `duplicate_participation`, `record_usable` and `exclusion_reason` remain blank participant-side. They belong to the later blinded researcher exclusion lock.
 
-## Automated pre-recruitment dry-run
+## Exact-head pre-recruitment evidence
 
-The participant workflow rebuilds and PCM-renders the exact-head pilot rather than copying the old artifact. It may build the participant bundle only after the fresh assets reproduce the frozen WAV, schedule and schema hashes.
+Participant interface head:
 
-The Python artifact dry-run checks P001–P036, all 36 WAV hashes, all 36 source schedule hashes, 12 trials each / 432 total assignments, 36 opaque stimuli, counterbalance assignments, schemas, absence of researcher condition labels and frozen response order.
+`94fb37ab37077346d6de585df5ee1d69ae23d009`
 
-The JavaScript dry-run uses the same `StudySession` state machine as the browser for all 36 schedules and checks:
+Workflow `participant-listening-gate` run `32127364426`: **success**.
 
-- consent/audio check before the main block;
-- blank metadata rejection;
-- `enrolled_at_utc` remains empty until trial-1 playback starts;
-- one-play state and ratings-after-ended;
-- restored in-play state cannot replay;
-- restored rating state cannot replay;
-- between-trial state resumes at the correct next trial;
-- completed state cannot restart;
-- exact frozen response order and CSV headers;
-- a representative P001 final export.
+Frozen participant bundle:
 
-Both dry-runs must pass 36 participants / 432 trials.
+- artifact: `ipm-participant-web-v1`;
+- artifact ID: `9321126844`;
+- artifact SHA-256: `ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa`.
+
+Gate evidence:
+
+- artifact: `participant-interface-gate`;
+- artifact ID: `9321127149`;
+- artifact SHA-256: `f86bf24c0dccc3f1bbe842717890e36c5037d81b6abca3973094be933b287e6c`.
+
+The Python artifact dry-run passed **36 / 36 participant schedules and 432 / 432 trial assignments**, verifying all frozen WAV/schedule/schema hashes and counterbalance assignments.
+
+The JavaScript state-machine dry-run passed **36 / 36 and 432 / 432**, including blank-metadata rejection, first-play enrolment, replay rejection, restored playback/rating/between-trial state, completion restart rejection, frozen response order and a representative P001 export.
+
+A pinned Playwright `1.55.0` / Chromium browser acceptance then ran synthetic non-human sessions for P001, P002 and P003 (counterbalance groups 1, 2 and 3). Together those sessions covered all **36 unique frozen stimuli** through the actual browser path. All 36 trials:
+
+- were fetched exactly once in the scheduled order;
+- passed browser WebCrypto WAV-digest verification;
+- played through the real audio element to natural `ended` before ratings became available;
+- took approximately 33.46–33.61 seconds wall-clock per excerpt;
+- produced 12 ordered response rows and a completed export per synthetic session.
+
+The browser exports contain no condition labels or frozen episode seeds, leave researcher exclusion fields blank, preserve the exact CSV headers, and record `enrolled_at_utc`, `main_block_started` and first `playback_started` at the same trial-1 boundary.
+
+Independent download inspection reproduced both GitHub artifact ZIP digests and found **0 / 36 WAV hash mismatches, 0 / 36 schedule-provenance mismatches, 0 bundle-manifest mismatches, and 0 condition/seed mapping leaks**. Consent, rating config and both schemas reproduce the frozen participant contract exactly.
+
+At this exact head the ordinary test, render, diagnostic and participant-listening workflows all pass. No actual listener was recruited by any acceptance test.
 
 ## Recruitment boundary
 
-No actual participant may be recruited until an exact participant-interface head has green ordinary tests and participant-gate CI; the standalone participant bundle and evidence artifacts have been independently inspected; all 36 WAV and P001–P036 schedule hashes reproduce the frozen trust anchor; the P001 dry-run export matches the frozen schemas; and the exact participant-web artifact ID/SHA is frozen in the PR record.
+The participant-facing implementation gate is complete, but recruitment is still blocked on a separate deployment/data-collection gate. That gate must establish the actual HTTPS host, participant-ID allocation and cross-device duplicate control, study contact details, export-return/data-handling procedure, and any applicable ethics/privacy governance.
 
-A separate deployment/data-collection gate must still establish the actual HTTPS host, participant-ID allocation/duplicate control, study contact and export-return/data-handling procedure. Merge and recruitment remain separate owner decisions.
+Merge and recruitment remain separate owner decisions.
