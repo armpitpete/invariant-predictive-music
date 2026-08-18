@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from concurrent.futures import ProcessPoolExecutor
 
 from ipm.engine import ExperimentMode, _choose_predictive_bar
 from ipm.experiment import (
@@ -17,7 +18,6 @@ from ipm.experiment import (
     _choose_control,
     _expected,
     _pool,
-    future_integration,
     pilot_config,
 )
 from ipm.randomness import SeededRandom
@@ -54,6 +54,89 @@ def _suffix(config, rng, state, expected):
     return tuple(suffix)
 
 
+def _analyse_seed(seed: int) -> dict:
+    criteria = MatchCriteria()
+    config, rng, state, scored, expected, ipm, ipm_branch = _target_context(seed)
+    seed_counts = Counter(examined=1)
+    candidate_totals = Counter()
+
+    ipm_nonexpected = ipm is not expected and ipm_branch != "expected"
+    ipm_surprising = ipm.surprise_bits >= criteria.min_ipm_surprise_bits
+    if ipm_nonexpected:
+        seed_counts["ipm_replaces_expected"] += 1
+    if ipm_nonexpected and ipm_surprising:
+        seed_counts["eligible_ipm_target"] += 1
+    if not (ipm_nonexpected and ipm_surprising):
+        return {
+            "seed_counts": dict(seed_counts),
+            "candidate_totals": {},
+            "future_gap": None,
+            "ipm_future_integration": None,
+        }
+
+    candidates = [item for item in scored if item is not expected and item is not ipm]
+    candidate_totals["eligible_nonbaseline"] += len(candidates)
+    ipm_pattern = _candidate_pattern_signature(ipm.candidate)
+
+    same_rhythm = [
+        item for item in candidates
+        if _candidate_pattern_signature(item.candidate) == ipm_pattern
+    ]
+    surprise = [
+        item for item in candidates
+        if abs(item.surprise_bits - ipm.surprise_bits)
+        <= criteria.max_target_surprise_error_bits
+    ]
+    weaker = [
+        item for item in candidates
+        if ipm.invariant_similarity - item.invariant_similarity
+        >= criteria.min_local_invariant_gap
+    ]
+    base = [
+        item for item in candidates
+        if abs(ipm.base.total - item.base.total)
+        <= criteria.max_target_base_score_delta
+    ]
+
+    stage_surprise = [item for item in same_rhythm if item in surprise]
+    stage_weaker = [item for item in stage_surprise if item in weaker]
+    stage_base = [item for item in stage_weaker if item in base]
+
+    for name, values in (
+        ("same_rhythm", same_rhythm),
+        ("surprise_independent", surprise),
+        ("weaker_invariant_independent", weaker),
+        ("base_quality_independent", base),
+        ("rhythm_then_surprise", stage_surprise),
+        ("then_weaker_invariant", stage_weaker),
+        ("fully_locally_matched", stage_base),
+    ):
+        candidate_totals[name] += len(values)
+        if values:
+            seed_counts[name] += 1
+
+    if not stage_base:
+        return {
+            "seed_counts": dict(seed_counts),
+            "candidate_totals": dict(candidate_totals),
+            "future_gap": None,
+            "ipm_future_integration": None,
+        }
+
+    suffix = _suffix(config, rng, state, expected)
+    _, metrics = _choose_control(ipm=ipm, controls=stage_base, suffix=suffix)
+    if metrics["ipm_future_integration"] >= criteria.min_ipm_future_integration:
+        seed_counts["ipm_future_integration_pass"] += 1
+    if metrics["future_integration_gap"] >= criteria.min_future_integration_gap:
+        seed_counts["future_gap_pass"] += 1
+    return {
+        "seed_counts": dict(seed_counts),
+        "candidate_totals": dict(candidate_totals),
+        "future_gap": metrics["future_integration_gap"],
+        "ipm_future_integration": metrics["ipm_future_integration"],
+    }
+
+
 def main() -> None:
     criteria = MatchCriteria()
     seed_counts = Counter()
@@ -61,73 +144,15 @@ def main() -> None:
     future_gaps = []
     future_ipm = []
 
-    for seed in range(START_SEED, START_SEED + SEARCH_LIMIT):
-        config, rng, state, scored, expected, ipm, ipm_branch = _target_context(seed)
-        seed_counts["examined"] += 1
-
-        ipm_nonexpected = ipm is not expected and ipm_branch != "expected"
-        ipm_surprising = ipm.surprise_bits >= criteria.min_ipm_surprise_bits
-        if ipm_nonexpected:
-            seed_counts["ipm_replaces_expected"] += 1
-        if ipm_nonexpected and ipm_surprising:
-            seed_counts["eligible_ipm_target"] += 1
-        if not (ipm_nonexpected and ipm_surprising):
-            continue
-
-        candidates = [item for item in scored if item is not expected and item is not ipm]
-        candidate_totals["eligible_nonbaseline"] += len(candidates)
-        ipm_pattern = _candidate_pattern_signature(ipm.candidate)
-
-        same_rhythm = [
-            item for item in candidates
-            if _candidate_pattern_signature(item.candidate) == ipm_pattern
-        ]
-        surprise = [
-            item for item in candidates
-            if abs(item.surprise_bits - ipm.surprise_bits)
-            <= criteria.max_target_surprise_error_bits
-        ]
-        weaker = [
-            item for item in candidates
-            if ipm.invariant_similarity - item.invariant_similarity
-            >= criteria.min_local_invariant_gap
-        ]
-        base = [
-            item for item in candidates
-            if abs(ipm.base.total - item.base.total)
-            <= criteria.max_target_base_score_delta
-        ]
-
-        stage_rhythm = same_rhythm
-        stage_surprise = [item for item in stage_rhythm if item in surprise]
-        stage_weaker = [item for item in stage_surprise if item in weaker]
-        stage_base = [item for item in stage_weaker if item in base]
-
-        for name, values in (
-            ("same_rhythm", same_rhythm),
-            ("surprise_independent", surprise),
-            ("weaker_invariant_independent", weaker),
-            ("base_quality_independent", base),
-            ("rhythm_then_surprise", stage_surprise),
-            ("then_weaker_invariant", stage_weaker),
-            ("fully_locally_matched", stage_base),
-        ):
-            candidate_totals[name] += len(values)
-            if values:
-                seed_counts[name] += 1
-
-        if not stage_base:
-            continue
-
-        suffix = _suffix(config, rng, state, expected)
-        control, metrics = _choose_control(ipm=ipm, controls=stage_base, suffix=suffix)
-        del control
-        future_gaps.append(metrics["future_integration_gap"])
-        future_ipm.append(metrics["ipm_future_integration"])
-        if metrics["ipm_future_integration"] >= criteria.min_ipm_future_integration:
-            seed_counts["ipm_future_integration_pass"] += 1
-        if metrics["future_integration_gap"] >= criteria.min_future_integration_gap:
-            seed_counts["future_gap_pass"] += 1
+    seeds = range(START_SEED, START_SEED + SEARCH_LIMIT)
+    with ProcessPoolExecutor(max_workers=4) as executor:
+        for item in executor.map(_analyse_seed, seeds, chunksize=8):
+            seed_counts.update(item["seed_counts"])
+            candidate_totals.update(item["candidate_totals"])
+            if item["future_gap"] is not None:
+                future_gaps.append(item["future_gap"])
+            if item["ipm_future_integration"] is not None:
+                future_ipm.append(item["ipm_future_integration"])
 
     result = {
         "seed_window": {
