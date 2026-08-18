@@ -8,6 +8,7 @@ let session;
 let storageKey;
 let audio = null;
 let objectUrl = null;
+let preparedStimulus = null;
 let maxObservedTime = 0;
 
 function htmlEscape(value) {
@@ -177,6 +178,7 @@ function renderAudioCheck() {
 function stopCurrentAudio() {
   const active = audio;
   audio = null;
+  preparedStimulus = null;
   if (active) {
     active.pause();
     active.removeAttribute("src");
@@ -190,6 +192,7 @@ function stopCurrentAudio() {
 
 function releaseCompletedAudio() {
   audio = null;
+  preparedStimulus = null;
   if (objectUrl) {
     URL.revokeObjectURL(objectUrl);
     objectUrl = null;
@@ -202,8 +205,8 @@ function renderTrial() {
     <section class="card">
       <div class="trial-head"><p class="eyebrow">Trial ${trial.trial} of 12</p><button id="stop-study" class="text-button">Stop study</button></div>
       <h1>Listen to the full excerpt</h1>
-      <p>Press play once. The rating questions will appear only after the excerpt reaches the end.</p>
-      <div class="player-box"><button id="play-stimulus">Play excerpt</button><span id="play-status" class="muted">Not played</span></div>
+      <p>The frozen excerpt is verified before the play button unlocks. Then press play once. The rating questions will appear only after the excerpt reaches the end.</p>
+      <div class="player-box"><button id="play-stimulus" disabled>Play excerpt</button><span id="play-status" class="muted">Preparing frozen audio…</span></div>
       <p id="trial-error" class="error" hidden></p>
       <div id="ratings" hidden></div>
     </section>`;
@@ -213,28 +216,30 @@ function renderTrial() {
     stopCurrentAudio();
     renderTerminal("You stopped the study. No more excerpts will be played.");
   });
-  $("#play-stimulus").addEventListener("click", () => playFrozenStimulus(trial), { once: true });
+  $("#play-stimulus").addEventListener("click", () => startPreparedPlayback(trial), { once: true });
+  prepareFrozenStimulus(trial);
 }
 
-async function playFrozenStimulus(trial) {
+async function prepareFrozenStimulus(trial) {
   const button = $("#play-stimulus");
   const status = $("#play-status");
-  button.disabled = true;
-  status.textContent = "Verifying frozen audio…";
   try {
     const response = await fetch(`./stimuli/${trial.stimulus_id}.wav`, { cache: "no-store" });
     if (!response.ok) throw new Error("The audio file could not be loaded.");
     const bytes = await response.arrayBuffer();
     const actualSha = await sha256Hex(bytes);
     if (actualSha !== trial.wav_sha256) throw new Error("Audio integrity check failed. Stop and tell the researcher.");
-    session.startPlayback(trial.stimulus_id, actualSha);
-    persistSession();
+    if (session.phase !== "trial-ready" || session.currentTrial?.stimulus_id !== trial.stimulus_id) return;
+
+    stopCurrentAudio();
     objectUrl = URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
     audio = new Audio(objectUrl);
     audio.controls = false;
     audio.preload = "auto";
     audio.playbackRate = 1;
     maxObservedTime = 0;
+    preparedStimulus = { stimulus_id: trial.stimulus_id, wav_sha256: actualSha };
+
     audio.addEventListener("ratechange", () => { if (audio && audio.playbackRate !== 1) audio.playbackRate = 1; });
     audio.addEventListener("timeupdate", () => { if (audio) maxObservedTime = Math.max(maxObservedTime, audio.currentTime); });
     audio.addEventListener("seeking", () => {
@@ -247,14 +252,18 @@ async function playFrozenStimulus(trial) {
       if (!audio || session.phase !== "playing") return;
       session.finishPlayback(trial.stimulus_id);
       persistSession();
-      status.textContent = "Completed";
+      const currentStatus = $("#play-status");
+      if (currentStatus) currentStatus.textContent = "Completed";
       releaseCompletedAudio();
       renderRatings();
     }, { once: true });
-    status.textContent = "Playing…";
-    await audio.play();
+
+    if (button && status) {
+      button.disabled = false;
+      status.textContent = "Ready";
+    }
   } catch (error) {
-    if (session.phase === "playing" || session.phase === "trial-ready") {
+    if (session.phase === "trial-ready") {
       failPlayback(error.message);
       return;
     }
@@ -263,6 +272,39 @@ async function playFrozenStimulus(trial) {
       node.hidden = false;
       node.textContent = error.message;
     }
+  }
+}
+
+function startPreparedPlayback(trial) {
+  const button = $("#play-stimulus");
+  const status = $("#play-status");
+  if (!audio || !preparedStimulus || preparedStimulus.stimulus_id !== trial.stimulus_id) {
+    failPlayback("Verified audio was not ready when playback was requested.");
+    return;
+  }
+  button.disabled = true;
+  status.textContent = "Starting…";
+  let startRecorded = false;
+
+  const recordActualStart = () => {
+    if (startRecorded || session.phase !== "trial-ready") return;
+    startRecorded = true;
+    session.startPlayback(trial.stimulus_id, preparedStimulus.wav_sha256);
+    persistSession();
+    const currentStatus = $("#play-status");
+    if (currentStatus) currentStatus.textContent = "Playing…";
+  };
+
+  audio.addEventListener("playing", recordActualStart, { once: true });
+  try {
+    const playPromise = audio.play();
+    if (playPromise && typeof playPromise.then === "function") {
+      playPromise.then(recordActualStart).catch((error) => {
+        if (session.phase === "trial-ready" || session.phase === "playing") failPlayback(error.message);
+      });
+    }
+  } catch (error) {
+    if (session.phase === "trial-ready" || session.phase === "playing") failPlayback(error.message);
   }
 }
 
