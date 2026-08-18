@@ -26,7 +26,7 @@ jobs:
       - name: Install IPM
         run: python -m pip install -e '.[dev]'
 
-      - name: Download exact repaired participant bundle and browser evidence v2
+      - name: Download exact participant v3 bundle and browser evidence
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -36,9 +36,9 @@ jobs:
             -H "Authorization: Bearer ${GH_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9326978102/zip" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9328095073/zip" \
             -o participant-web.zip
-          echo "7f17c97d628adb4f4ddc6ef5233b29f6b5fc282d366790593cc6dbb2674b65f2  participant-web.zip" | sha256sum --check --strict
+          echo "1e512e85fea0e90f1e03791897803a28d264be9a5c3a8569def9324a1d5364c6  participant-web.zip" | sha256sum --check --strict
           mkdir participant-web
           unzip -q participant-web.zip -d participant-web
 
@@ -46,173 +46,120 @@ jobs:
             -H "Authorization: Bearer ${GH_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9326978910/zip" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9328095794/zip" \
             -o participant-gate.zip
-          echo "6818bd689c4398a407363fc7b19687c79373a3461113718117c802543c2eb3cc  participant-gate.zip" | sha256sum --check --strict
+          echo "54d802b265c29cca853f894d46be3a3ff2c4502e7b2b8f61ba1961f0f810d501  participant-gate.zip" | sha256sum --check --strict
           mkdir participant-gate
           unzip -q participant-gate.zip -d participant-gate
 
-      - name: Run collection-control unit tests against repaired frozen evidence
+      - name: Verify v3 intake contract and superseded-export rejection
         env:
           IPM_PARTICIPANT_BUNDLE: participant-web
           IPM_SYNTHETIC_EXPORTS: participant-gate/participant-browser-acceptance
         run: pytest -q tests/test_collection_control.py
 
-      - name: Run P001-P003 reservation and intake dry-run
+      - name: Run P001-P003 issuance, intake and duplicate dry-run
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p collection-gate/store collection-gate/exports
-          python -m ipm.collection_control init \
-            --db collection-gate/control.sqlite3 \
-            --bundle participant-web > collection-gate/init.json
-          for pid in P001 P002 P003; do
-            lower=$(echo "$pid" | tr '[:upper:]' '[:lower:]')
-            python -m ipm.collection_control reserve \
-              --db collection-gate/control.sqlite3 \
-              --participant-id "$pid" \
-              --invitation-reference "synthetic-${lower}" \
-              --invitation-channel "synthetic-gate" \
-              > "collection-gate/reserve-${pid}.json"
-            python -m ipm.collection_control ingest \
-              --db collection-gate/control.sqlite3 \
-              --bundle participant-web \
-              --store collection-gate/store \
-              --export "participant-gate/participant-browser-acceptance/${pid}-synthetic-export.json" \
-              > "collection-gate/ingest-${pid}.json"
-          done
-
-      - name: Exercise cross-device duplicate ordering and unissued-ID rejection
-        shell: bash
-        run: |
-          set -euo pipefail
           python - <<'PY'
+          import hashlib
           import json
           from copy import deepcopy
           from datetime import datetime, timedelta
           from pathlib import Path
 
-          source = json.loads(Path("participant-gate/participant-browser-acceptance/P001-synthetic-export.json").read_text())
-          old = source["enrolled_at_utc"]
-          origin = datetime.fromisoformat(old.replace("Z", "+00:00"))
-          def stamp(hours):
-              return (origin + timedelta(hours=hours)).isoformat(timespec="milliseconds").replace("+00:00", "Z")
-          def shifted(value):
+          from ipm.collection_control import audit, ingest, init_store, reserve
+
+          bundle = Path("participant-web")
+          evidence = Path("participant-gate/participant-browser-acceptance")
+          root = Path("collection-gate")
+          db = root / "control.sqlite3"
+          store = root / "store"
+
+          config = json.loads((bundle / "config.json").read_text())
+          assert config["participant_interface_source_revision"] == "e6b07579878350c80fb6548107290898b48501ca"
+
+          init_store(db, bundle)
+          for pid in ("P001", "P002", "P003"):
+              reserve(db, pid, f"synthetic-{pid.lower()}", "synthetic-gate")
+              ingest(db, bundle, store, evidence / f"{pid}-synthetic-export.json")
+
+          source_path = evidence / "P001-synthetic-export.json"
+          source = json.loads(source_path.read_text())
+          assert source["export_version"] == 2
+          assert source["participant_interface_source_revision"] == config["participant_interface_source_revision"]
+          original = source["enrolled_at_utc"]
+          origin = datetime.fromisoformat(original.replace("Z", "+00:00"))
+
+          def shifted(hours):
+              value = (origin + timedelta(hours=hours)).isoformat(timespec="milliseconds").replace("+00:00", "Z")
               item = deepcopy(source)
               item["enrolled_at_utc"] = value
               main = play = False
               for event in item["audit"]:
-                  if event["event"] == "main_block_started" and event.get("at") == old and not main:
-                      event["at"] = value; main = True
-                  if event["event"] == "playback_started" and event.get("at") == old and not play:
-                      event["at"] = value; play = True
+                  if event["event"] == "main_block_started" and event.get("at") == original and not main:
+                      event["at"] = value
+                      main = True
+                  if event["event"] == "playback_started" and event.get("at") == original and not play:
+                      event["at"] = value
+                      play = True
               assert main and play
-              return item
-          later = stamp(1)
-          earlier = stamp(-1)
-          Path("collection-gate/exports/P001-later.json").write_text(json.dumps(shifted(later), indent=2) + "\n")
-          Path("collection-gate/exports/P001-earlier.json").write_text(json.dumps(shifted(earlier), indent=2) + "\n")
-          Path("collection-gate/duplicate-times.json").write_text(json.dumps({"original": old, "later": later, "earlier": earlier}, indent=2) + "\n")
-          PY
-          python -m ipm.collection_control ingest --db collection-gate/control.sqlite3 --bundle participant-web --store collection-gate/store --export collection-gate/exports/P001-later.json > collection-gate/P001-later-result.json
-          python -m ipm.collection_control ingest --db collection-gate/control.sqlite3 --bundle participant-web --store collection-gate/store --export collection-gate/exports/P001-earlier.json > collection-gate/P001-earlier-result.json
+              return value, item
 
-          set +e
-          python -m ipm.collection_control ingest \
-            --db collection-gate/control.sqlite3 \
-            --bundle participant-web \
-            --store collection-gate/store \
-            --export participant-gate/participant-browser-acceptance/P001-synthetic-export.json \
-            > /dev/null 2>&1
-          idempotent_status=$?
-          set -e
-          test "$idempotent_status" -eq 0
+          later_at, later = shifted(1)
+          earlier_at, earlier = shifted(-1)
+          later_path = root / "exports/P001-later.json"
+          earlier_path = root / "exports/P001-earlier.json"
+          later_path.write_text(json.dumps(later, indent=2) + "\n")
+          earlier_path.write_text(json.dumps(earlier, indent=2) + "\n")
+          ingest(db, bundle, store, later_path)
+          ingest(db, bundle, store, earlier_path)
+          ingest(db, bundle, store, source_path)  # idempotent re-ingest
 
-          python - <<'PY'
-          import csv
-          import io
-          import json
-          from pathlib import Path
-
-          p004 = json.loads(Path("participant-gate/participant-browser-acceptance/P001-synthetic-export.json").read_text())
-          schedule = json.loads(Path("participant-web/schedules/P004.json").read_text())
-          config = json.loads(Path("participant-web/config.json").read_text())
-          p004["participant_id"] = "P004"
-          p004["source_schedule_sha256"] = schedule["source_schedule_sha256"]
-          p004["participant"]["participant_id"] = "P004"
-          p004["participant"]["counterbalance_group"] = schedule["counterbalance_group"]
-          for row, trial in zip(p004["responses"], schedule["trials"]):
-              row["participant_id"] = "P004"
-              row["trial"] = trial["trial"]
-              row["stimulus_id"] = trial["stimulus_id"]
-          for event in p004["audit"]:
-              if event.get("trial") and 1 <= event["trial"] <= 12 and event["event"] in {"playback_started", "playback_completed", "ratings_submitted"}:
-                  trial = schedule["trials"][event["trial"] - 1]
-                  event["stimulus_id"] = trial["stimulus_id"]
-                  if event["event"] == "playback_started":
-                      event["wav_sha256"] = trial["wav_sha256"]
-          def encode(header, rows):
-              out = io.StringIO(newline="")
-              writer = csv.DictWriter(out, fieldnames=header, lineterminator="\r\n")
-              writer.writeheader(); writer.writerows(rows)
-              return out.getvalue()
-          p004["participant_csv"] = encode(config["participant_schema_header"].split(","), [p004["participant"]])
-          p004["responses_csv"] = encode(config["response_schema_header"].split(","), p004["responses"])
-          Path("collection-gate/exports/P004-valid-unreserved.json").write_text(json.dumps(p004, indent=2) + "\n")
-          PY
-          if python -m ipm.collection_control ingest --db collection-gate/control.sqlite3 --bundle participant-web --store collection-gate/store --export collection-gate/exports/P004-valid-unreserved.json; then
-            echo "valid but unreserved P004 submission unexpectedly accepted" >&2
-            exit 1
-          fi
-
-      - name: Enforce collection-control outcome
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m ipm.collection_control audit --db collection-gate/control.sqlite3 > collection-gate/audit.json
-          python - <<'PY'
-          import hashlib
-          import json
-          from pathlib import Path
-
-          audit = json.loads(Path("collection-gate/audit.json").read_text())
-          times = json.loads(Path("collection-gate/duplicate-times.json").read_text())
-          assert audit["participant_count"] == 36
-          assert audit["reserved_or_received"] == 3
-          assert audit["submission_count"] == 5
-          assert audit["participants_with_duplicate_enrolled_submissions"] == ["P001"]
-          p001 = next(row for row in audit["participants"] if row["participant_id"] == "P001")
+          report = audit(db)
+          assert report["participant_count"] == 36
+          assert report["reserved_or_received"] == 3
+          assert report["submission_count"] == 5
+          assert report["participants_with_duplicate_enrolled_submissions"] == ["P001"]
+          p001 = next(row for row in report["participants"] if row["participant_id"] == "P001")
           assert p001["enrolled_submission_count"] == 3
-          assert p001["canonical_enrolled_at_utc"] == times["earlier"]
-          assert p001["status"] == "received-enrolled"
-          raw = list((Path("collection-gate/store/submissions/P001")).glob("*.json"))
+          assert p001["canonical_enrolled_at_utc"] == earlier_at
+          raw = list((store / "submissions/P001").glob("*.json"))
           assert len(raw) == 3
           assert all(path.stem == hashlib.sha256(path.read_bytes()).hexdigest() for path in raw)
-          report = {
-              "gate": "researcher participant issuance and data-return control v2",
+
+          gate = {
+              "gate": "researcher participant issuance and data-return control v3",
               "passed": True,
               "synthetic_nonhuman_sessions": True,
               "real_participants_recruited": 0,
               "participant_pool": "P001-P036",
               "reserved_synthetic_ids": ["P001", "P002", "P003"],
-              "frozen_participant_artifact_id": 9326978102,
-              "frozen_participant_artifact_sha256": "7f17c97d628adb4f4ddc6ef5233b29f6b5fc282d366790593cc6dbb2674b65f2",
-              "source_browser_evidence_artifact_id": 9326978910,
-              "source_browser_evidence_artifact_sha256": "6818bd689c4398a407363fc7b19687c79373a3461113718117c802543c2eb3cc",
-              "participant_interface_source_revision": "090263f5f8204915fec22528ccbc77d6d1f4d304",
-              "unreserved_or_invalid_submission_rejected": True,
+              "frozen_participant_artifact_id": 9328095073,
+              "frozen_participant_artifact_sha256": "1e512e85fea0e90f1e03791897803a28d264be9a5c3a8569def9324a1d5364c6",
+              "source_browser_evidence_artifact_id": 9328095794,
+              "source_browser_evidence_artifact_sha256": "54d802b265c29cca853f894d46be3a3ff2c4502e7b2b8f61ba1961f0f810d501",
+              "participant_interface_source_revision": config["participant_interface_source_revision"],
+              "export_version": source["export_version"],
+              "superseded_export_versions_rejected_by_tests": True,
+              "central_reservation_required_by_tests": True,
               "content_addressed_raw_evidence_preserved": True,
               "duplicate_rule": "earliest enrolled_at_utc wins canonical; all distinct submissions retained",
               "p001_distinct_enrolled_submissions": 3,
-              "p001_canonical_enrolled_at_utc": p001["canonical_enrolled_at_utc"],
+              "p001_canonical_enrolled_at_utc": earlier_at,
+              "synthetic_original_enrolled_at_utc": original,
+              "synthetic_later_enrolled_at_utc": later_at,
           }
-          Path("collection-gate/collection-control-gate.json").write_text(json.dumps(report, indent=2) + "\n")
-          print(json.dumps(report, indent=2))
+          (root / "audit.json").write_text(json.dumps(report, indent=2) + "\n")
+          (root / "collection-control-gate.json").write_text(json.dumps(gate, indent=2) + "\n")
+          print(json.dumps(gate, indent=2))
           PY
 
       - uses: actions/upload-artifact@v4
         with:
-          name: data-collection-control-gate-v2
+          name: data-collection-control-gate-v3
           path: |
             collection-gate/*.json
             DATA_COLLECTION.md
