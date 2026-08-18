@@ -38,23 +38,13 @@ That makes the central claim testable rather than merely aesthetic.
 
 ## Listening Experiment 1
 
-The active pre-listening gate is **Counterfactual Episode v2**, not more composer features.
+The active pre-listening experiment is **Counterfactual Episode v2**.
 
-[`EXPERIMENT.md`](EXPERIMENT.md) defines an 8-bar Tune-only matched episode. Predictable and IPM are selected from the same frozen production target pool after an identical 4-bar learning prefix. Once IPM has been chosen, the experiment layer holds its target rhythm fixed and generates deterministic alternative pitch realisations from the identical pre-target state. The selected Unstructured-Surprise control must match IPM on modelled surprise and local base quality while weakening the learned melodic invariant.
+[`EXPERIMENT.md`](EXPERIMENT.md) freezes the causal construction, corpus, PCM-isolated listener artifact, human measures, recruitment stopping rule and analysis plan. [`PARTICIPANT.md`](PARTICIPANT.md) defines the participant-facing implementation, consent screen, single-play/reload behavior, frozen asset trust anchor and pre-recruitment browser acceptance gate.
 
-The common 3-bar suffix is generated once from the **IPM target state** and attached unchanged to Predictable, IPM, and Control. The experiment realiser also replays the IPM target's audible subdivisions, durations, and velocities for Control, so IPM and Control differ in target pitch content rather than target rhythm/articulation.
+The participant implementation is deliberately downstream of the frozen musical object: it may advance only while all 36 listener WAVs, P001–P036 schedules and export schemas reproduce the frozen hashes exactly.
 
-Build the prequalified pilot set with:
-
-```bash
-ipm-experiment --output listening-pilot
-```
-
-The builder keeps the complete accepted/rejected seed funnel, creates opaque stimulus IDs, generates participant-specific trial orders inside three balanced condition groups, and freezes exact source provenance. GitHub Actions renders admitted MIDI through one fixed soundfont as 44.1 kHz stereo 16-bit WAV and records renderer, soundfont and stimulus hashes.
-
-A corpus diagnostic also evaluates the unchanged qualification thresholds across the entire frozen 512-seed window rather than stopping when the first 12 qualified sets have been found.
-
-The primary human mechanism outcome remains **retrospective sense**: whether the unusual target comes to make sense as the identical, IPM-conditioned suffix unfolds. Liking remains a secondary outcome. No listener result is claimed by the construction gate.
+No actual listener result is claimed by any construction, participant or browser acceptance gate.
 
 ## Musical controls
 
