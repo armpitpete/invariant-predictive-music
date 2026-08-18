@@ -1,4 +1,5 @@
 export const SESSION_EXPORT_VERSION = 1;
+export const SESSION_SNAPSHOT_VERSION = 1;
 
 const RATING_FIELDS = [
   "retrospective_sense_0_100",
@@ -21,6 +22,10 @@ function finiteNumber(value, name) {
   assert(Number.isFinite(number), `${name} must be numeric`);
   assert(number >= 0 && number <= 100, `${name} must be between 0 and 100`);
   return number;
+}
+
+function sameFrozenArtifact(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
 }
 
 export function csvEscape(value) {
@@ -55,6 +60,56 @@ export class StudySession {
     this.playbackFailure = false;
     this.withdrawn = false;
     this.completedAt = null;
+  }
+
+  static restore({ config, schedule, snapshot, now = () => new Date().toISOString() }) {
+    assert(snapshot?.snapshot_version === SESSION_SNAPSHOT_VERSION, "saved study state version is invalid");
+    assert(snapshot.participant_id === schedule.participant_id, "saved participant ID does not match schedule");
+    assert(snapshot.source_schedule_sha256 === schedule.source_schedule_sha256, "saved schedule provenance does not match");
+    assert(sameFrozenArtifact(snapshot.frozen_listener_artifact, config.frozen_listener_artifact), "saved listener artifact does not match");
+    assert(
+      ["consent", "audio-check", "ready", "trial-ready", "playing", "rating", "complete", "technical-failure", "withdrawn"].includes(snapshot.phase),
+      "saved study phase is invalid",
+    );
+    assert(Number.isInteger(snapshot.current_trial_index), "saved trial index is invalid");
+    assert(snapshot.current_trial_index >= 0 && snapshot.current_trial_index <= schedule.trials.length, "saved trial index escapes schedule");
+    assert(Array.isArray(snapshot.responses), "saved responses are invalid");
+    assert(snapshot.responses.length === snapshot.current_trial_index, "saved response count does not match trial index");
+
+    for (let index = 0; index < snapshot.responses.length; index += 1) {
+      const response = snapshot.responses[index];
+      const trial = schedule.trials[index];
+      assert(response.participant_id === schedule.participant_id, "saved response participant drifted");
+      assert(response.trial === trial.trial, "saved response trial number drifted");
+      assert(response.stimulus_id === trial.stimulus_id, "saved response stimulus order drifted");
+      for (const field of RATING_FIELDS) {
+        assert(Number.isInteger(response[field]) && response[field] >= 0 && response[field] <= 100, `saved ${field} is invalid`);
+      }
+    }
+
+    if (snapshot.phase === "complete") {
+      assert(snapshot.current_trial_index === schedule.trials.length, "completed saved state has incomplete trials");
+    }
+    if (snapshot.phase === "playing" || snapshot.phase === "rating") {
+      const trial = schedule.trials[snapshot.current_trial_index];
+      assert(trial, "saved active trial is missing");
+      assert(snapshot.playback?.stimulus_id === trial.stimulus_id, "saved playback stimulus drifted");
+    }
+
+    const session = new StudySession({ config, schedule, now });
+    session.phase = snapshot.phase;
+    session.consent = snapshot.consent ?? null;
+    session.metadata = snapshot.metadata ?? null;
+    session.audioCheckCompletedAt = snapshot.audio_check_completed_at_utc ?? null;
+    session.enrolledAt = snapshot.enrolled_at_utc ?? null;
+    session.currentTrialIndex = snapshot.current_trial_index;
+    session.playback = snapshot.playback ? { ...snapshot.playback } : null;
+    session.responses = snapshot.responses.map((row) => ({ ...row }));
+    session.audit = Array.isArray(snapshot.audit) ? snapshot.audit.map((item) => ({ ...item })) : [];
+    session.playbackFailure = snapshot.playback_failure === true;
+    session.withdrawn = snapshot.withdrawn === true;
+    session.completedAt = snapshot.completed_at_utc ?? null;
+    return session;
   }
 
   get participantId() { return this.schedule.participant_id; }
@@ -92,11 +147,10 @@ export class StudySession {
   }
 
   beginMainBlock() {
-    assert(this.phase === "ready", "consent and audio check must complete before enrolment");
+    assert(this.phase === "ready", "consent and audio check must complete before the main block is armed");
     const at = this.now();
-    this.enrolledAt = at;
     this.phase = "trial-ready";
-    this.audit.push({ event: "main_block_started", at, trial: 1 });
+    this.audit.push({ event: "main_block_armed", at, trial: 1 });
   }
 
   startPlayback(stimulusId, verifiedSha256) {
@@ -105,6 +159,10 @@ export class StudySession {
     assert(trial && stimulusId === trial.stimulus_id, "stimulus does not match frozen schedule");
     assert(verifiedSha256 === trial.wav_sha256, "stimulus bytes do not match frozen SHA-256");
     const at = this.now();
+    if (this.currentTrialIndex === 0 && this.enrolledAt === null) {
+      this.enrolledAt = at;
+      this.audit.push({ event: "main_block_started", at, trial: 1 });
+    }
     this.playback = { stimulus_id: stimulusId, started_at_utc: at, ended_at_utc: null };
     this.phase = "playing";
     this.audit.push({ event: "playback_started", at, trial: trial.trial, stimulus_id: stimulusId, wav_sha256: verifiedSha256 });
@@ -160,6 +218,27 @@ export class StudySession {
     this.withdrawn = true;
     this.phase = "withdrawn";
     this.audit.push({ event: "participant_stopped", at, trial: this.currentTrial?.trial ?? null });
+  }
+
+  snapshotObject() {
+    return {
+      snapshot_version: SESSION_SNAPSHOT_VERSION,
+      participant_id: this.participantId,
+      frozen_listener_artifact: this.config.frozen_listener_artifact,
+      source_schedule_sha256: this.schedule.source_schedule_sha256,
+      phase: this.phase,
+      consent: this.consent,
+      metadata: this.metadata,
+      audio_check_completed_at_utc: this.audioCheckCompletedAt,
+      enrolled_at_utc: this.enrolledAt,
+      current_trial_index: this.currentTrialIndex,
+      playback: this.playback,
+      responses: this.responses,
+      audit: this.audit,
+      playback_failure: this.playbackFailure,
+      withdrawn: this.withdrawn,
+      completed_at_utc: this.completedAt,
+    };
   }
 
   exportObject() {
