@@ -13,6 +13,10 @@ function assert(condition, message) {
 }
 
 function finiteNumber(value, name) {
+  assert(
+    value !== null && value !== undefined && String(value).trim() !== "",
+    `${name} is required`,
+  );
   const number = Number(value);
   assert(Number.isFinite(number), `${name} must be numeric`);
   assert(number >= 0 && number <= 100, `${name} must be between 0 and 100`);
