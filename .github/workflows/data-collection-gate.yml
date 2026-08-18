@@ -89,10 +89,14 @@ jobs:
           python - <<'PY'
           import json
           from copy import deepcopy
+          from datetime import datetime, timedelta
           from pathlib import Path
 
           source = json.loads(Path("participant-gate/participant-browser-acceptance/P001-synthetic-export.json").read_text())
           old = source["enrolled_at_utc"]
+          origin = datetime.fromisoformat(old.replace("Z", "+00:00"))
+          def stamp(hours):
+              return (origin + timedelta(hours=hours)).isoformat(timespec="milliseconds").replace("+00:00", "Z")
           def shifted(value):
               item = deepcopy(source)
               item["enrolled_at_utc"] = value
@@ -104,8 +108,11 @@ jobs:
                       event["at"] = value; play = True
               assert main and play
               return item
-          Path("collection-gate/exports/P001-later.json").write_text(json.dumps(shifted("2026-08-18T11:36:16.611Z"), indent=2) + "\n")
-          Path("collection-gate/exports/P001-earlier.json").write_text(json.dumps(shifted("2026-08-18T09:36:16.611Z"), indent=2) + "\n")
+          later = stamp(1)
+          earlier = stamp(-1)
+          Path("collection-gate/exports/P001-later.json").write_text(json.dumps(shifted(later), indent=2) + "\n")
+          Path("collection-gate/exports/P001-earlier.json").write_text(json.dumps(shifted(earlier), indent=2) + "\n")
+          Path("collection-gate/duplicate-times.json").write_text(json.dumps({"original": old, "later": later, "earlier": earlier}, indent=2) + "\n")
           PY
           python -m ipm.collection_control ingest --db collection-gate/control.sqlite3 --bundle participant-web --store collection-gate/store --export collection-gate/exports/P001-later.json > collection-gate/P001-later-result.json
           python -m ipm.collection_control ingest --db collection-gate/control.sqlite3 --bundle participant-web --store collection-gate/store --export collection-gate/exports/P001-earlier.json > collection-gate/P001-earlier-result.json
@@ -169,13 +176,14 @@ jobs:
           from pathlib import Path
 
           audit = json.loads(Path("collection-gate/audit.json").read_text())
+          times = json.loads(Path("collection-gate/duplicate-times.json").read_text())
           assert audit["participant_count"] == 36
           assert audit["reserved_or_received"] == 3
           assert audit["submission_count"] == 5
           assert audit["participants_with_duplicate_enrolled_submissions"] == ["P001"]
           p001 = next(row for row in audit["participants"] if row["participant_id"] == "P001")
           assert p001["enrolled_submission_count"] == 3
-          assert p001["canonical_enrolled_at_utc"] == "2026-08-18T09:36:16.611Z"
+          assert p001["canonical_enrolled_at_utc"] == times["earlier"]
           assert p001["status"] == "received-enrolled"
           raw = list((Path("collection-gate/store/submissions/P001")).glob("*.json"))
           assert len(raw) == 3
