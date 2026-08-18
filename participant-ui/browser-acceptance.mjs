@@ -150,7 +150,7 @@ async function runSyntheticSession(browser, baseUrl, schedule) {
     document.addEventListener("click", (event) => {
       if (!event.isTrusted) return;
       globalThis.__ipmDirectGestureTurn = true;
-      queueMicrotask(() => { globalThis.__ipmDirectGestureTurn = false; });
+      setTimeout(() => { globalThis.__ipmDirectGestureTurn = false; }, 0);
     }, true);
     const originalPlay = HTMLMediaElement.prototype.play;
     HTMLMediaElement.prototype.play = function (...args) {
@@ -162,7 +162,7 @@ async function runSyntheticSession(browser, baseUrl, schedule) {
       globalThis.__ipmMediaPlayAudit.push(record);
       if (!record.same_click_turn) {
         return Promise.reject(new DOMException(
-          "Synthetic WebKit-style gate: audible media play() was not called directly in the trusted click turn.",
+          "Synthetic WebKit-style gate: audible media play() was not called directly in the trusted click task.",
           "NotAllowedError",
         ));
       }
@@ -196,7 +196,16 @@ async function runSyntheticSession(browser, baseUrl, schedule) {
     assert(await page.locator("#play-stimulus").isEnabled(), `${schedule.participant_id} trial ${trial.trial} play button unavailable after frozen-audio verification`);
     const started = Date.now();
     await page.locator("#play-stimulus").click();
-    await page.waitForFunction(() => document.querySelector("#play-status")?.textContent === "Playing…");
+    try {
+      await page.waitForFunction(() => document.querySelector("#play-status")?.textContent === "Playing…", null, { timeout: 5_000 });
+    } catch (error) {
+      const diagnostics = await page.evaluate(() => ({
+        status: document.querySelector("#play-status")?.textContent ?? null,
+        body: document.body.innerText,
+        media_play_audit: globalThis.__ipmMediaPlayAudit ?? [],
+      }));
+      throw new Error(`${schedule.participant_id} trial ${trial.trial} did not start playback: ${JSON.stringify(diagnostics)}`, { cause: error });
+    }
     await page.locator("#ratings").waitFor({ state: "visible", timeout: 50_000 });
     const elapsed = (Date.now() - started) / 1000;
     wallDurations.push(elapsed);
@@ -218,7 +227,7 @@ async function runSyntheticSession(browser, baseUrl, schedule) {
   await page.getByRole("heading", { name: "Study complete" }).waitFor();
   const mediaPlayAudit = await page.evaluate(() => globalThis.__ipmMediaPlayAudit ?? []);
   assert(mediaPlayAudit.length === 12, "browser must call HTMLMediaElement.play exactly once per trial");
-  assert(mediaPlayAudit.every((item) => item.same_click_turn === true), "media play escaped the direct trusted-click turn");
+  assert(mediaPlayAudit.every((item) => item.same_click_turn === true), "media play escaped the direct trusted-click task");
 
   const downloadPromise = page.waitForEvent("download");
   await page.locator("#download-export").click();
