@@ -90,6 +90,8 @@ jobs:
               assert record["passed"] is True
               assert record["participant_count"] == 36
               assert record["total_trial_count"] == 432
+          js = json.loads((Path("listening-pilot/researcher") / "participant-js-dry-run.json").read_text())
+          assert "rejected-pre-start-playback-remains-unenrolled" in js["checked"]
           PY
       - name: Install pinned browser acceptance runtime
         shell: bash
@@ -122,20 +124,24 @@ jobs:
           assert record["unique_stimulus_count"] == 36
           assert record["browser_webcrypto_delivery_hash_check"] is True
           assert record["actual_browser_playback_to_ended"] is True
+          assert record["direct_user_gesture_playback_gate"] is True
+          assert record["autoplay_policy_override_used"] is False
           assert record["exported_records_verified"] is True
           assert record["condition_mapping_leak_detected"] is False
           assert len(record["sessions"]) == 3
           assert all(item["passed"] for item in record["sessions"])
           assert all(item["trial_count"] == 12 for item in record["sessions"])
           assert all(item["wav_sha256_verified_from_browser_audit"] == 12 for item in record["sessions"])
+          assert all(item["direct_user_gesture_play_calls"] == 12 for item in record["sessions"])
+          assert all(item["direct_user_gesture_gate_passed"] is True for item in record["sessions"])
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: ipm-participant-web-v1
+          name: ipm-participant-web-v2
           path: participant-web
       - uses: actions/upload-artifact@v4
         with:
-          name: participant-interface-gate
+          name: participant-interface-gate-v2
           path: |
             listening-pilot/researcher/participant-interface-dry-run.json
             listening-pilot/researcher/participant-js-dry-run.json
