@@ -13,6 +13,7 @@ permissions:
   actions: read
   pages: write
   id-token: write
+  issues: write
 
 concurrency:
   group: "ipm-frozen-listening-pages"
@@ -26,6 +27,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
 
       - name: Download exact frozen participant artifact
         shell: bash
@@ -84,3 +89,197 @@ jobs:
       - name: Deploy frozen participant site
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify deployed HTTPS bytes against frozen manifest
+        shell: bash
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import time
+          import urllib.request
+          from pathlib import Path
+
+          freeze = "freeze-ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa"
+          root = Path("_site") / freeze
+          local_manifest_bytes = (root / "bundle-manifest.json").read_bytes()
+          manifest = json.loads(local_manifest_bytes)
+          expected = manifest["file_sha256"]
+          base = os.environ["PAGE_URL"].rstrip("/") + f"/{freeze}/"
+
+          def fetch(rel, attempts=8):
+              url = base + rel
+              last = None
+              for attempt in range(attempts):
+                  try:
+                      request = urllib.request.Request(url, headers={"Cache-Control": "no-cache", "User-Agent": "ipm-deployment-gate"})
+                      with urllib.request.urlopen(request, timeout=60) as response:
+                          if response.status != 200:
+                              raise RuntimeError(f"HTTP {response.status}")
+                          return response.read()
+                  except Exception as exc:
+                      last = exc
+                      if attempt + 1 < attempts:
+                          time.sleep(5)
+              raise RuntimeError(f"failed to fetch {url}: {last}")
+
+          remote_manifest = fetch("bundle-manifest.json")
+          assert hashlib.sha256(remote_manifest).hexdigest() == hashlib.sha256(local_manifest_bytes).hexdigest()
+          mismatches = []
+          for index, (rel, digest) in enumerate(sorted(expected.items()), start=1):
+              data = fetch(rel, attempts=3)
+              actual = hashlib.sha256(data).hexdigest()
+              if actual != digest:
+                  mismatches.append({"file": rel, "expected": digest, "actual": actual})
+              print(f"{index}/{len(expected)} {rel} {actual}")
+          report = {
+              "gate": "deployed HTTPS byte verification",
+              "passed": not mismatches,
+              "base_url": base,
+              "frozen_artifact_id": 9321126844,
+              "frozen_artifact_sha256": "ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa",
+              "participant_interface_source_revision": "94fb37ab37077346d6de585df5ee1d69ae23d009",
+              "verified_file_count": len(expected),
+              "mismatches": mismatches,
+          }
+          Path("deployed-listening-gate").mkdir(exist_ok=True)
+          Path("deployed-listening-gate/deployed-byte-verification.json").write_text(json.dumps(report, indent=2) + "\n")
+          assert report["passed"], mismatches
+          print(json.dumps(report, indent=2))
+          PY
+
+      - name: Install pinned Chromium acceptance runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Prepare deployed-URL browser acceptance harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp participant-ui/browser-acceptance.mjs participant-ui/deployed-browser-acceptance.generated.mjs
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("participant-ui/deployed-browser-acceptance.generated.mjs")
+          text = path.read_text()
+          old = '''const selectedSchedules = chooseGroupSchedules();\nconst server = createStaticServer(webRoot);\nawait new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));\nconst address = server.address();\nconst baseUrl = `http://127.0.0.1:${address.port}`;'''
+          new = '''const selectedSchedules = chooseGroupSchedules();\nconst server = null;\nconst baseUrl = process.env.IPM_BASE_URL?.replace(/\\/+$/, "");\nassert(baseUrl && baseUrl.startsWith("https://"), "deployed acceptance requires an HTTPS IPM_BASE_URL");'''
+          assert old in text
+          text = text.replace(old, new)
+          old_finally = '''  await new Promise((resolve) => server.close(resolve));'''
+          new_finally = '''  if (server) await new Promise((resolve) => server.close(resolve));'''
+          assert old_finally in text
+          text = text.replace(old_finally, new_finally)
+          path.write_text(text)
+          PY
+
+      - name: Run synthetic P001/P002/P003 against deployed HTTPS URL
+        shell: bash
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          freeze="freeze-ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa"
+          export IPM_BASE_URL="${PAGE_URL%/}/${freeze}"
+          node participant-ui/deployed-browser-acceptance.generated.mjs \
+            "_site/${freeze}" deployed-listening-gate/browser \
+            > deployed-listening-gate/deployed-browser-acceptance.stdout.json
+          cp deployed-listening-gate/browser/participant-browser-acceptance.json \
+            deployed-listening-gate/deployed-browser-acceptance.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("deployed-listening-gate/deployed-browser-acceptance.json").read_text())
+          assert report["passed"] is True
+          assert report["synthetic_nonhuman_sessions"] is True
+          assert report["real_participants_recruited"] == 0
+          assert report["groups_covered"] == [1, 2, 3]
+          assert report["participant_schedules_exercised"] == ["P001", "P002", "P003"]
+          assert report["total_trial_count"] == 36
+          assert report["unique_stimulus_count"] == 36
+          assert report["browser_webcrypto_delivery_hash_check"] is True
+          assert report["actual_browser_playback_to_ended"] is True
+          assert report["exported_records_verified"] is True
+          assert report["condition_mapping_leak_detected"] is False
+          PY
+
+      - name: Record deployment gate evidence
+        shell: bash
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          freeze="freeze-ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          byte_report = json.loads(Path("deployed-listening-gate/deployed-byte-verification.json").read_text())
+          browser_report = json.loads(Path("deployed-listening-gate/deployed-browser-acceptance.json").read_text())
+          record = {
+              "gate": "immutable HTTPS deployment and deployed-browser acceptance",
+              "passed": byte_report["passed"] and browser_report["passed"],
+              "synthetic_nonhuman_sessions": True,
+              "real_participants_recruited": 0,
+              "page_url": os.environ["PAGE_URL"],
+              "study_url": byte_report["base_url"],
+              "workflow_run_id": os.environ["GITHUB_RUN_ID"],
+              "workflow_run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+              "deployment_workflow_revision": os.environ["GITHUB_SHA"],
+              "frozen_artifact_id": 9321126844,
+              "frozen_artifact_sha256": "ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa",
+              "participant_interface_source_revision": "94fb37ab37077346d6de585df5ee1d69ae23d009",
+              "https_files_verified": byte_report["verified_file_count"],
+              "deployed_browser_participants": browser_report["participant_schedules_exercised"],
+              "deployed_browser_trial_count": browser_report["total_trial_count"],
+              "deployed_browser_unique_stimuli": browser_report["unique_stimulus_count"],
+          }
+          Path("deployed-listening-gate/deployment-gate.json").write_text(json.dumps(record, indent=2) + "\n")
+          print(json.dumps(record, indent=2))
+          PY
+
+      - name: Upload deployment evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployed-listening-gate
+          path: deployed-listening-gate
+
+      - name: Report successful deployed gate on PR 24
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          freeze="freeze-ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa"
+          study_url="${PAGE_URL%/}/${freeze}/"
+          body=$(cat <<EOF
+          ### Automated deployment evidence — PASS
+
+          - workflow run: \`${GITHUB_RUN_ID}\` attempt \`${GITHUB_RUN_ATTEMPT}\`
+          - deployment workflow revision: \`${GITHUB_SHA}\`
+          - frozen participant artifact: \`9321126844\`
+          - frozen artifact SHA-256: \`ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa\`
+          - HTTPS study URL: ${study_url}
+          - deployed bytes: **79 / 79 frozen manifest files verified**
+          - deployed browser acceptance: **P001/P002/P003 PASS**, 36 trials / 36 unique stimuli
+          - synthetic non-human sessions only; **0 real participants recruited**
+
+          This proves hosting/delivery only. Participant-ID reservation, cross-device duplicate control, response collection/access controls, governance, merge and recruitment remain separate gates.
+          EOF
+          )
+          payload=$(python -c 'import json,sys; print(json.dumps({"body": sys.stdin.read()}))' <<<"$body")
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/24/comments" \
+            --data "$payload"
