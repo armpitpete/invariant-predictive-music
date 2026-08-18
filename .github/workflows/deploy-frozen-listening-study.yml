@@ -6,9 +6,6 @@ on:
       - agent/matched-listening-pilot
     paths:
       - ".github/workflows/deploy-frozen-listening-study.yml"
-  pull_request:
-    paths:
-      - ".github/workflows/deploy-frozen-listening-study.yml"
   workflow_dispatch:
 
 permissions:
