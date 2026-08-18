@@ -1,6 +1,6 @@
 # Listening Experiment 1 — Participant Interface Contract
 
-**Status:** participant-facing pre-recruitment implementation gate passed at exact head `94fb37ab37077346d6de585df5ee1d69ae23d009`. This does not authorize recruitment by itself.
+**Status:** participant-facing pre-recruitment implementation gate passed at exact implementation head `94fb37ab37077346d6de585df5ee1d69ae23d009`. This does not authorize recruitment by itself.
 
 This is the participant-facing implementation contract for the frozen Counterfactual Episode v2 pilot in `EXPERIMENT.md`.
 
@@ -111,7 +111,7 @@ The interface does not automatically transmit data. At completion, withdrawal or
 
 ## Exact-head pre-recruitment evidence
 
-Participant interface head:
+Participant implementation head:
 
 `94fb37ab37077346d6de585df5ee1d69ae23d009`
 
@@ -145,7 +145,9 @@ The browser exports contain no condition labels or frozen episode seeds, leave r
 
 Independent download inspection reproduced both GitHub artifact ZIP digests and found **0 / 36 WAV hash mismatches, 0 / 36 schedule-provenance mismatches, 0 bundle-manifest mismatches, and 0 condition/seed mapping leaks**. Consent, rating config and both schemas reproduce the frozen participant contract exactly.
 
-At this exact head the ordinary test, render, diagnostic and participant-listening workflows all pass. No actual listener was recruited by any acceptance test.
+At implementation head `94fb37ab…` the ordinary test, render, diagnostic and participant-listening workflows all pass. No actual listener was recruited by any acceptance test.
+
+The current branch may contain documentation-only descendants that record this evidence. They do not supersede the implementation/artifact freeze unless participant code, workflow, trust-anchor files or assets change and the gate is rerun.
 
 ## Recruitment boundary
 
