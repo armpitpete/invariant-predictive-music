@@ -50,8 +50,9 @@ async function loadStudy() {
     return response.json();
   });
   storageKey = [
-    "ipm-listening-v1",
+    "ipm-listening-v2",
     participantId,
+    config.participant_interface_source_revision,
     schedule.source_schedule_sha256,
     config.frozen_listener_artifact.artifact_sha256,
   ].join(":");
