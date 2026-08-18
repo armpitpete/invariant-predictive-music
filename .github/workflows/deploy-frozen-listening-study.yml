@@ -1,0 +1,84 @@
+name: deploy-frozen-listening-study
+
+on:
+  push:
+    branches:
+      - agent/matched-listening-pilot
+    paths:
+      - ".github/workflows/deploy-frozen-listening-study.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "ipm-frozen-listening-pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download exact frozen participant artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl --fail --location \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9321126844/zip" \
+            --output frozen-participant.zip
+          echo "ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa  frozen-participant.zip" | sha256sum --check --strict
+
+      - name: Expand and verify frozen participant bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          freeze="freeze-ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa"
+          mkdir -p "_site/${freeze}"
+          unzip -q frozen-participant.zip -d "_site/${freeze}"
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+
+          root = Path("_site/freeze-ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa")
+          manifest = json.loads((root / "bundle-manifest.json").read_text())
+          expected = manifest["file_sha256"]
+          actual_files = {
+              str(path.relative_to(root)).replace("\\", "/")
+              for path in root.rglob("*")
+              if path.is_file() and path.name != "bundle-manifest.json"
+          }
+          assert actual_files == set(expected), (len(actual_files), len(expected), sorted(actual_files ^ set(expected)))
+          for rel, digest in expected.items():
+              actual = hashlib.sha256((root / rel).read_bytes()).hexdigest()
+              assert actual == digest, (rel, actual, digest)
+          assert manifest["participant_interface_source_revision"] == "94fb37ab37077346d6de585df5ee1d69ae23d009"
+          assert manifest["participant_count"] == 36
+          assert manifest["trial_count_per_participant"] == 12
+          assert manifest["unique_stimulus_count"] == 36
+          print(f"verified {len(expected)} frozen participant files")
+          PY
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload immutable Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy frozen participant site
+        id: deployment
+        uses: actions/deploy-pages@v4
