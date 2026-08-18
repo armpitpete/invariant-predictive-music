@@ -1,61 +1,135 @@
 # Deployment / data-collection gate status — 18 August 2026
 
-## Data-control half: PASS
+## Current authority
 
-Evidence-bearing CI run: `32138030700`
+The original participant implementation/deployment is **rejected for participant use** after an owner real-device QA run exposed a WebKit-style user-activation failure before trial-1 audio began.
 
-Artifact: `data-collection-control-gate` / `9324748181`
+Current authoritative participant interface evidence revision:
 
-Artifact digest: `sha256:a3facb08f4b228f22f46a8c4809f8ad709c615e271e3a7c5ca141e405b2bae1e`
+`e6b07579878350c80fb6548107290898b48501ca`
 
-The gate used frozen participant artifact `9321126844` and frozen participant-browser evidence artifact `9321127149`. It passed central P001–P036 initialization, atomic one-time reservation, P001/P002/P003 intake, exact export/schedule/WAV validation, rejection of a valid-but-unreserved P004 return, content-addressed raw evidence preservation, idempotent re-ingest, and cross-device duplicate ordering in which the earliest real `enrolled_at_utc` remains canonical while all distinct submissions are retained.
+Current authoritative participant bundle:
 
-Study contact / return mailbox: `merrin@merrinworld.uk`.
+- artifact `ipm-participant-web-v3` / `9328095073`
+- artifact SHA-256 `1e512e85fea0e90f1e03791897803a28d264be9a5c3a8569def9324a1d5364c6`
+- participant gate run `32145307925`: **PASS**
+
+Current participant-interface evidence:
+
+- artifact `participant-interface-gate-v3` / `9328095794`
+- artifact SHA-256 `54d802b265c29cca853f894d46be3a3ff2c4502e7b2b8f61ba1961f0f810d501`
+
+All 36 WAVs and all 36 P001–P036 schedules remain byte-identical to the previously frozen scientific stimulus/schedule set. The repair changed participant delivery/provenance only.
+
+## Owner real-device QA finding
+
+An owner-only P001 test on the superseded v1 deployment reached trial 1 but the browser rejected `HTMLMediaElement.play()` with a user-agent/platform permission error before audible experimental playback began.
+
+Hostile review found two participant-layer defects in v1:
+
+1. the click handler awaited WAV fetch/hash work before calling `audio.play()`, allowing Safari/WebKit user activation to expire;
+2. the app logged `main_block_started`, `playback_started` and `enrolled_at_utc` before confirming that media playback had actually begun.
+
+Therefore the owner QA export is **not a real participant record and not a real enrolment under the frozen protocol**. It is not committed as study data.
+
+The repair now:
+
+- fetches and SHA-verifies the frozen WAV before enabling the trial Play button;
+- calls `audio.play()` directly in the subsequent trusted click task with no preceding await;
+- records enrolment/playback start only after the browser reports successful actual playback start;
+- leaves a rejected pre-start playback attempt unenrolled;
+- uses interface-revision-bound browser storage so superseded saved state cannot contaminate a repaired deployment.
+
+The browser acceptance gate removed the prior autoplay-policy bypass and actively rejects any media `play()` call that escapes the trusted click task. P001/P002/P003 then passed all 36 real Chromium playback trials.
+
+## Export provenance repair
+
+The direct-play repair was first frozen as participant v2, but that version was immediately superseded because its returned JSON did not identify the participant-interface revision. Since v1 and v2 intentionally shared the same scientific audio/schedules, intake could not mechanically distinguish a complete old-interface export from a repaired-interface export.
+
+Participant v3 closes that gap:
+
+- `export_version = 2`;
+- every export includes `participant_interface_source_revision`;
+- saved session snapshots include and enforce the same revision;
+- researcher intake rejects export version 1 and any interface revision that does not exactly match the authorised participant bundle.
+
+## Data-control half: PASS on v3
+
+Evidence-bearing CI run: `32147376085`.
+
+Artifact: `data-collection-control-gate-v3` / `9328321516`.
+
+Artifact SHA-256: `5d84067b8a1f756f69c416a63c662674056095214205ff5580b15a96638c1eb9`.
+
+The v3 control gate uses participant artifact `9328095073` and participant-browser evidence `9328095794`. It passes:
+
+- exact P001–P036 initialization;
+- atomic one-time reservation;
+- P001/P002/P003 synthetic intake;
+- exact interface/listener-artifact/schedule/WAV/export validation;
+- central-reservation enforcement;
+- rejection of superseded export version 1 and wrong interface revision;
+- content-addressed raw evidence preservation;
+- idempotent re-ingest;
+- cross-device duplicate ordering in which earliest actual `enrolled_at_utc` remains canonical while every distinct submission is retained.
+
+Study contact / response-return mailbox: `merrin@merrinworld.uk`.
 
 Gmail study label: `IPM Listening Study/Responses`.
 
-Private researcher storage location: Google Drive folder `IPM Listening Study - Private Data`, folder ID `1LJySie2I_gwCaf3UKLQZ--aP8fyO8bfX`. At creation/verification it was `shared: false` with one permission only: owner `merrin@merrinworld.uk`.
+Private researcher storage: Google Drive folder `IPM Listening Study - Private Data`, folder ID `1LJySie2I_gwCaf3UKLQZ--aP8fyO8bfX`; when verified it was unshared with owner `merrin@merrinworld.uk` as the sole permission.
 
-## Hosting half: PASS
+## Hosting half: PASS on v3
 
-Evidence-bearing deployment run: `32136418241`, attempt `2`.
+Evidence-bearing deployment run: `32147297192`.
 
-Deployment workflow revision: `35298fa1d2d6500f0a3819d989736ca65061c163`.
+Deployment workflow revision: `6ca0b5d8d68da349117872eaee58edaebeeb58a1`.
 
-Frozen participant artifact: `9321126844`.
+Authoritative content-addressed HTTPS study URL:
 
-Frozen artifact SHA-256: `ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa`.
+`https://armpitpete.github.io/invariant-predictive-music/freeze-1e512e85fea0e90f1e03791897803a28d264be9a5c3a8569def9324a1d5364c6/`
 
-Immutable content-addressed HTTPS study URL:
+Deployment evidence:
 
-`https://armpitpete.github.io/invariant-predictive-music/freeze-ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa/`
-
-Post-deployment verification fetched the deployed site back over HTTPS and verified **79 / 79 frozen manifest files**, with **0 mismatches**.
-
-Pinned Playwright/Chromium acceptance then ran synthetic non-human P001/P002/P003 against that deployed URL:
-
-- groups 1/2/3 covered;
-- 36 / 36 trials completed through actual browser audio playback to natural `ended`;
-- all 36 unique frozen stimuli covered;
-- browser WebCrypto delivery hash checks passed;
-- three completed exports verified;
-- no condition-mapping leak detected;
+- exact participant artifact `9328095073` retrieved and verified before deployment;
+- **79 / 79** deployed manifest files fetched back over HTTPS and SHA-256 verified, 0 mismatches;
+- synthetic P001/P002/P003 covered counterbalance groups 1/2/3 and all 36 unique stimuli;
+- **36 / 36** deployed browser trials reached natural audio `ended`;
+- browser WebCrypto delivery hashes passed;
+- direct-user-gesture playback gate passed with **no autoplay-policy override**;
+- deployed returned exports were version 2 and carried exact interface revision `e6b07579878350c80fb6548107290898b48501ca`;
+- no condition-mapping leak;
 - 0 real participants recruited.
 
-Deployment evidence artifact: `deployed-listening-gate` / `9325230824`.
+Deployment evidence artifact: `deployed-listening-gate-v3` / `9328666559`.
 
-Artifact digest: `sha256:277872eadbe8cbb498ca861e277359db1e34b20154543a1b94d707b93bc4b360`.
+Artifact SHA-256: `a5ec5b4923958166f5d47bedd352824d98ceb541f8cda6e16e891160b629eae5`.
 
-The workflow's overall Actions conclusion is `failure` only because its final non-scientific PR-comment POST returned HTTP 403 after the evidence artifact had uploaded. All deployment, HTTPS byte-verification, deployed-browser, evidence-recording and artifact-upload steps passed. The equivalent PR evidence comment was recorded separately through the connected GitHub surface as comment `5328478538`.
+## Superseded participant artifacts / URLs
 
-## Governance state
+Do not use for participants:
 
-The operational privacy/invitation template is `researcher/invitation-template.md`. It discloses the pseudonymous export, email return, GitHub Pages IP logging, browser local-storage behavior, legitimate-interests basis, retention and withdrawal route before participation.
+- v1 artifact `9321126844`, SHA `ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa`: rejected after real-device playback/user-activation defect and false pre-play enrolment audit;
+- v2 artifact `9326978102`, SHA `7f17c97d628adb4f4ddc6ef5233b29f6b5fc282d366790593cc6dbb2674b65f2`: direct-play repair passed CI/deployment but superseded because returned exports lacked participant-interface revision provenance.
 
-Current UK regulatory/ethics scope is recorded in `DATA_COLLECTION.md`. The remaining pre-recruitment owner facts are not technical build work: actual controller/sponsorship context, ICO data-protection-fee assessment, applicable independent/institutional ethics review or exemption, and account-security confirmation.
+Only the v3 content-addressed deployment above is authorised for further owner QA.
 
-## Recruitment / merge
+## Remaining gate: same-context owner retest
+
+Automated participant, collection and deployed-browser v3 gates pass. Because the defect was discovered on an actual user device/context that Chromium CI did not reproduce, the technical gate remains conservatively **open** until the repaired v3 URL is checked again on that same class of real device/browser.
+
+Required owner QA evidence:
+
+- trial-1 Play tap audibly starts the excerpt without `NotAllowedError`;
+- if an export is produced, it has `export_version: 2` and participant interface revision `e6b07579878350c80fb6548107290898b48501ca`;
+- `enrolled_at_utc`, first `main_block_started` and first `playback_started` appear only if actual playback begins.
+
+This is owner QA, not recruitment.
+
+## Governance / recruitment / merge
+
+The operational privacy/invitation template is `researcher/invitation-template.md`; UK governance scope is recorded in `DATA_COLLECTION.md`.
+
+Even after the same-context owner retest passes, recruitment remains blocked until the owner closes the factual governance checklist: controller/sponsorship context, ICO data-protection-fee assessment, applicable ethics/institutional requirement or independent status, and mailbox MFA/forwarding/delegation state.
 
 No real participant has been recruited. PR #24 remains draft and unmerged.
-
-**Technical deployment + data-control gate: PASS. Recruitment remains blocked until the remaining owner/legal/ethics checks are closed, after which the project reaches the separate owner decision on actual listener recruitment.**
