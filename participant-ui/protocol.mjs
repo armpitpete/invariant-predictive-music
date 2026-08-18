@@ -1,5 +1,5 @@
-export const SESSION_EXPORT_VERSION = 1;
-export const SESSION_SNAPSHOT_VERSION = 1;
+export const SESSION_EXPORT_VERSION = 2;
+export const SESSION_SNAPSHOT_VERSION = 2;
 
 const RATING_FIELDS = [
   "retrospective_sense_0_100",
@@ -43,6 +43,7 @@ export function rowsToCsv(header, rows) {
 export class StudySession {
   constructor({ config, schedule, now = () => new Date().toISOString() }) {
     assert(config && schedule, "config and schedule are required");
+    assert(typeof config.participant_interface_source_revision === "string" && config.participant_interface_source_revision.length === 40, "participant interface revision is required");
     assert(config.participant_ids.includes(schedule.participant_id), "participant ID is not in frozen enrolment set");
     assert(schedule.trials.length === 12, "frozen schedule must contain exactly 12 trials");
     this.config = config;
@@ -64,6 +65,7 @@ export class StudySession {
 
   static restore({ config, schedule, snapshot, now = () => new Date().toISOString() }) {
     assert(snapshot?.snapshot_version === SESSION_SNAPSHOT_VERSION, "saved study state version is invalid");
+    assert(snapshot.participant_interface_source_revision === config.participant_interface_source_revision, "saved participant interface revision does not match");
     assert(snapshot.participant_id === schedule.participant_id, "saved participant ID does not match schedule");
     assert(snapshot.source_schedule_sha256 === schedule.source_schedule_sha256, "saved schedule provenance does not match");
     assert(sameFrozenArtifact(snapshot.frozen_listener_artifact, config.frozen_listener_artifact), "saved listener artifact does not match");
@@ -223,6 +225,7 @@ export class StudySession {
   snapshotObject() {
     return {
       snapshot_version: SESSION_SNAPSHOT_VERSION,
+      participant_interface_source_revision: this.config.participant_interface_source_revision,
       participant_id: this.participantId,
       frozen_listener_artifact: this.config.frozen_listener_artifact,
       source_schedule_sha256: this.schedule.source_schedule_sha256,
@@ -259,6 +262,7 @@ export class StudySession {
     const participantHeader = this.config.participant_schema_header.split(",");
     return {
       export_version: SESSION_EXPORT_VERSION,
+      participant_interface_source_revision: this.config.participant_interface_source_revision,
       participant_id: this.participantId,
       frozen_listener_artifact: this.config.frozen_listener_artifact,
       source_schedule_sha256: this.schedule.source_schedule_sha256,
