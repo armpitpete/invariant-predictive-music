@@ -1,8 +1,9 @@
 """Corpus-wide diagnostic for Counterfactual Episode v2.
 
 This is experiment-layer tooling only. It applies the frozen v1 qualification
-thresholds to every seed in the frozen 512-seed window using the v2 episode
-constructor. It does not change composer behaviour, thresholds, or selection.
+thresholds to every seed in the frozen 512-seed window using the final v2
+constructor, including the audible target-articulation lock. It does not change
+composer behaviour, thresholds, or selection.
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from ipm.experiment import MatchCriteria
-from ipm.experiment_v2 import _episode_for_seed_v2
+from ipm.experiment_v2_articulation import _episode_for_seed_v2_articulated
 
 START_SEED = 2026081800
 SEARCH_LIMIT = 512
@@ -38,12 +39,13 @@ FAILURE_ORDER = (
     "ipm_integrates_with_actual_suffix",
     "actual_suffix_favours_ipm",
     "non_target_music_identical",
+    "ipm_control_audible_rhythm_identical",
 )
 
 
 def _analyse_seed(seed: int) -> dict:
     criteria = MatchCriteria()
-    _, audit = _episode_for_seed_v2(
+    _, audit = _episode_for_seed_v2_articulated(
         seed=seed,
         bars=BARS,
         target_bar=TARGET_BAR,
@@ -104,7 +106,8 @@ def build_report(*, workers: int = 4) -> dict:
         },
         "criteria": asdict(criteria),
         "control_construction": {
-            "rhythm": "IPM target rhythm held fixed",
+            "structural_rhythm": "IPM target rhythm held fixed",
+            "audible_articulation": "IPM target subdivisions/durations/velocities replayed for control",
             "pitch_search_state": "identical pre-target state",
             "future_state": "IPM target state",
             "future_attachment": "same suffix attached to Predictable, IPM, Control",
