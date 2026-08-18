@@ -79,9 +79,21 @@ function assertNoConditionLeak(text, label) {
   for (const forbidden of FORBIDDEN_LABELS) {
     assert(!lowered.includes(forbidden), `${label} leaks condition label ${forbidden}`);
   }
-  assert(!/\bcondition(?:_name|_label|_key)?\b/i.test(text), `${label} exposes a condition field/key`);
   for (const seed of FROZEN_SEEDS) {
     assert(!text.includes(seed), `${label} leaks frozen episode seed ${seed}`);
+  }
+}
+
+function assertNoMappingKeys(value, label, location = "$") {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => assertNoMappingKeys(item, label, `${location}[${index}]`));
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+  for (const [key, child] of Object.entries(value)) {
+    assert(!/^condition(?:_|$)/i.test(key), `${label} exposes condition mapping key ${location}.${key}`);
+    assert(!/^(?:episode_)?seed(?:_|$)/i.test(key), `${label} exposes episode-seed mapping key ${location}.${key}`);
+    assertNoMappingKeys(child, label, `${location}.${key}`);
   }
 }
 
@@ -137,6 +149,8 @@ async function runSyntheticSession(browser, baseUrl, schedule) {
   assert((await page.locator("audio").count()) === 0, "native audio controls unexpectedly exposed");
 
   const config = readJson(path.join(webRoot, "config.json"));
+  assertNoMappingKeys(config, "participant config");
+  assertNoMappingKeys(schedule, `${schedule.participant_id} schedule`);
   for (const item of config.consent.checks) await page.locator(`#consent-${item.id}`).check();
   await page.locator("#headphones").check();
   await page.locator("#music-years").fill("3.5");
@@ -183,6 +197,7 @@ async function runSyntheticSession(browser, baseUrl, schedule) {
   const exportedText = fs.readFileSync(exportPath, "utf8");
   assertNoConditionLeak(exportedText, `${schedule.participant_id} export`);
   const exported = JSON.parse(exportedText);
+  assertNoMappingKeys(exported, `${schedule.participant_id} export`);
 
   assert(exported.participant_id === schedule.participant_id, "export participant ID drifted");
   assert(exported.terminal_state === "complete", "synthetic session did not export complete state");
@@ -230,6 +245,10 @@ async function runSyntheticSession(browser, baseUrl, schedule) {
 const bundleTextFiles = listTextFiles(webRoot);
 for (const filename of bundleTextFiles) {
   assertNoConditionLeak(fs.readFileSync(filename, "utf8"), path.relative(webRoot, filename));
+}
+assertNoMappingKeys(readJson(path.join(webRoot, "config.json")), "participant config");
+for (const filename of fs.readdirSync(path.join(webRoot, "schedules")).filter((name) => name.endsWith(".json"))) {
+  assertNoMappingKeys(readJson(path.join(webRoot, "schedules", filename)), filename);
 }
 assert(!fs.existsSync(path.join(webRoot, "researcher")), "participant bundle unexpectedly contains researcher directory");
 assert(!fs.existsSync(path.join(webRoot, "condition-key.csv")), "participant bundle unexpectedly contains condition key");
