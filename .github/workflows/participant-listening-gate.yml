@@ -91,6 +91,44 @@ jobs:
               assert record["participant_count"] == 36
               assert record["total_trial_count"] == 432
           PY
+      - name: Install pinned browser acceptance runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run complete three-group browser delivery acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          node participant-ui/browser-acceptance.mjs \
+            participant-web participant-browser-acceptance
+          cp participant-browser-acceptance/participant-browser-acceptance.json \
+            listening-pilot/researcher/participant-browser-acceptance.json
+      - name: Enforce browser delivery acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          record = json.loads(Path("participant-browser-acceptance/participant-browser-acceptance.json").read_text())
+          assert record["passed"] is True
+          assert record["synthetic_nonhuman_sessions"] is True
+          assert record["real_participants_recruited"] == 0
+          assert record["groups_covered"] == [1, 2, 3]
+          assert record["total_trial_count"] == 36
+          assert record["unique_stimulus_count"] == 36
+          assert record["browser_webcrypto_delivery_hash_check"] is True
+          assert record["actual_browser_playback_to_ended"] is True
+          assert record["exported_records_verified"] is True
+          assert record["condition_mapping_leak_detected"] is False
+          assert len(record["sessions"]) == 3
+          assert all(item["passed"] for item in record["sessions"])
+          assert all(item["trial_count"] == 12 for item in record["sessions"])
+          assert all(item["wav_sha256_verified_from_browser_audit"] == 12 for item in record["sessions"])
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: ipm-participant-web-v1
@@ -101,4 +139,6 @@ jobs:
           path: |
             listening-pilot/researcher/participant-interface-dry-run.json
             listening-pilot/researcher/participant-js-dry-run.json
+            listening-pilot/researcher/participant-browser-acceptance.json
+            participant-browser-acceptance/*.json
             participant-ui/frozen-participant-contract.json
