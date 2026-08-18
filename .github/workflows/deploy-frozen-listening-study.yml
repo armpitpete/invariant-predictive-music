@@ -32,7 +32,7 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Download exact frozen participant artifact
+      - name: Download exact repaired participant artifact v2
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -42,22 +42,22 @@ jobs:
             --header "Authorization: Bearer ${GH_TOKEN}" \
             --header "Accept: application/vnd.github+json" \
             --header "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9321126844/zip" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9326978102/zip" \
             --output frozen-participant.zip
-          echo "ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa  frozen-participant.zip" | sha256sum --check --strict
+          echo "7f17c97d628adb4f4ddc6ef5233b29f6b5fc282d366790593cc6dbb2674b65f2  frozen-participant.zip" | sha256sum --check --strict
 
-      - name: Expand and verify frozen participant bytes
+      - name: Expand and verify repaired participant bytes
         shell: bash
         run: |
           set -euo pipefail
-          freeze="freeze-ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa"
+          freeze="freeze-7f17c97d628adb4f4ddc6ef5233b29f6b5fc282d366790593cc6dbb2674b65f2"
           mkdir -p "_site/${freeze}"
           unzip -q frozen-participant.zip -d "_site/${freeze}"
           python - <<'PY'
           import hashlib, json
           from pathlib import Path
 
-          root = Path("_site/freeze-ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa")
+          root = Path("_site/freeze-7f17c97d628adb4f4ddc6ef5233b29f6b5fc282d366790593cc6dbb2674b65f2")
           manifest = json.loads((root / "bundle-manifest.json").read_text())
           expected = manifest["file_sha256"]
           actual_files = {
@@ -69,11 +69,11 @@ jobs:
           for rel, digest in expected.items():
               actual = hashlib.sha256((root / rel).read_bytes()).hexdigest()
               assert actual == digest, (rel, actual, digest)
-          assert manifest["participant_interface_source_revision"] == "94fb37ab37077346d6de585df5ee1d69ae23d009"
+          assert manifest["participant_interface_source_revision"] == "090263f5f8204915fec22528ccbc77d6d1f4d304"
           assert manifest["participant_count"] == 36
           assert manifest["trial_count_per_participant"] == 12
           assert manifest["unique_stimulus_count"] == 36
-          print(f"verified {len(expected)} frozen participant files")
+          print(f"verified {len(expected)} repaired frozen participant files")
           PY
 
       - name: Configure GitHub Pages
@@ -86,11 +86,11 @@ jobs:
         with:
           path: _site
 
-      - name: Deploy frozen participant site
+      - name: Deploy repaired participant site
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Verify deployed HTTPS bytes against frozen manifest
+      - name: Verify deployed HTTPS bytes against repaired frozen manifest
         shell: bash
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
@@ -104,7 +104,7 @@ jobs:
           import urllib.request
           from pathlib import Path
 
-          freeze = "freeze-ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa"
+          freeze = "freeze-7f17c97d628adb4f4ddc6ef5233b29f6b5fc282d366790593cc6dbb2674b65f2"
           root = Path("_site") / freeze
           local_manifest_bytes = (root / "bundle-manifest.json").read_bytes()
           manifest = json.loads(local_manifest_bytes)
@@ -116,7 +116,7 @@ jobs:
               last = None
               for attempt in range(attempts):
                   try:
-                      request = urllib.request.Request(url, headers={"Cache-Control": "no-cache", "User-Agent": "ipm-deployment-gate"})
+                      request = urllib.request.Request(url, headers={"Cache-Control": "no-cache", "User-Agent": "ipm-deployment-gate-v2"})
                       with urllib.request.urlopen(request, timeout=60) as response:
                           if response.status != 200:
                               raise RuntimeError(f"HTTP {response.status}")
@@ -137,17 +137,17 @@ jobs:
                   mismatches.append({"file": rel, "expected": digest, "actual": actual})
               print(f"{index}/{len(expected)} {rel} {actual}")
           report = {
-              "gate": "deployed HTTPS byte verification",
+              "gate": "repaired v2 deployed HTTPS byte verification",
               "passed": not mismatches,
               "base_url": base,
-              "frozen_artifact_id": 9321126844,
-              "frozen_artifact_sha256": "ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa",
-              "participant_interface_source_revision": "94fb37ab37077346d6de585df5ee1d69ae23d009",
+              "frozen_artifact_id": 9326978102,
+              "frozen_artifact_sha256": "7f17c97d628adb4f4ddc6ef5233b29f6b5fc282d366790593cc6dbb2674b65f2",
+              "participant_interface_source_revision": "090263f5f8204915fec22528ccbc77d6d1f4d304",
               "verified_file_count": len(expected),
               "mismatches": mismatches,
           }
-          Path("deployed-listening-gate").mkdir(exist_ok=True)
-          Path("deployed-listening-gate/deployed-byte-verification.json").write_text(json.dumps(report, indent=2) + "\n")
+          Path("deployed-listening-gate-v2").mkdir(exist_ok=True)
+          Path("deployed-listening-gate-v2/deployed-byte-verification.json").write_text(json.dumps(report, indent=2) + "\n")
           assert report["passed"], mismatches
           print(json.dumps(report, indent=2))
           PY
@@ -180,23 +180,23 @@ jobs:
           path.write_text(text)
           PY
 
-      - name: Run synthetic P001/P002/P003 against deployed HTTPS URL
+      - name: Run synthetic P001/P002/P003 against repaired deployed HTTPS URL
         shell: bash
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
           set -euo pipefail
-          freeze="freeze-ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa"
+          freeze="freeze-7f17c97d628adb4f4ddc6ef5233b29f6b5fc282d366790593cc6dbb2674b65f2"
           export IPM_BASE_URL="${PAGE_URL%/}/${freeze}"
           node participant-ui/deployed-browser-acceptance.generated.mjs \
-            "_site/${freeze}" deployed-listening-gate/browser \
-            > deployed-listening-gate/deployed-browser-acceptance.stdout.json
-          cp deployed-listening-gate/browser/participant-browser-acceptance.json \
-            deployed-listening-gate/deployed-browser-acceptance.json
+            "_site/${freeze}" deployed-listening-gate-v2/browser \
+            > deployed-listening-gate-v2/deployed-browser-acceptance.stdout.json
+          cp deployed-listening-gate-v2/browser/participant-browser-acceptance.json \
+            deployed-listening-gate-v2/deployed-browser-acceptance.json
           python - <<'PY'
           import json
           from pathlib import Path
-          report = json.loads(Path("deployed-listening-gate/deployed-browser-acceptance.json").read_text())
+          report = json.loads(Path("deployed-listening-gate-v2/deployed-browser-acceptance.json").read_text())
           assert report["passed"] is True
           assert report["synthetic_nonhuman_sessions"] is True
           assert report["real_participants_recruited"] == 0
@@ -206,25 +206,28 @@ jobs:
           assert report["unique_stimulus_count"] == 36
           assert report["browser_webcrypto_delivery_hash_check"] is True
           assert report["actual_browser_playback_to_ended"] is True
+          assert report["direct_user_gesture_playback_gate"] is True
+          assert report["autoplay_policy_override_used"] is False
           assert report["exported_records_verified"] is True
           assert report["condition_mapping_leak_detected"] is False
+          assert all(item["direct_user_gesture_play_calls"] == 12 for item in report["sessions"])
+          assert all(item["direct_user_gesture_gate_passed"] is True for item in report["sessions"])
           PY
 
-      - name: Record deployment gate evidence
+      - name: Record repaired deployment gate evidence
         shell: bash
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
           set -euo pipefail
-          freeze="freeze-ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa"
           python - <<'PY'
           import json
           import os
           from pathlib import Path
-          byte_report = json.loads(Path("deployed-listening-gate/deployed-byte-verification.json").read_text())
-          browser_report = json.loads(Path("deployed-listening-gate/deployed-browser-acceptance.json").read_text())
+          byte_report = json.loads(Path("deployed-listening-gate-v2/deployed-byte-verification.json").read_text())
+          browser_report = json.loads(Path("deployed-listening-gate-v2/deployed-browser-acceptance.json").read_text())
           record = {
-              "gate": "immutable HTTPS deployment and deployed-browser acceptance",
+              "gate": "repaired v2 immutable HTTPS deployment and deployed-browser acceptance",
               "passed": byte_report["passed"] and browser_report["passed"],
               "synthetic_nonhuman_sessions": True,
               "real_participants_recruited": 0,
@@ -233,46 +236,47 @@ jobs:
               "workflow_run_id": os.environ["GITHUB_RUN_ID"],
               "workflow_run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
               "deployment_workflow_revision": os.environ["GITHUB_SHA"],
-              "frozen_artifact_id": 9321126844,
-              "frozen_artifact_sha256": "ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa",
-              "participant_interface_source_revision": "94fb37ab37077346d6de585df5ee1d69ae23d009",
+              "frozen_artifact_id": 9326978102,
+              "frozen_artifact_sha256": "7f17c97d628adb4f4ddc6ef5233b29f6b5fc282d366790593cc6dbb2674b65f2",
+              "participant_interface_source_revision": "090263f5f8204915fec22528ccbc77d6d1f4d304",
               "https_files_verified": byte_report["verified_file_count"],
               "deployed_browser_participants": browser_report["participant_schedules_exercised"],
               "deployed_browser_trial_count": browser_report["total_trial_count"],
               "deployed_browser_unique_stimuli": browser_report["unique_stimulus_count"],
+              "direct_user_gesture_playback_gate": browser_report["direct_user_gesture_playback_gate"],
+              "autoplay_policy_override_used": browser_report["autoplay_policy_override_used"],
           }
-          Path("deployed-listening-gate/deployment-gate.json").write_text(json.dumps(record, indent=2) + "\n")
+          Path("deployed-listening-gate-v2/deployment-gate.json").write_text(json.dumps(record, indent=2) + "\n")
           print(json.dumps(record, indent=2))
           PY
 
-      - name: Upload deployment evidence
+      - name: Upload repaired deployment evidence
         uses: actions/upload-artifact@v4
         with:
-          name: deployed-listening-gate
-          path: deployed-listening-gate
+          name: deployed-listening-gate-v2
+          path: deployed-listening-gate-v2
 
-      - name: Report successful deployed gate on PR 24
+      - name: Report successful repaired deployed gate on PR 24
+        continue-on-error: true
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
           set -euo pipefail
-          freeze="freeze-ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa"
+          freeze="freeze-7f17c97d628adb4f4ddc6ef5233b29f6b5fc282d366790593cc6dbb2674b65f2"
           study_url="${PAGE_URL%/}/${freeze}/"
           body=$(cat <<EOF
-          ### Automated deployment evidence — PASS
+          ### Automated repaired deployment evidence — PASS
 
-          - workflow run: \`${GITHUB_RUN_ID}\` attempt \`${GITHUB_RUN_ATTEMPT}\`
-          - deployment workflow revision: \`${GITHUB_SHA}\`
-          - frozen participant artifact: \`9321126844\`
-          - frozen artifact SHA-256: \`ab61b0d89db85dc17458c38df518e238748ea8e0f6a15a5448fca7f0a84ae6aa\`
+          - frozen participant artifact v2: \`9326978102\`
+          - frozen artifact SHA-256: \`7f17c97d628adb4f4ddc6ef5233b29f6b5fc282d366790593cc6dbb2674b65f2\`
+          - participant interface evidence head: \`090263f5f8204915fec22528ccbc77d6d1f4d304\`
           - HTTPS study URL: ${study_url}
           - deployed bytes: **79 / 79 frozen manifest files verified**
           - deployed browser acceptance: **P001/P002/P003 PASS**, 36 trials / 36 unique stimuli
+          - direct-user-gesture playback gate: **PASS**, no autoplay-policy override
           - synthetic non-human sessions only; **0 real participants recruited**
-
-          This proves hosting/delivery only. Participant-ID reservation, cross-device duplicate control, response collection/access controls, governance, merge and recruitment remain separate gates.
           EOF
           )
           payload=$(python -c 'import json,sys; print(json.dumps({"body": sys.stdin.read()}))' <<<"$body")
