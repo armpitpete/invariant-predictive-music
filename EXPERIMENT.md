@@ -1,132 +1,247 @@
-# IPM Listening Experiment 1 — mechanism-isolation pilot
+# IPM Listening Experiment 1 — matched counterfactual episode pilot
 
 **Status:** pre-listening gate. No human result exists yet.
 
 ## Question
 
-Does the IPM condition produce better listener responses than both a predictable baseline and a surprise-matched weaker-invariant control?
+Does a surprising Tune event that preserves learned melodic invariants and is better integrated by the music that follows produce greater **retrospective sense** than a similarly surprising, weaker-invariant event in the same musical context?
 
-The central prediction is:
+The causal claim under test is:
 
-> IPM should be preferred to both Predictable and Unstructured Surprise, while IPM and Unstructured Surprise remain similar in perceived surprise and differ in structural coherence / retrospective sense.
+> learned structure → prediction → one controlled violation → invariant continuity → later music makes the violation fit in retrospect
 
-## Why Experiment 1 is Tune-only
+This pilot tests that mechanism before returning to the full Tune/Bass/Rhythm texture.
 
-Bass and Rhythm are disabled through their existing `activity = 0` density governors for this first human experiment.
+## Experimental unit
 
-That is deliberate. Once Tune differs between conditions, independently generated subsidiary events can also differ. If the first experiment retained the full texture, a listener effect could be caused by accompaniment rather than the prediction / invariant / retrospective-integration mechanism.
+The unit is an **8-bar Tune-only episode**.
 
-A later replication should restore the default Tune/Bass/Rhythm texture if the Tune mechanism survives.
+- Bars 1–4: identical learning prefix.
+- Bar 5: the only structural intervention.
+- Bars 6–8: identical suffix.
+
+The three versions of one episode therefore have:
+
+> **same past → same target candidate pool → different target bar → same future**
+
+All non-target Tune events must be identical across the three versions.
+
+Bass and Rhythm are absent from Experiment 1. This is an experimental isolation choice, not a new composer mode.
+
+At 58 BPM, an 8-bar episode is about 33 seconds. Twelve trials therefore contain about 6.6 minutes of audio before ratings.
 
 ## Conditions
 
-Each seed generates the existing three modes from the same high-level configuration:
+At the shared target candidate pool:
 
-1. `predictable`
-2. `ipm`
-3. `unstructured-surprise`
+1. **Predictable** — the engine's existing Expected choice.
+2. **IPM** — the engine's existing IPM choice, and it must actually replace Expected.
+3. **Unstructured Surprise** — a control chosen from the **same candidate pool**.
 
-No listener is shown those labels.
+The control is matched to IPM on target surprise and local base quality, has the same target rhythm pattern as IPM, but must have weaker learned-invariant continuity.
 
-## Stimulus qualification
+Listeners never see these labels.
 
-A seed is admitted only before listening and only from generator-side quantities.
+## Fixed future
 
-Required checks:
+The suffix is generated once from the Predictable reference trajectory and copied verbatim into all three versions.
 
-- identical seed, tempo, duration, tonic, candidate-pool size and lane controls;
-- all engine validation checks pass;
-- Predictable selects Expected throughout;
-- Bass and Rhythm are silent in all three conditions;
-- IPM contains at least three non-Expected bars;
-- IPM and Unstructured Surprise are close in modelled surprise burden;
-- Unstructured Surprise is lower in invariant similarity on most IPM-surprise bars and lower on average;
-- Tune event counts remain close enough to avoid a crude density confound.
+This is deliberate. If each target event generated its own future, the conditions would immediately become different musical trajectories and the causal comparison would be lost.
 
-Seeds that miss the matching contract are rejected rather than repaired by ear.
+The experiment therefore asks how the **same later music** changes the interpretation of different target events.
+
+## Future integration
+
+Experiment 1 adds a researcher-side `future_integration` measure.
+
+It is computed only after the actual suffix exists. It compares the target's melodic interval structure with interval patterns in the suffix and includes the immediate target→suffix pitch connection.
+
+This is distinct from the engine's current prospective `retrospective_coherence` / `retrospective_necessity` selection fields, which are available before later bars exist.
+
+`future_integration` is a stimulus-construction measure, not evidence that a human listener experienced retrospective coherence. The human measure below is the empirical test.
+
+## Pre-listening qualification
+
+A seed is admitted only if all of the following are true before any listener data exists:
+
+- one shared target candidate pool generated from the identical prefix state;
+- the current IPM selector chooses a non-Expected target;
+- the IPM target is sufficiently surprising;
+- a control exists in that same pool;
+- IPM and control use the same target rhythm pattern;
+- IPM and control are close in modelled target surprise;
+- IPM and control are close in local base musical score;
+- control has weaker learned-invariant similarity;
+- IPM reaches a minimum actual-suffix integration score;
+- the identical suffix integrates IPM more strongly than control;
+- generated non-target events are verified identical across all three variants.
+
+Seeds are rejected rather than repaired by ear.
 
 Human ratings are never used to decide which stimuli enter the experiment.
 
-## Pilot set
+## Selection-funnel requirement
+
+Every seed examined must remain in the research record, whether accepted or rejected.
+
+The frozen corpus records:
+
+- starting seed;
+- search limit;
+- final seed examined;
+- every attempted seed;
+- every qualification check and metric;
+- qualified seed list;
+- exact source revision.
+
+This is necessary to show how selective the stimulus filter was.
+
+## Pilot corpus
 
 Default build:
 
-- 12 qualified seed sets;
-- 16 bars per stimulus;
-- 58 BPM unless the production configuration changes before the experiment is frozen;
-- three counterbalancing groups;
-- each participant hears exactly one condition for each seed;
-- across the three groups, every seed is heard once in every condition;
-- trial order is deterministically shuffled inside each group;
-- condition filenames are opaque hashes.
+- 12 qualified episode sets;
+- 8 bars per stimulus;
+- target = bar 5;
+- 58 BPM;
+- three condition-assignment groups;
+- 36 planned complete participants;
+- one condition per episode seed per participant;
+- across each set of three groups, every seed appears once in every condition;
+- each participant receives an independently shuffled trial order;
+- participant-facing filenames are opaque hashes.
 
-At 16 bars and 58 BPM, each stimulus is about 66 seconds, so 12 listening trials are about 13 minutes of audio before ratings.
+The 36-person figure is a pilot recruitment target, not a powered confirmatory sample size.
 
 ## Human measures
 
-After each stimulus, collect 0–100 ratings for:
+After each episode, collect 0–100 ratings for:
 
-- **Liking** — primary outcome;
-- coherence;
-- perceived surprise;
-- retrospective sense: how much unusual moments came to make sense as the music continued;
-- desire to hear again.
+1. **Retrospective sense — primary mechanism outcome**  
+   How much did unusual moments come to make sense as the music continued?
+2. perceived surprise;
+3. coherence;
+4. liking;
+5. desire to hear again.
 
-Record musical training / music-making experience as participant metadata, but do not use it as an exclusion criterion.
+Record separately:
 
-## Primary tests
+- years of music-making experience;
+- years of formal musical training.
 
-Planned contrasts on **Liking**:
+These variables describe the sample; they are not exclusion criteria.
 
-1. IPM > Unstructured Surprise.
-2. IPM > Predictable.
+## Primary test
 
-The first contrast is the more diagnostic test of the proposed mechanism.
+Primary planned contrast:
+
+> **IPM > Unstructured Surprise on retrospective sense**
+
+This is the most direct human test of the proposed mechanism.
+
+Secondary contrasts include:
+
+- IPM > Unstructured Surprise on coherence;
+- IPM > Unstructured Surprise on liking;
+- IPM > Predictable on liking;
+- IPM > Predictable on retrospective sense.
 
 ## Manipulation checks
 
-The experiment is not interpretable as an IPM test unless:
+A valid manipulation requires:
 
-- perceived surprise is approximately matched between IPM and Unstructured Surprise;
-- both are more surprising than Predictable to a useful degree;
-- IPM scores higher than Unstructured Surprise on coherence and retrospective sense.
+- IPM and Unstructured Surprise to be approximately matched in **listener-rated surprise**;
+- both to be more surprising than Predictable to a useful degree.
 
-If listener-rated surprise is not matched, treat the experiment as a failed manipulation rather than evidence for or against IPM.
+If listener-rated surprise is not matched, report a failed surprise manipulation.
+
+Do **not** classify absence of an IPM advantage in coherence or retrospective sense as a manipulation failure. Those are predicted outcomes and null or contrary results count against the theory.
 
 ## Analysis
 
-Use a mixed-effects model rather than collapsing each participant to one mean:
+Use trial-level mixed-effects models.
 
+Primary model:
+
+- outcome: retrospective sense;
 - fixed effect: condition;
-- random intercepts: participant and stimulus seed;
-- add participant condition slopes if the data support a stable fit;
-- report effect estimates and confidence intervals, not only p-values.
+- random intercepts: participant and episode seed;
+- participant condition slopes if they fit stably;
+- include trial position as a nuisance covariate if needed.
 
-The pilot is for effect-size / variance estimation and failure discovery. A default initial recruitment target is **36 complete participants** (12 per counterbalance group). Do not treat that number as a powered confirmatory sample.
+Report:
 
-A confirmatory sample size must be set from the pilot effect and variance before the confirmatory run starts.
+- condition effect estimates;
+- confidence intervals;
+- model diagnostics;
+- all exclusions;
+- manipulation-check results.
+
+Do not reduce each participant to one grand mean before analysis.
+
+## Confirmatory study
+
+The pilot is for:
+
+- mechanism failure discovery;
+- effect-size estimation;
+- variance estimation;
+- playback/procedure validation.
+
+A confirmatory sample size and analysis must be frozen from the pilot evidence **before** the confirmatory run begins.
+
+Pilot listeners must not be silently folded into the confirmatory dataset.
 
 ## Exclusions fixed before data collection
 
-Exclude only for predeclared procedural reasons such as:
+Exclude only for predeclared procedural reasons:
 
 - duplicate participation;
 - failure to complete the main listening block;
 - confirmed technical playback failure;
 - unusable response record.
 
-Do not exclude people because their ratings are flat, surprising, negative, or contrary to the theory.
+Do not exclude participants for flat ratings, negative ratings, unexpected ratings, low musical experience, or disagreement with IPM.
+
+The participant metadata schema contains explicit fields for these decisions.
 
 ## Audio-render gate
 
-MIDI is the reproducible composition object, not the final human stimulus.
+MIDI remains the deterministic composition object. Human stimuli are frozen audio.
 
-Before recruitment, render every admitted MIDI through one fixed synthesizer / soundfont and one fixed sample rate, then loudness-normalise consistently. The rendered audio files, renderer version, soundfont identity and hashes must be frozen with the experiment manifest.
+Before recruitment:
 
-No listening result should be interpreted if participants heard materially different renderers or playback assets.
+- render every admitted MIDI through one fixed synthesizer and soundfont;
+- use 44.1 kHz stereo 16-bit PCM WAV;
+- apply the same loudness-normalisation procedure;
+- record FluidSynth and FFmpeg versions;
+- hash the soundfont;
+- hash every MIDI and WAV;
+- freeze the exact source revision.
+
+No listening result is interpretable if materially different assets are substituted during data collection.
+
+## Blinding and schedules
+
+The researcher corpus contains:
+
+- condition key;
+- qualification audit trail;
+- participant→counterbalance-group assignments.
+
+Participant-facing schedule files contain only:
+
+- trial number;
+- opaque stimulus ID.
+
+Condition assignment is balanced by three groups, but trial order is independently shuffled for every participant so fatigue/order cannot collapse onto three fixed sequences.
 
 ## Stop conditions
 
 Do not change composer weights after listening begins.
 
-If the matching contract cannot produce enough qualifying seeds, fix the experimental control or relax only a scientifically unjustified threshold **before** collecting listeners. Do not tune the composer against listener responses from this experiment.
+Do not relax stimulus criteria after seeing listener responses.
+
+If the default matching gate cannot produce enough episodes, inspect which **experimental** criterion fails. Change a threshold only with a written scientific reason before recruitment.
+
+Do not add Tune/Bass/Rhythm composer features merely to make the experiment pass.
