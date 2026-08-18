@@ -180,25 +180,36 @@ The 36-person figure is a pilot design choice, not a powered confirmatory sample
 
 ## Frozen rendered-pilot provenance
 
-The authoritative listener stimulus artifact is the exact-head articulated-v2 render:
+The earlier whole-episode render artifact `9318246875` is **rejected for listener use**. Hostile review found that independently rendering and normalising the three complete condition files allowed condition-dependent audio differences before the target and after the nominal suffix boundary even though the underlying MIDI events were identical there.
 
-- stimulus-generator revision: `184105d341366d91919388e298105e4eeb4c13ac`;
-- render workflow run: `32120102219`;
-- artifact ID: `9318246875`;
-- artifact name: `ipm-listening-pilot-v2`;
-- artifact SHA-256: `c6246d50f63e178e7eca280d746307a0c563d34c86947231d941af83220f805e`.
+The authoritative listener stimulus artifact must therefore be the `render-listening-pilot` artifact produced from the **exact protocol-lock commit containing this PCM-isolation repair**. Before recruitment, the PR record must freeze that exact commit, workflow run, artifact ID and artifact SHA-256. No earlier WAV artifact is eligible for listener playback.
 
-At that revision the public `ipm-experiment` entry point resolves to `ipm.experiment_v2_articulation:main`, so the documented CLI and the render workflow use the same final experiment constructor.
+The repaired audio construction is experiment/render-layer only:
 
-A bytewise comparison against the earlier articulated-v2 artifact `9317664611` found every participant stimulus MIDI and WAV to be identical. Only provenance files (`manifest.json` and `researcher/audio-renderer.txt`) differ because they record a different source revision. Artifact `9318246875` therefore supersedes the earlier provenance freeze **without changing any listener stimulus**.
+- the original full-episode MIDI remains the deterministic composition object;
+- the shared prefix is rendered once and its PCM is reused unchanged across Predictable, IPM and Control;
+- each target bar is rendered separately for its condition;
+- the shared suffix is rendered once from a fresh synthesizer state and its PCM is reused unchanged across all three conditions;
+- FluidSynth chorus and reverb are disabled for the component renders;
+- target release/effect state is therefore unable to cross into the common suffix;
+- one common peak gain is calculated per three-condition seed triplet and applied to every source segment before assembly;
+- there is no independent condition-by-condition normalisation;
+- a machine gate asserts sample-for-sample PCM identity from episode start to target start and from suffix start to common end for all 12 seeds;
+- the machine gate is persisted as `researcher/audio-isolation-gate.json` in the artifact.
 
-The full frozen 512-seed diagnostic at the same revision is:
+The full-episode MIDI, qualified seeds, qualification audits and frozen thresholds must remain byte-for-byte or value-for-value unchanged by this downstream audio repair.
 
+The construction-level frozen 512-seed diagnostic remains the already accepted record:
+
+- construction revision: `184105d341366d91919388e298105e4eeb4c13ac`;
 - workflow run: `32120102069`;
 - artifact ID: `9318415552`;
-- artifact SHA-256: `e0f6bac20c3874ccbaed9b5c5f754111b61891552e69cc6461f5af5c685c0a8d`.
+- artifact SHA-256: `e0f6bac20c3874ccbaed9b5c5f754111b61891552e69cc6461f5af5c685c0a8d`;
+- result: **213 / 512 qualify**.
 
-The protocol lock is the exact Git commit containing this document after hostile pre-registration review. Protocol-only commits after the stimulus-generator revision do not authorize stimulus regeneration or substitution.
+That corpus result is not reopened by a downstream PCM-render correction unless the MIDI construction, selection criteria, frozen seeds or qualification logic changes.
+
+The protocol lock is the exact Git commit containing this document after hostile pre-listening review. A later commit does not authorize stimulus regeneration or substitution unless the complete artifact and hostile-review gates are rerun and explicitly frozen again.
 
 ## Selection-funnel record
 
@@ -381,16 +392,22 @@ The final exclusion table must list every enrolled `P001`–`P036`, usable/exclu
 
 ## Audio-render gate
 
-MIDI remains the deterministic composition object. Human stimuli are the frozen audio from artifact `9318246875`.
+MIDI remains the deterministic composition object. Human stimuli are the frozen PCM-isolated audio artifact produced from the exact protocol-lock commit and recorded in the PR before recruitment.
 
-The frozen render uses:
+The frozen render must use:
 
 - 44.1 kHz stereo 16-bit PCM WAV;
 - one fixed FluidSynth/FluidR3_GM rendering path;
-- the same loudness-normalisation procedure for every stimulus;
-- recorded FluidSynth and FFmpeg versions;
+- FluidSynth chorus and reverb disabled for the experiment component renders;
+- one rendered shared prefix reused as identical PCM across all three conditions;
+- one condition-specific target render per condition;
+- one fresh-state rendered shared suffix reused as identical PCM across all three conditions;
+- one common triplet peak gain targeting `-1.5 dBFS`, never independent condition-level normalisation;
 - a hashed soundfont;
-- a SHA-256 for every MIDI and WAV.
+- a SHA-256 for every full MIDI, final WAV and component MIDI;
+- `researcher/audio-isolation-gate.json` proving sample-for-sample equality for episode start→target start and suffix start→common end in every seed.
+
+The machine gate must fail the workflow if either shared PCM region differs between conditions or if IPM and Control target audio are identical.
 
 No listening result is interpretable if a materially different asset is substituted during data collection. A stimulus hash mismatch is a stop condition, not permission to rerender silently.
 
