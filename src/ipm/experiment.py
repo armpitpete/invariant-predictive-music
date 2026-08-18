@@ -124,8 +124,6 @@ def _realise_candidate(
     beats_per_bar: int,
 ) -> tuple[NoteEvent, ...]:
     cells = tuple((cell.kind, cell.duration) for cell in candidate.pattern.cells)
-    # Each bar starts from its own deterministic micro-rhythm seed. This keeps
-    # the copied prefix/suffix independent of which target candidate is rendered.
     micro_rng = SeededRandom(seed ^ 0xA21000 ^ (bar * 0x9E3779B1))
     events, _ = realise_micro_bar(
         cells,
@@ -210,11 +208,7 @@ def future_integration(
     target: WholeBarCandidate,
     suffix: Sequence[WholeBarCandidate],
 ) -> float:
-    """Measure target structure against the music that actually follows it.
-
-    Unlike the engine's prospective selection score, this quantity cannot be
-    computed until an actual suffix exists.
-    """
+    """Measure target structure against the music that actually follows it."""
 
     if not suffix:
         return 0.0
@@ -247,23 +241,43 @@ def _candidate_digest(scored: Sequence[PredictiveBarScore]) -> str:
     ).hexdigest()
 
 
-def _choose_control(
+def _locally_matched_controls(
     *,
     ipm: PredictiveBarScore,
     expected: PredictiveBarScore,
     scored: Sequence[PredictiveBarScore],
-    suffix: Sequence[WholeBarCandidate],
     criteria: MatchCriteria,
-) -> tuple[PredictiveBarScore | None, dict[str, Any]]:
-    ipm_future = future_integration(ipm.candidate, suffix)
-    candidates: list[tuple[tuple[float, ...], PredictiveBarScore, dict[str, float]]] = []
+) -> tuple[PredictiveBarScore, ...]:
     ipm_pattern = _candidate_pattern_signature(ipm.candidate)
-
+    result: list[PredictiveBarScore] = []
     for control in scored:
         if control is expected or control is ipm:
             continue
         if _candidate_pattern_signature(control.candidate) != ipm_pattern:
             continue
+        if abs(control.surprise_bits - ipm.surprise_bits) > criteria.max_target_surprise_error_bits:
+            continue
+        if ipm.invariant_similarity - control.invariant_similarity < criteria.min_local_invariant_gap:
+            continue
+        if abs(ipm.base.total - control.base.total) > criteria.max_target_base_score_delta:
+            continue
+        result.append(control)
+    return tuple(result)
+
+
+def _choose_control(
+    *,
+    ipm: PredictiveBarScore,
+    controls: Sequence[PredictiveBarScore],
+    suffix: Sequence[WholeBarCandidate],
+) -> tuple[PredictiveBarScore, dict[str, float]]:
+    """Choose the locally matched control least integrated by the fixed suffix."""
+
+    if not controls:
+        raise ValueError("at least one locally matched control is required")
+    ipm_future = future_integration(ipm.candidate, suffix)
+    candidates: list[tuple[tuple[float, ...], PredictiveBarScore, dict[str, float]]] = []
+    for control in controls:
         surprise_error = abs(control.surprise_bits - ipm.surprise_bits)
         invariant_gap = ipm.invariant_similarity - control.invariant_similarity
         base_delta = abs(ipm.base.total - control.base.total)
@@ -277,31 +291,15 @@ def _choose_control(
             "control_future_integration": control_future,
             "future_integration_gap": future_gap,
         }
-        if (
-            surprise_error <= criteria.max_target_surprise_error_bits
-            and invariant_gap >= criteria.min_local_invariant_gap
-            and base_delta <= criteria.max_target_base_score_delta
-            and ipm_future >= criteria.min_ipm_future_integration
-            and future_gap >= criteria.min_future_integration_gap
-        ):
-            rank = (
-                future_gap,
-                invariant_gap,
-                -surprise_error,
-                -base_delta,
-                control.base.total,
-            )
-            candidates.append((rank, control, metrics))
+        rank = (
+            future_gap,
+            invariant_gap,
+            -surprise_error,
+            -base_delta,
+            control.base.total,
+        )
+        candidates.append((rank, control, metrics))
 
-    if not candidates:
-        return None, {
-            "target_surprise_error_bits": None,
-            "local_invariant_gap": None,
-            "target_base_score_delta": None,
-            "ipm_future_integration": ipm_future,
-            "control_future_integration": None,
-            "future_integration_gap": None,
-        }
     _, control, metrics = max(candidates, key=lambda item: item[0])
     return control, metrics
 
@@ -319,13 +317,11 @@ def _episode_for_seed(
 
     rng = SeededRandom(config.seed ^ 0xA20)
     state = MusicalState()
-    prefix: list[WholeBarCandidate] = []
     prefix_events: list[NoteEvent] = []
 
     for bar in range(target_bar):
         scored = _pool(rng=rng, state=state, config=config, bar=bar)
         selected = _expected(scored)
-        prefix.append(selected.candidate)
         prefix_events.extend(
             _realise_candidate(
                 selected.candidate,
@@ -344,9 +340,38 @@ def _episode_for_seed(
         target_scored,
         mode=ExperimentMode.IPM,
     )
+    ipm_nonexpected = ipm is not expected and ipm_branch != "expected"
+    ipm_surprising = ipm.surprise_bits >= criteria.min_ipm_surprise_bits
+    local_controls = _locally_matched_controls(
+        ipm=ipm,
+        expected=expected,
+        scored=target_scored,
+        criteria=criteria,
+    )
 
-    # The suffix is generated once from the Predictable reference trajectory.
-    # It is then copied verbatim into all three listener variants.
+    local_checks = {
+        "shared_target_candidate_pool": True,
+        "ipm_replaces_expected": ipm_nonexpected,
+        "ipm_is_sufficiently_surprising": ipm_surprising,
+        "matched_control_exists": bool(local_controls),
+        "ipm_control_target_rhythm_identical": bool(local_controls),
+        "target_surprise_matched": bool(local_controls),
+        "control_has_weaker_local_invariants": bool(local_controls),
+        "target_base_quality_matched": bool(local_controls),
+    }
+    local_metrics: dict[str, Any] = {
+        "candidate_pool_sha256": _candidate_digest(target_scored),
+        "target_bar": target_bar,
+        "ipm_branch": ipm_branch,
+        "expected_surprise_bits": expected.surprise_bits,
+        "ipm_surprise_bits": ipm.surprise_bits,
+        "expected_invariant_similarity": expected.invariant_similarity,
+        "ipm_invariant_similarity": ipm.invariant_similarity,
+        "locally_matched_control_count": len(local_controls),
+    }
+    if not all(local_checks.values()):
+        return None, EpisodeAudit(seed, target_bar, False, local_checks, local_metrics)
+
     suffix_state = advance_state(state, expected.candidate)
     suffix: list[WholeBarCandidate] = []
     suffix_events: list[NoteEvent] = []
@@ -368,75 +393,28 @@ def _episode_for_seed(
 
     control, pair_metrics = _choose_control(
         ipm=ipm,
-        expected=expected,
-        scored=target_scored,
+        controls=local_controls,
         suffix=suffix,
-        criteria=criteria,
     )
-
-    ipm_nonexpected = ipm is not expected and ipm_branch != "expected"
-    ipm_surprising = ipm.surprise_bits >= criteria.min_ipm_surprise_bits
-    control_found = control is not None
-    same_target_pattern = (
-        control is not None
-        and _candidate_pattern_signature(ipm.candidate)
-        == _candidate_pattern_signature(control.candidate)
-    )
-
     checks = {
-        "shared_target_candidate_pool": True,
-        "ipm_replaces_expected": ipm_nonexpected,
-        "ipm_is_sufficiently_surprising": ipm_surprising,
-        "matched_control_exists": control_found,
-        "ipm_control_target_rhythm_identical": same_target_pattern,
-        "target_surprise_matched": (
-            control_found
-            and pair_metrics["target_surprise_error_bits"]
-            <= criteria.max_target_surprise_error_bits
-        ),
-        "control_has_weaker_local_invariants": (
-            control_found
-            and pair_metrics["local_invariant_gap"] >= criteria.min_local_invariant_gap
-        ),
-        "target_base_quality_matched": (
-            control_found
-            and pair_metrics["target_base_score_delta"]
-            <= criteria.max_target_base_score_delta
-        ),
+        **local_checks,
         "ipm_integrates_with_actual_suffix": (
-            control_found
-            and pair_metrics["ipm_future_integration"]
+            pair_metrics["ipm_future_integration"]
             >= criteria.min_ipm_future_integration
         ),
         "actual_suffix_favours_ipm": (
-            control_found
-            and pair_metrics["future_integration_gap"]
+            pair_metrics["future_integration_gap"]
             >= criteria.min_future_integration_gap
         ),
     }
-
-    metrics: dict[str, Any] = {
-        "candidate_pool_sha256": _candidate_digest(target_scored),
-        "target_bar": target_bar,
-        "ipm_branch": ipm_branch,
-        "expected_surprise_bits": expected.surprise_bits,
-        "ipm_surprise_bits": ipm.surprise_bits,
-        "expected_invariant_similarity": expected.invariant_similarity,
-        "ipm_invariant_similarity": ipm.invariant_similarity,
+    metrics = {
+        **local_metrics,
         **pair_metrics,
+        "control_surprise_bits": control.surprise_bits,
+        "control_invariant_similarity": control.invariant_similarity,
     }
-    if control is not None:
-        metrics.update(
-            {
-                "control_surprise_bits": control.surprise_bits,
-                "control_invariant_similarity": control.invariant_similarity,
-            }
-        )
-
-    passed = all(checks.values())
-    audit = EpisodeAudit(seed, target_bar, passed, checks, metrics)
-    if not passed or control is None:
-        return None, audit
+    if not all(checks.values()):
+        return None, EpisodeAudit(seed, target_bar, False, checks, metrics)
 
     target_phase = _phase_for_bar(target_bar, bars)
     common_non_target = tuple(prefix_events + suffix_events)
@@ -462,19 +440,26 @@ def _episode_for_seed(
             future_integration=future_integration(target_score.candidate, suffix),
         )
 
-    # Verify the causal object itself, rather than trusting construction intent.
     start = Fraction(target_bar * config.beats_per_bar)
     end = start + config.beats_per_bar
 
     def outside_target(voice: Voice) -> tuple[NoteEvent, ...]:
-        return tuple(event for event in voice.events if event.onset < start or event.onset >= end)
+        return tuple(
+            event for event in voice.events
+            if event.onset < start or event.onset >= end
+        )
 
     outside = {outside_target(variant.tune) for variant in variants.values()}
     if len(outside) != 1:
         failed_checks = dict(checks)
         failed_checks["non_target_music_identical"] = False
-        failed = EpisodeAudit(seed, target_bar, False, failed_checks, metrics)
-        return None, failed
+        return None, EpisodeAudit(
+            seed,
+            target_bar,
+            False,
+            failed_checks,
+            metrics,
+        )
 
     final_checks = dict(checks)
     final_checks["non_target_music_identical"] = True
@@ -538,8 +523,6 @@ def _condition_assignments(
     *,
     blind_seed: int,
 ) -> dict[int, list[dict[str, Any]]]:
-    """Create three condition-assignment groups, one condition per seed."""
-
     modes = (
         ExperimentMode.PREDICTABLE,
         ExperimentMode.IPM,
@@ -567,8 +550,6 @@ def _participant_schedules(
     blind_seed: int,
     participant_count: int,
 ) -> tuple[dict[str, Any], ...]:
-    """Balance conditions by group but give every participant a unique order."""
-
     if participant_count <= 0:
         raise ValueError("participant_count must be positive")
     groups = _condition_assignments(qualified, blind_seed=blind_seed)
@@ -630,8 +611,6 @@ def write_listening_pilot(
     source_revision: str = "unknown",
     criteria: MatchCriteria | None = None,
 ) -> Path:
-    """Build the blinded counterfactual MIDI set and complete research audit trail."""
-
     criteria = criteria or MatchCriteria()
     run = qualify_episodes(
         start_seed=start_seed,
