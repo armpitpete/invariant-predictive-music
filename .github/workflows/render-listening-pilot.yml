@@ -7,6 +7,7 @@ on:
       - "EXPERIMENT.md"
       - "src/ipm/experiment.py"
       - "src/ipm/experiment_v2.py"
+      - "src/ipm/experiment_v2_articulation.py"
       - "src/ipm/engine.py"
       - "src/ipm/micro_rhythm.py"
       - "src/ipm/midi.py"
@@ -34,7 +35,7 @@ jobs:
         run: |
           set -euo pipefail
           revision="$(git rev-parse HEAD)"
-          python -m ipm.experiment_v2 \
+          python -m ipm.experiment_v2_articulation \
             --output listening-pilot \
             --source-revision "$revision"
       - name: Install fixed audio renderer
