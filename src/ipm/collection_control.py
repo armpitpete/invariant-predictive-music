@@ -152,8 +152,10 @@ def validate_export(bundle_dir: Path, export: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(pid, str) or not schedule_path.exists():
         raise ValueError("export participant_id is not a frozen P001-P036 ID")
     schedule = json.loads(schedule_path.read_text())
-    if export.get("export_version") != 1:
+    if export.get("export_version") != 2:
         raise ValueError("unexpected export version")
+    if export.get("participant_interface_source_revision") != config["participant_interface_source_revision"]:
+        raise ValueError("participant interface revision mismatch")
     if export.get("frozen_listener_artifact") != config["frozen_listener_artifact"]:
         raise ValueError("frozen listener artifact identity mismatch")
     if export.get("source_schedule_sha256") != schedule["source_schedule_sha256"]:
@@ -227,7 +229,13 @@ def validate_export(bundle_dir: Path, export: dict[str, Any]) -> dict[str, Any]:
             raise ValueError("complete export must contain one enrolled 12-trial main block")
         if participant.get("completed_main_block") != "true" or participant.get("playback_failure") != "false":
             raise ValueError("complete participant flags are inconsistent")
-    return {"participant_id": pid, "schedule": schedule, "terminal_state": terminal, "enrolled_at_utc": enrolled}
+    return {
+        "participant_id": pid,
+        "participant_interface_source_revision": export["participant_interface_source_revision"],
+        "schedule": schedule,
+        "terminal_state": terminal,
+        "enrolled_at_utc": enrolled,
+    }
 
 
 def _refresh_participant(db: sqlite3.Connection, participant_id: str) -> None:
