@@ -5,6 +5,7 @@ const app = $("#app");
 let config;
 let schedule;
 let session;
+let storageKey;
 let audio = null;
 let objectUrl = null;
 let maxObservedTime = 0;
@@ -22,7 +23,20 @@ async function sha256Hex(buffer) {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+function assertPersistentStorage() {
+  const key = "ipm-listening-storage-check";
+  localStorage.setItem(key, "ok");
+  if (localStorage.getItem(key) !== "ok") throw new Error("Browser storage is unavailable.");
+  localStorage.removeItem(key);
+}
+
+function persistSession() {
+  localStorage.setItem(storageKey, JSON.stringify(session.snapshotObject()));
+}
+
 async function loadStudy() {
+  assertPersistentStorage();
+  if (!globalThis.crypto?.subtle) throw new Error("This study requires a secure HTTPS connection for audio integrity checking.");
   const participantId = new URLSearchParams(location.search).get("participant");
   if (!participantId || !/^P\d{3}$/.test(participantId)) throw new Error("Open the study using the participant-specific link supplied by the researcher.");
   config = await fetch("./config.json", { cache: "no-store" }).then((response) => {
@@ -34,7 +48,57 @@ async function loadStudy() {
     if (!response.ok) throw new Error("Could not load the frozen participant schedule.");
     return response.json();
   });
+  storageKey = [
+    "ipm-listening-v1",
+    participantId,
+    schedule.source_schedule_sha256,
+    config.frozen_listener_artifact.artifact_sha256,
+  ].join(":");
+  const saved = localStorage.getItem(storageKey);
+  if (saved) {
+    session = StudySession.restore({ config, schedule, snapshot: JSON.parse(saved) });
+    resumeSavedSession();
+    return;
+  }
   session = new StudySession({ config, schedule });
+  renderConsent();
+}
+
+function resumeSavedSession() {
+  if (session.phase === "playing") {
+    session.failPlayback("The study page was reloaded while an excerpt was playing.");
+    persistSession();
+    renderTerminal("A technical playback failure was recorded because the page reloaded during an excerpt. Do not restart or replay the study.");
+    return;
+  }
+  if (session.phase === "rating") {
+    renderRestoredRating();
+    return;
+  }
+  if (session.phase === "audio-check") {
+    renderAudioCheck();
+    return;
+  }
+  if (session.phase === "ready") {
+    renderReadyToBegin();
+    return;
+  }
+  if (session.phase === "trial-ready") {
+    renderTrial();
+    return;
+  }
+  if (session.phase === "complete") {
+    renderTerminal("Thank you. The listening block is complete.");
+    return;
+  }
+  if (session.phase === "technical-failure") {
+    renderTerminal("A technical playback failure was recorded. Do not restart or replay the study.");
+    return;
+  }
+  if (session.phase === "withdrawn") {
+    renderTerminal("You stopped the study. No more excerpts will be played.");
+    return;
+  }
   renderConsent();
 }
 
@@ -65,6 +129,7 @@ function renderConsent() {
         musicMakingYears: $("#music-years").value,
         formalTrainingYears: $("#training-years").value,
       });
+      persistSession();
       renderAudioCheck();
     } catch (error) {
       const node = $("#consent-error");
@@ -82,8 +147,7 @@ function renderAudioCheck() {
       <p>Keep your headphones on. Play the short check tone and set your device to a comfortable listening level. The tone is not part of the experiment.</p>
       <div class="actions"><button id="play-check">Play check tone</button></div>
       <label class="confirm"><input id="comfortable" type="checkbox" disabled> I heard the check tone clearly and the volume is comfortable.</label>
-      <div class="actions"><button id="begin" disabled>Begin 12-trial listening block</button></div>
-      <p class="muted">Once the listening block begins, each excerpt can be played once only.</p>
+      <div class="actions"><button id="audio-check-complete" disabled>Confirm volume</button></div>
     </section>`;
   $("#play-check").addEventListener("click", async () => {
     const context = new AudioContext();
@@ -98,10 +162,25 @@ function renderAudioCheck() {
     await context.close();
     $("#comfortable").disabled = false;
   }, { once: true });
-  $("#comfortable").addEventListener("change", (event) => { $("#begin").disabled = !event.target.checked; });
-  $("#begin").addEventListener("click", () => {
+  $("#comfortable").addEventListener("change", (event) => { $("#audio-check-complete").disabled = !event.target.checked; });
+  $("#audio-check-complete").addEventListener("click", () => {
     session.completeAudioCheck();
+    persistSession();
+    renderReadyToBegin();
+  }, { once: true });
+}
+
+function renderReadyToBegin() {
+  app.innerHTML = `
+    <section class="card">
+      <p class="eyebrow">Ready</p>
+      <h1>Begin the listening block</h1>
+      <p>You will hear 12 excerpts. Each excerpt can be played once only. The first excerpt begins only when you press its play button.</p>
+      <div class="actions"><button id="begin">Begin 12-trial listening block</button></div>
+    </section>`;
+  $("#begin").addEventListener("click", () => {
     session.beginMainBlock();
+    persistSession();
     renderTrial();
   }, { once: true });
 }
@@ -140,8 +219,9 @@ function renderTrial() {
       <div id="ratings" hidden></div>
     </section>`;
   $("#stop-study").addEventListener("click", () => {
-    stopCurrentAudio();
     session.withdraw();
+    persistSession();
+    stopCurrentAudio();
     renderTerminal("You stopped the study. No more excerpts will be played.");
   });
   $("#play-stimulus").addEventListener("click", () => playFrozenStimulus(trial), { once: true });
@@ -159,6 +239,7 @@ async function playFrozenStimulus(trial) {
     const actualSha = await sha256Hex(bytes);
     if (actualSha !== trial.wav_sha256) throw new Error("Audio integrity check failed. Stop and tell the researcher.");
     session.startPlayback(trial.stimulus_id, actualSha);
+    persistSession();
     objectUrl = URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
     audio = new Audio(objectUrl);
     audio.controls = false;
@@ -176,6 +257,7 @@ async function playFrozenStimulus(trial) {
     audio.addEventListener("ended", () => {
       if (!audio || session.phase !== "playing") return;
       session.finishPlayback(trial.stimulus_id);
+      persistSession();
       status.textContent = "Completed";
       releaseCompletedAudio();
       renderRatings();
@@ -183,24 +265,28 @@ async function playFrozenStimulus(trial) {
     status.textContent = "Playing…";
     await audio.play();
   } catch (error) {
-    if (session.phase === "playing") session.failPlayback(error.message);
+    if (session.phase === "playing" || session.phase === "trial-ready") {
+      failPlayback(error.message);
+      return;
+    }
     const node = $("#trial-error");
-    node.hidden = false;
-    node.textContent = error.message;
-    if (session.phase === "technical-failure") renderTerminal("A technical playback failure was recorded. Do not restart or replay the study.");
+    if (node) {
+      node.hidden = false;
+      node.textContent = error.message;
+    }
   }
 }
 
 function failPlayback(reason) {
-  if (session.phase === "playing" || session.phase === "trial-ready") session.failPlayback(reason);
+  if (!(session.phase === "playing" || session.phase === "trial-ready")) return;
+  session.failPlayback(reason);
+  persistSession();
   stopCurrentAudio();
   renderTerminal("A technical playback failure was recorded. Do not restart or replay the study.");
 }
 
-function renderRatings() {
-  const host = $("#ratings");
-  host.hidden = false;
-  host.innerHTML = `
+function ratingMarkup() {
+  return `
     <h2>Rate what you just heard</h2>
     ${config.ratings.map((item) => `
       <fieldset class="rating" data-field="${htmlEscape(item.field)}">
@@ -209,6 +295,9 @@ function renderRatings() {
         <div class="scale"><span>0 — ${htmlEscape(item.min_anchor)}</span><output for="${htmlEscape(item.field)}">—</output><span>100 — ${htmlEscape(item.max_anchor)}</span></div>
       </fieldset>`).join("")}
     <div class="actions"><button id="submit-ratings" disabled>${session.currentTrialIndex === 11 ? "Finish study" : "Next trial"}</button></div>`;
+}
+
+function wireRatings() {
   for (const item of config.ratings) {
     const input = $(`#${item.field}`);
     const output = input.closest("fieldset").querySelector("output");
@@ -222,9 +311,29 @@ function renderRatings() {
   $("#submit-ratings").addEventListener("click", () => {
     const values = Object.fromEntries(config.ratings.map((item) => [item.field, Number($(`#${item.field}`).value)]));
     session.submitRatings(values);
+    persistSession();
     if (session.phase === "complete") renderTerminal("Thank you. The listening block is complete.");
     else renderTrial();
   }, { once: true });
+}
+
+function renderRatings() {
+  const host = $("#ratings");
+  host.hidden = false;
+  host.innerHTML = ratingMarkup();
+  wireRatings();
+}
+
+function renderRestoredRating() {
+  const trial = session.currentTrial;
+  app.innerHTML = `
+    <section class="card">
+      <p class="eyebrow">Trial ${trial.trial} of 12</p>
+      <h1>Rate the excerpt you already heard</h1>
+      <p>The excerpt finished before this page was reloaded. It cannot be replayed; complete the ratings below.</p>
+      <div id="ratings">${ratingMarkup()}</div>
+    </section>`;
+  wireRatings();
 }
 
 function downloadExport() {
