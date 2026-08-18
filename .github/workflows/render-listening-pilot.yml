@@ -7,7 +7,9 @@ on:
       - "EXPERIMENT.md"
       - "src/ipm/experiment.py"
       - "src/ipm/engine.py"
+      - "src/ipm/micro_rhythm.py"
       - "src/ipm/midi.py"
+      - "src/ipm/sequential_bar.py"
       - "pyproject.toml"
       - ".github/workflows/render-listening-pilot.yml"
 
@@ -19,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
@@ -28,8 +32,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y fluidsynth fluid-soundfont-gm ffmpeg
-      - name: Build matched blinded pilot set
-        run: ipm-experiment --output listening-pilot
+      - name: Build matched counterfactual pilot set
+        shell: bash
+        run: |
+          set -euo pipefail
+          revision="$(git rev-parse HEAD)"
+          ipm-experiment \
+            --output listening-pilot \
+            --source-revision "$revision"
       - name: Render fixed WAV stimuli
         shell: bash
         run: |
@@ -41,13 +51,15 @@ jobs:
             wav="${midi%.mid}.wav"
             fluidsynth -ni "$soundfont" "$midi" -F "$raw" -r 44100 >/dev/null 2>&1
             ffmpeg -hide_banner -loglevel error -y -i "$raw" \
-              -af loudnorm=I=-18:TP=-1.5:LRA=11 "$wav"
+              -af loudnorm=I=-18:TP=-1.5:LRA=11 \
+              -ar 44100 -ac 2 -c:a pcm_s16le "$wav"
             rm "$raw"
           done
       - name: Record renderer identity and hashes
         shell: bash
         run: |
           {
+            echo "source_revision=$(git rev-parse HEAD)"
             echo "fluidsynth=$(fluidsynth --version 2>&1 | head -n 1)"
             echo "ffmpeg=$(ffmpeg -version | head -n 1)"
             echo "soundfont=/usr/share/sounds/sf2/FluidR3_GM.sf2"
