@@ -406,6 +406,15 @@ def render_portfolio(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+
+    review_path = output / "review-sheet.json"
+    review = json.loads(review_path.read_text(encoding="utf-8"))
+    review["manifest_sha256"] = _sha256_file(manifest_path)
+    review["renderer_frozen"] = True
+    review_path.write_text(
+        json.dumps(review, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     return manifest_path
 
 
