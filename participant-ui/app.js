@@ -80,7 +80,9 @@ function resumeSavedSession() {
     return;
   }
   if (session.phase === "ready") {
-    renderReadyToBegin();
+    session.beginMainBlock();
+    persistSession();
+    renderTrial();
     return;
   }
   if (session.phase === "trial-ready") {
@@ -147,7 +149,8 @@ function renderAudioCheck() {
       <p>Keep your headphones on. Play the short check tone and set your device to a comfortable listening level. The tone is not part of the experiment.</p>
       <div class="actions"><button id="play-check">Play check tone</button></div>
       <label class="confirm"><input id="comfortable" type="checkbox" disabled> I heard the check tone clearly and the volume is comfortable.</label>
-      <div class="actions"><button id="audio-check-complete" disabled>Confirm volume</button></div>
+      <div class="actions"><button id="begin" disabled>Begin 12-trial listening block</button></div>
+      <p class="muted">The study is not counted as enrolled until the first scheduled excerpt actually starts playing.</p>
     </section>`;
   $("#play-check").addEventListener("click", async () => {
     const context = new AudioContext();
@@ -162,23 +165,9 @@ function renderAudioCheck() {
     await context.close();
     $("#comfortable").disabled = false;
   }, { once: true });
-  $("#comfortable").addEventListener("change", (event) => { $("#audio-check-complete").disabled = !event.target.checked; });
-  $("#audio-check-complete").addEventListener("click", () => {
-    session.completeAudioCheck();
-    persistSession();
-    renderReadyToBegin();
-  }, { once: true });
-}
-
-function renderReadyToBegin() {
-  app.innerHTML = `
-    <section class="card">
-      <p class="eyebrow">Ready</p>
-      <h1>Begin the listening block</h1>
-      <p>You will hear 12 excerpts. Each excerpt can be played once only. The first excerpt begins only when you press its play button.</p>
-      <div class="actions"><button id="begin">Begin 12-trial listening block</button></div>
-    </section>`;
+  $("#comfortable").addEventListener("change", (event) => { $("#begin").disabled = !event.target.checked; });
   $("#begin").addEventListener("click", () => {
+    session.completeAudioCheck();
     session.beginMainBlock();
     persistSession();
     renderTrial();
