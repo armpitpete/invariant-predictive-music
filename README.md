@@ -38,9 +38,11 @@ That makes the central claim testable rather than merely aesthetic.
 
 ## Listening Experiment 1
 
-The current project gate is human testing, not more composer features.
+The active pre-listening gate is **Counterfactual Episode v2**, not more composer features.
 
-[`EXPERIMENT.md`](EXPERIMENT.md) defines an 8-bar **matched counterfactual episode** pilot. Each three-condition set has an identical 4-bar learning prefix, one shared target candidate pool at bar 5, one differing target bar, and an identical 3-bar suffix. Predictable and IPM use the engine's existing selectors; the Unstructured-Surprise control is chosen from the same target pool to match IPM surprise while weakening melodic invariant continuity.
+[`EXPERIMENT.md`](EXPERIMENT.md) defines an 8-bar Tune-only matched episode. Predictable and IPM are selected from the same frozen production target pool after an identical 4-bar learning prefix. Once IPM has been chosen, the experiment layer holds its target rhythm fixed and generates deterministic alternative pitch realisations from the identical pre-target state. The selected Unstructured-Surprise control must match IPM on modelled surprise and local base quality while weakening the learned melodic invariant.
+
+The common 3-bar suffix is generated once from the **IPM target state** and attached unchanged to Predictable, IPM, and Control. The experiment realiser also replays the IPM target's audible subdivisions, durations, and velocities for Control, so IPM and Control differ in target pitch content rather than target rhythm/articulation.
 
 Build the prequalified pilot set with:
 
@@ -50,7 +52,9 @@ ipm-experiment --output listening-pilot
 
 The builder keeps the complete accepted/rejected seed funnel, creates opaque stimulus IDs, generates participant-specific trial orders inside three balanced condition groups, and freezes exact source provenance. GitHub Actions renders admitted MIDI through one fixed soundfont as 44.1 kHz stereo 16-bit WAV and records renderer, soundfont and stimulus hashes.
 
-The primary human mechanism outcome is **retrospective sense**: whether the unusual target comes to make sense as the identical suffix unfolds. Liking remains a secondary outcome.
+A corpus diagnostic also evaluates the unchanged qualification thresholds across the entire frozen 512-seed window rather than stopping when the first 12 qualified sets have been found.
+
+The primary human mechanism outcome remains **retrospective sense**: whether the unusual target comes to make sense as the identical, IPM-conditioned suffix unfolds. Liking remains a secondary outcome. No listener result is claimed by the construction gate.
 
 ## Musical controls
 
