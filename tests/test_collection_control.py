@@ -1,5 +1,6 @@
 import json
 from copy import deepcopy
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -27,6 +28,11 @@ def shift_enrolment(export: dict, timestamp: str) -> dict:
             changed_play = True
     assert changed_main and changed_play
     return item
+
+
+def offset_utc(timestamp: str, *, hours: int) -> str:
+    value = datetime.fromisoformat(timestamp.replace("Z", "+00:00")) + timedelta(hours=hours)
+    return value.isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 def test_reservation_is_single_use(tmp_path, participant_bundle):
@@ -71,13 +77,15 @@ def test_cross_device_duplicates_preserve_all_and_keep_earliest_enrolment(tmp_pa
     first = ingest(db, participant_bundle, store, original_path)
     assert first["canonical_export_sha256"] == original_sha
 
-    later_path = write_export(tmp_path / "later.json", shift_enrolment(original, "2026-08-18T11:36:16.611Z"))
+    later_timestamp = offset_utc(original["enrolled_at_utc"], hours=1)
+    later_path = write_export(tmp_path / "later.json", shift_enrolment(original, later_timestamp))
     later_sha = sha256_bytes(later_path.read_bytes())
     second = ingest(db, participant_bundle, store, later_path)
     assert second["duplicate_participation"] is True
     assert second["canonical_export_sha256"] == original_sha
 
-    earlier_path = write_export(tmp_path / "earlier.json", shift_enrolment(original, "2026-08-18T09:36:16.611Z"))
+    earlier_timestamp = offset_utc(original["enrolled_at_utc"], hours=-1)
+    earlier_path = write_export(tmp_path / "earlier.json", shift_enrolment(original, earlier_timestamp))
     earlier_sha = sha256_bytes(earlier_path.read_bytes())
     third = ingest(db, participant_bundle, store, earlier_path)
     assert third["canonical_export_sha256"] == earlier_sha
