@@ -44,3 +44,35 @@ jobs:
               "updated_at": run["updated_at"],
           }, indent=2))
           PY
+
+      - name: Print github-pages environment policy
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/environments/github-pages" \
+            > environment.json
+          python - <<'PY'
+          import json
+          item = json.load(open("environment.json"))
+          print(json.dumps({
+              "name": item.get("name"),
+              "protection_rules": item.get("protection_rules"),
+              "deployment_branch_policy": item.get("deployment_branch_policy"),
+          }, indent=2))
+          PY
+          policy=$(python -c 'import json; print("true" if (json.load(open("environment.json")).get("deployment_branch_policy") or {}).get("custom_branch_policies") else "false")')
+          if [ "$policy" = "true" ]; then
+            curl --fail --silent --show-error \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/environments/github-pages/deployment-branch-policies?per_page=100" \
+              > policies.json
+            cat policies.json
+          fi
