@@ -144,6 +144,32 @@ async function runSyntheticSession(browser, baseUrl, schedule) {
     if (match && response.ok()) requestedStimuli.push(match[1]);
   });
 
+  await page.addInitScript(() => {
+    globalThis.__ipmDirectGestureTurn = false;
+    globalThis.__ipmMediaPlayAudit = [];
+    document.addEventListener("click", (event) => {
+      if (!event.isTrusted) return;
+      globalThis.__ipmDirectGestureTurn = true;
+      queueMicrotask(() => { globalThis.__ipmDirectGestureTurn = false; });
+    }, true);
+    const originalPlay = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function (...args) {
+      const record = {
+        same_click_turn: globalThis.__ipmDirectGestureTurn === true,
+        user_activation_active: globalThis.navigator?.userActivation?.isActive ?? null,
+        src: this.src,
+      };
+      globalThis.__ipmMediaPlayAudit.push(record);
+      if (!record.same_click_turn) {
+        return Promise.reject(new DOMException(
+          "Synthetic WebKit-style gate: audible media play() was not called directly in the trusted click turn.",
+          "NotAllowedError",
+        ));
+      }
+      return originalPlay.apply(this, args);
+    };
+  });
+
   await page.goto(`${baseUrl}/?participant=${schedule.participant_id}`, { waitUntil: "networkidle" });
   assert(await page.evaluate(() => Boolean(globalThis.crypto?.subtle)), "browser WebCrypto is unavailable");
   assert((await page.locator("audio").count()) === 0, "native audio controls unexpectedly exposed");
@@ -166,7 +192,8 @@ async function runSyntheticSession(browser, baseUrl, schedule) {
   const wallDurations = [];
   for (let index = 0; index < schedule.trials.length; index += 1) {
     const trial = schedule.trials[index];
-    assert(await page.locator("#play-stimulus").isEnabled(), `${schedule.participant_id} trial ${trial.trial} play button unavailable`);
+    await page.waitForFunction(() => document.querySelector("#play-status")?.textContent === "Ready");
+    assert(await page.locator("#play-stimulus").isEnabled(), `${schedule.participant_id} trial ${trial.trial} play button unavailable after frozen-audio verification`);
     const started = Date.now();
     await page.locator("#play-stimulus").click();
     await page.waitForFunction(() => document.querySelector("#play-status")?.textContent === "Playing…");
@@ -189,6 +216,10 @@ async function runSyntheticSession(browser, baseUrl, schedule) {
   }
 
   await page.getByRole("heading", { name: "Study complete" }).waitFor();
+  const mediaPlayAudit = await page.evaluate(() => globalThis.__ipmMediaPlayAudit ?? []);
+  assert(mediaPlayAudit.length === 12, "browser must call HTMLMediaElement.play exactly once per trial");
+  assert(mediaPlayAudit.every((item) => item.same_click_turn === true), "media play escaped the direct trusted-click turn");
+
   const downloadPromise = page.waitForEvent("download");
   await page.locator("#download-export").click();
   const download = await downloadPromise;
@@ -233,6 +264,8 @@ async function runSyntheticSession(browser, baseUrl, schedule) {
     stimulus_ids: schedule.trials.map((trial) => trial.stimulus_id),
     wav_sha256_verified_from_browser_audit: 12,
     browser_fetch_count: requestedStimuli.length,
+    direct_user_gesture_play_calls: mediaPlayAudit.length,
+    direct_user_gesture_gate_passed: mediaPlayAudit.every((item) => item.same_click_turn === true),
     min_wall_playback_seconds: Math.min(...wallDurations),
     max_wall_playback_seconds: Math.max(...wallDurations),
     min_audit_playback_seconds: Math.min(...auditSeconds),
@@ -261,10 +294,7 @@ const baseUrl = `http://127.0.0.1:${address.port}`;
 
 let browser;
 try {
-  browser = await chromium.launch({
-    headless: true,
-    args: ["--autoplay-policy=no-user-gesture-required"],
-  });
+  browser = await chromium.launch({ headless: true });
   const sessions = await Promise.all(
     selectedSchedules.map((schedule) => runSyntheticSession(browser, baseUrl, schedule)),
   );
@@ -281,6 +311,8 @@ try {
     unique_stimulus_count: stimulusUnion.size,
     browser_webcrypto_delivery_hash_check: true,
     actual_browser_playback_to_ended: true,
+    direct_user_gesture_playback_gate: true,
+    autoplay_policy_override_used: false,
     exported_records_verified: true,
     condition_mapping_leak_detected: false,
     bundle_text_files_scanned: bundleTextFiles.length,
