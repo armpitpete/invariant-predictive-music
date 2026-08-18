@@ -77,4 +77,4 @@ jobs:
             cat policies.json
           fi
 
-# v2 deployment inspection refresh
+# v3 deployment inspection refresh
