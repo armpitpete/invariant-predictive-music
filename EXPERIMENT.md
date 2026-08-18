@@ -1,6 +1,6 @@
 # IPM Listening Experiment 1 — Counterfactual Episode v2
 
-**Status:** pre-listening corpus gate. No human result exists yet and recruitment has not started.
+**Status:** pre-listening corpus and protocol gate. No human result exists yet and recruitment has not started.
 
 ## Question
 
@@ -163,20 +163,42 @@ The first 12 qualified seeds remain the frozen pilot set:
 
 `2026081804, 2026081805, 2026081808, 2026081810, 2026081812, 2026081813, 2026081814, 2026081817, 2026081819, 2026081822, 2026081827, 2026081828`
 
-Default build:
+The frozen pilot design is:
 
 - 12 qualified episode sets;
 - 8 bars per stimulus;
 - target = bar 5;
 - 58 BPM;
 - three condition-assignment groups;
-- 36 planned complete participants;
+- **36 total enrolments, not 36 usable-complete records**;
 - one condition per episode seed per participant;
 - across each set of three groups, every seed appears once in every condition;
 - each participant receives an independently shuffled trial order;
 - participant-facing filenames are opaque hashes.
 
-The 36-person figure is a pilot recruitment target, not a powered confirmatory sample size. **Recruitment has not started.**
+The 36-person figure is a pilot design choice, not a powered confirmatory sample size. **Recruitment has not started.**
+
+## Frozen rendered-pilot provenance
+
+The authoritative listener stimulus artifact is the exact-head articulated-v2 render:
+
+- stimulus-generator revision: `184105d341366d91919388e298105e4eeb4c13ac`;
+- render workflow run: `32120102219`;
+- artifact ID: `9318246875`;
+- artifact name: `ipm-listening-pilot-v2`;
+- artifact SHA-256: `c6246d50f63e178e7eca280d746307a0c563d34c86947231d941af83220f805e`.
+
+At that revision the public `ipm-experiment` entry point resolves to `ipm.experiment_v2_articulation:main`, so the documented CLI and the render workflow use the same final experiment constructor.
+
+A bytewise comparison against the earlier articulated-v2 artifact `9317664611` found every participant stimulus MIDI and WAV to be identical. Only provenance files (`manifest.json` and `researcher/audio-renderer.txt`) differ because they record a different source revision. Artifact `9318246875` therefore supersedes the earlier provenance freeze **without changing any listener stimulus**.
+
+The full frozen 512-seed diagnostic at the same revision is:
+
+- workflow run: `32120102069`;
+- artifact ID: `9318415552`;
+- artifact SHA-256: `e0f6bac20c3874ccbaed9b5c5f754111b61891552e69cc6461f5af5c685c0a8d`.
+
+The protocol lock is the exact Git commit containing this document after hostile pre-registration review. Protocol-only commits after the stimulus-generator revision do not authorize stimulus regeneration or substitution.
 
 ## Selection-funnel record
 
@@ -194,71 +216,139 @@ The corpus record includes:
 
 This is necessary to show how selective the stimulus filter was.
 
+## Recruitment stopping rule
+
+Recruitment is frozen as follows:
+
+- participant IDs `P001` through `P036` are the complete enrolment set already represented by the frozen schedules;
+- a person becomes **enrolled** when consent is complete and the first main-block stimulus begins playback;
+- recruitment closes permanently when `P036` becomes enrolled;
+- an enrolled participant who later withdraws, fails playback, duplicates an earlier participant, fails to complete, or has an unusable record is **not replaced**;
+- the analysed usable sample may therefore be smaller than 36;
+- recruitment must not be extended because an interim effect is small, large, significant, non-significant, surprising, or otherwise interesting;
+- no outcome summaries or condition-stratified results may be inspected before recruitment closes and the blinded exclusion lock is complete.
+
+People who consent but leave **before the first main-block stimulus begins** are not enrolled and do not consume a `P001`–`P036` schedule.
+
+## Listening procedure
+
+The participant procedure is fixed before recruitment:
+
+1. Complete consent and participant metadata.
+2. Use headphones in a quiet setting. A participant who cannot confirm headphone use does not begin the main block and is not enrolled.
+3. Before trial 1, use a non-experimental platform audio check to set a comfortable volume. The check sound is not one of the 36 experimental stimuli.
+4. Once the main block begins, keep the listening level unchanged unless adjustment is necessary for safety or discomfort; any such adjustment is recorded as a procedural note but is not by itself an exclusion.
+5. Each experimental stimulus plays automatically **once** from the beginning. Seeking and replay are disabled.
+6. The rating screen appears only after successful playback reaches the end of the stimulus.
+7. All five ratings are required before the next trial can begin.
+8. Participants may pause between trials for as long as needed, but may not replay a completed stimulus.
+9. The 12-trial order is exactly the participant's frozen schedule. Trials may not be substituted, reordered, skipped, or repeated.
+
+A browser/device interruption during playback that prevents the stimulus from reaching its end is a technical playback failure under the exclusion rule below. A participant should never be asked to judge a partially heard stimulus.
+
 ## Human measures
 
-After each episode, collect 0–100 ratings for:
+All ratings use an integer 0–100 slider and appear after each episode in the fixed order below.
 
 1. **Retrospective sense — primary mechanism outcome**  
-   How much did unusual moments come to make sense as the music continued?
-2. perceived surprise;
-3. coherence;
-4. liking;
-5. desire to hear again.
+   Exact prompt: **“Thinking about what you heard around the middle of the excerpt: by the end, how much did that moment come to make sense because of what followed?”**  
+   `0 = Not at all — what followed did not make it fit.`  
+   `100 = Completely — what followed made it fit strongly in retrospect.`
+2. **Perceived surprise**  
+   Exact prompt: **“How surprising was what you heard around the middle of the excerpt?”**  
+   `0 = Not at all surprising.`  
+   `100 = Extremely surprising.`
+3. **Coherence**  
+   Exact prompt: **“How coherent did the excerpt feel as a whole?”**  
+   `0 = Not at all coherent.`  
+   `100 = Completely coherent.`
+4. **Liking**  
+   Exact prompt: **“How much did you like this excerpt?”**  
+   `0 = Not at all.`  
+   `100 = Extremely.`
+5. **Desire to hear again**  
+   Exact prompt: **“How much would you like to hear this excerpt again?”**  
+   `0 = Not at all.`  
+   `100 = Very much.`
 
-Record separately:
+Record separately before the main block:
 
 - years of music-making experience;
 - years of formal musical training.
 
-These variables describe the sample; they are not exclusion criteria.
+These variables describe the sample; they are not exclusion criteria and are not included in the frozen primary model.
 
 ## Primary test
 
 Primary planned contrast:
 
-> **IPM > Unstructured Surprise on retrospective sense**
+> **IPM minus Unstructured Surprise / Control on retrospective sense**
 
-This is the most direct human test of the proposed mechanism.
+The directional theoretical prediction is positive. Because this is an estimation pilot rather than a confirmatory efficacy test, the primary report is the estimated contrast and its 95% confidence interval rather than a pass/fail p-value threshold.
 
-Secondary contrasts include:
+Secondary contrasts are descriptive and include:
 
-- IPM > Unstructured Surprise on coherence;
-- IPM > Unstructured Surprise on liking;
-- IPM > Predictable on liking;
-- IPM > Predictable on retrospective sense.
+- IPM minus Control on coherence;
+- IPM minus Control on liking;
+- IPM minus Predictable on liking;
+- IPM minus Predictable on retrospective sense.
+
+No secondary outcome can replace retrospective sense as the primary outcome after data collection.
 
 ## Manipulation checks
 
-A valid manipulation requires:
+Listener-rated surprise checks are operationalised before data collection.
 
-- IPM and Unstructured Surprise to be approximately matched in **listener-rated surprise**;
-- both to be more surprising than Predictable to a useful degree.
+Use the same fixed-effects and random-effects structure as the primary model, with perceived surprise as the outcome. Report model-adjusted condition contrasts and 95% confidence intervals.
 
-If listener-rated surprise is not matched, report a failed surprise manipulation.
+The **predeclared descriptive targets** are:
 
-Do **not** classify absence of an IPM advantage in coherence or retrospective sense as a manipulation failure. Those are predicted outcomes and null or contrary results count against the theory.
+- IPM and Control are considered approximately surprise-matched when `abs(IPM - Control) <= 10` points on the 0–100 scale;
+- IPM is considered meaningfully more surprising than Predictable when `IPM - Predictable >= 10` points;
+- Control is considered meaningfully more surprising than Predictable when `Control - Predictable >= 10` points.
 
-## Analysis
+These 10-point targets are descriptive operational thresholds, not inferential stopping rules. If any target is missed, report **“surprise manipulation not demonstrated”** for that component and still run and report the frozen primary analysis unchanged.
 
-Use trial-level mixed-effects models.
+Do **not** exclude participants or trials, relax stimulus thresholds, choose a different corpus, change the primary model, or reclassify a null/contrary retrospective-sense result because a manipulation check failed.
 
-Primary model:
+Absence of an IPM advantage in coherence or retrospective sense is never a manipulation failure. Those are predicted outcomes and null or contrary results count against the theory.
 
-- outcome: retrospective sense;
-- fixed effect: condition;
-- random intercepts: participant and episode seed;
-- participant condition slopes if they fit stably;
-- include trial position as a nuisance covariate if needed.
+## Frozen analysis
 
-Report:
+Analyse trial-level data; do not reduce each participant to one grand mean.
 
-- condition effect estimates;
-- confidence intervals;
-- model diagnostics;
-- all exclusions;
-- manipulation-check results.
+### Primary model
 
-Do not reduce each participant to one grand mean before analysis.
+The frozen primary model is a linear mixed-effects model:
+
+`retrospective_sense_0_100 ~ condition + trial_position_c + (1 + condition || participant_id) + (1 | episode_seed)`
+
+where:
+
+- `Control` is the condition reference level;
+- `trial_position_c` is trial number 1–12 centred on its sample mean and is **always included** as a linear nuisance covariate;
+- participant condition slopes are uncorrelated with the participant intercept (`||` formulation);
+- episode seed has a random intercept;
+- the primary estimand is the model-adjusted **IPM − Control** contrast in retrospective-sense points.
+
+Fit the model by maximum likelihood. Report the point estimate and a two-sided 95% confidence interval, along with convergence and residual diagnostics. This pilot has **no predeclared alpha/significance threshold** for declaring the theory confirmed.
+
+### Frozen convergence fallback
+
+Attempt the primary model first. If, after one refit with a high-iteration derivative-free optimiser, the model either:
+
+- emits a convergence warning; or
+- is singular at tolerance `1e-4`,
+
+then use exactly this fallback model:
+
+`retrospective_sense_0_100 ~ condition + trial_position_c + (1 | participant_id) + (1 | episode_seed)`
+
+No other random-effects search is permitted. The fixed effects, primary estimand, reference level, nuisance covariate and 95% interval remain unchanged. Report which model was used and why the fallback was triggered.
+
+### Secondary analyses
+
+Run secondary outcome models using the final random-effects structure selected by the frozen primary/fallback rule and the same fixed condition and centred trial-position terms. Report secondary contrasts with 95% confidence intervals as descriptive estimates. Do not promote a secondary result to primary status.
 
 ## Confirmatory study
 
@@ -275,32 +365,33 @@ Pilot listeners must not be silently folded into the confirmatory dataset.
 
 ## Exclusions fixed before data collection
 
-Exclude only for predeclared procedural reasons:
+Exclusion decisions are procedural and must be locked **before condition labels are joined to the response data and before any outcome summary is calculated**. The exclusion reviewer may inspect participant IDs, schedule completion and technical/procedural flags, but not condition assignments or rating values.
 
-- duplicate participation;
-- failure to complete the main listening block;
-- confirmed technical playback failure;
-- unusable response record.
+Exclude an enrolled participant only for one of these reasons:
 
-Do not exclude participants for flat ratings, negative ratings, unexpected ratings, low musical experience, or disagreement with IPM.
+1. **Duplicate participation** — the same study-issued identity/recruitment identity is found to have entered the main block more than once. Retain the first session that began the main block and exclude later duplicate sessions.
+2. **Failure to complete the main listening block** — fewer than all 12 scheduled stimuli reached successful playback completion with a recorded primary retrospective-sense rating.
+3. **Confirmed technical playback failure** — at least one main-block stimulus failed to start, ended early, was inaudible/corrupted, or was interrupted by a browser/device failure before playback completion. The failure must be logged contemporaneously by the platform or participant; it cannot be inferred from an unusual rating pattern.
+4. **Unusable response record** — the participant ID cannot be reliably linked to the frozen schedule, the exported record is corrupted/unparseable, or one or more of the 12 primary retrospective-sense ratings cannot be recovered. Missing secondary ratings alone do not make an otherwise usable primary record unusable; any such missingness is reported and the corresponding secondary observation is omitted only from that secondary analysis.
 
-The participant metadata schema contains explicit fields for these decisions.
+Do **not** exclude participants or trials for flat ratings, negative ratings, unexpected ratings, low musical experience, slow/fast responding, disagreement with IPM, or because their responses weaken the predicted effect.
+
+The final exclusion table must list every enrolled `P001`–`P036`, usable/excluded status and exactly one predeclared reason where excluded. Excluded participants are not replaced.
 
 ## Audio-render gate
 
-MIDI remains the deterministic composition object. Human stimuli are frozen audio.
+MIDI remains the deterministic composition object. Human stimuli are the frozen audio from artifact `9318246875`.
 
-Before recruitment:
+The frozen render uses:
 
-- render every admitted MIDI through one fixed synthesizer and soundfont;
-- use 44.1 kHz stereo 16-bit PCM WAV;
-- apply the same loudness-normalisation procedure;
-- record FluidSynth and FFmpeg versions;
-- hash the soundfont;
-- hash every MIDI and WAV;
-- freeze the exact source revision.
+- 44.1 kHz stereo 16-bit PCM WAV;
+- one fixed FluidSynth/FluidR3_GM rendering path;
+- the same loudness-normalisation procedure for every stimulus;
+- recorded FluidSynth and FFmpeg versions;
+- a hashed soundfont;
+- a SHA-256 for every MIDI and WAV.
 
-No listening result is interpretable if materially different assets are substituted during data collection.
+No listening result is interpretable if a materially different asset is substituted during data collection. A stimulus hash mismatch is a stop condition, not permission to rerender silently.
 
 ## Blinding and schedules
 
@@ -317,14 +408,22 @@ Participant-facing schedule files contain only:
 
 Condition assignment is balanced by three groups, but trial order is independently shuffled for every participant so fatigue/order cannot collapse onto three fixed sequences.
 
+During recruitment and the exclusion lock, the condition key remains separate from participant response records. Unblinding occurs only after recruitment has closed and the exclusion table is frozen.
+
 ## Stop conditions
 
 Do not change composer weights after listening begins.
 
 Do not relax stimulus criteria after seeing listener responses.
 
-Do not recruit listeners until the pre-listening construction, artifact and review gates are complete.
+Do not regenerate, substitute, reorder or relabel listener stimuli after recruitment begins.
 
-If the matching gate cannot produce enough episodes in a future revision, inspect which **experimental** criterion fails. Change a threshold only with a written scientific reason before recruitment.
+Do not inspect outcome summaries or condition-stratified data before recruitment closes and the blinded exclusion lock is complete.
+
+Do not recruit beyond 36 enrolled participants and do not replace exclusions.
+
+Do not recruit listeners until the pre-listening construction, artifact, protocol and hostile-review gates are complete.
+
+If a future revision cannot produce enough matched episodes, inspect which **experimental** criterion fails. Change a threshold only with a written scientific reason before any recruitment for that future revision.
 
 Do not add Tune/Bass/Rhythm composer features merely to make the experiment pass.
