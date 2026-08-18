@@ -14,12 +14,20 @@ function mustThrow(fn, label) {
 }
 
 const results = [];
+let sampleExport = null;
 for (const participantId of config.participant_ids) {
   const schedule = JSON.parse(fs.readFileSync(path.join(root, "schedules", `${participantId}.json`), "utf8"));
   const session = new StudySession({ config, schedule, now });
+  const acceptedChecks = Object.fromEntries(config.consent.checks.map((item) => [item.id, true]));
   mustThrow(() => session.beginMainBlock(), "begin before consent/audio check");
+  mustThrow(() => session.acceptConsent({
+    checks: acceptedChecks,
+    headphones: true,
+    musicMakingYears: "",
+    formalTrainingYears: "",
+  }), "blank participant metadata");
   session.acceptConsent({
-    checks: Object.fromEntries(config.consent.checks.map((item) => [item.id, true])),
+    checks: acceptedChecks,
     headphones: true,
     musicMakingYears: 0,
     formalTrainingYears: 0,
@@ -49,14 +57,18 @@ for (const participantId of config.participant_ids) {
   if (expected !== actual) throw new Error(`${participantId} export order drifted`);
   if (!exported.responses_csv.startsWith(config.response_schema_header + "\r\n")) throw new Error(`${participantId} response CSV header drifted`);
   if (!exported.participant_csv.startsWith(config.participant_schema_header + "\r\n")) throw new Error(`${participantId} participant CSV header drifted`);
+  if (participantId === "P001") sampleExport = exported;
   results.push({ participant_id: participantId, trials: exported.responses.length, passed: true });
 }
+
+if (!sampleExport) throw new Error("P001 sample export was not produced");
 
 console.log(JSON.stringify({
   gate: "participant JS state-machine dry-run",
   passed: results.every((item) => item.passed),
   participant_count: results.length,
   total_trial_count: results.reduce((sum, item) => sum + item.trials, 0),
-  checked: ["consent-before-enrolment", "audio-check-before-enrolment", "single-play state", "ratings-after-ended", "frozen trial order", "exact CSV headers"],
+  checked: ["consent-before-enrolment", "blank-metadata-rejected", "audio-check-before-enrolment", "single-play state", "ratings-after-ended", "frozen trial order", "exact CSV headers", "sample export"],
   participants: results,
+  sample_export: sampleExport,
 }, null, 2));
