@@ -5,8 +5,8 @@ on:
   pull_request:
     paths:
       - "EXPERIMENT.md"
-      - "scripts/diagnose_listening_controls.py"
       - "src/ipm/experiment.py"
+      - "src/ipm/experiment_v2.py"
       - "src/ipm/engine.py"
       - "src/ipm/micro_rhythm.py"
       - "src/ipm/midi.py"
@@ -29,20 +29,18 @@ jobs:
           python-version: "3.13"
       - name: Install IPM
         run: python -m pip install -e '.[dev]'
-      - name: Diagnose control attrition
-        run: python scripts/diagnose_listening_controls.py
-      - name: Install fixed audio renderer
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y fluidsynth fluid-soundfont-gm ffmpeg
-      - name: Build matched counterfactual pilot set
+      - name: Build Counterfactual Episode v2 pilot set
         shell: bash
         run: |
           set -euo pipefail
           revision="$(git rev-parse HEAD)"
-          ipm-experiment \
+          python -m ipm.experiment_v2 \
             --output listening-pilot \
             --source-revision "$revision"
+      - name: Install fixed audio renderer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fluidsynth fluid-soundfont-gm ffmpeg
       - name: Render fixed WAV stimuli
         shell: bash
         run: |
@@ -73,5 +71,5 @@ jobs:
             > listening-pilot/researcher/stimulus-sha256.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: ipm-listening-pilot
+          name: ipm-listening-pilot-v2
           path: listening-pilot
