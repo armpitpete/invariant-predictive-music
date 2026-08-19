@@ -8,7 +8,7 @@ It is intentionally an **orchestration layer**, not a new composition formula. T
 
 > Can a person steer IPM and finish a piece while retaining a clear sense of musical agency?
 
-That question is **not to be tested against a toy playback layer**. Machine use testing remains blocked unless the proper internal synth engine passes its own implementation gate.
+That question is **not to be tested against a toy playback layer**. Machine use testing remains blocked until the internal synth passes audible sound acceptance, not merely technical implementation checks.
 
 Machine v0 does not claim live continuation yet. The current engine composes complete deterministic pieces, so v0 steers whole-piece renders honestly rather than simulating a continuation API that does not exist.
 
@@ -23,7 +23,7 @@ Machine v0 does not claim live continuation yet. The current engine composes com
 
 ## Machine Synth Engine v1
 
-PLAY and FINISH use the same deterministic 44.1 kHz stereo synthesis engine. It is a real instrument layer rather than the original convenience oscillator.
+PLAY and FINISH use the same deterministic 44.1 kHz stereo synthesis engine.
 
 The fixed v1 signal path is:
 
@@ -31,13 +31,21 @@ The fixed v1 signal path is:
 
 The three musical lanes have independent timbres:
 
-- **TUNE** — warm harmonically layered lead, slight detune and restrained vibrato, left-of-centre placement;
-- **BASS** — darker fundamental-led voice, slower release and low cutoff, near-centre placement;
+- **TUNE** — harmonically layered lead, slight detune and restrained vibrato, left-of-centre placement;
+- **BASS** — fundamental-led voice, slower release and low cutoff, near-centre placement;
 - **RHYTHM** — brighter short-decay pitched voice with wider detune, right-of-centre placement.
 
-The synth is deterministic: identical IPM events and synth contract must produce byte-identical WAV output. It requires no SoundFont, DAW, external synthesizer or network service.
+The synth is deterministic: identical IPM events and synth contract produce byte-identical WAV output. It requires no SoundFont, DAW, external synthesizer or network service.
 
 The synth is a **product renderer only**. It does not replace or alter the frozen scientific listener-study renderer.
+
+### Audible acceptance status
+
+**Synth Sound Acceptance v1: FAIL.**
+
+The owner judged the frozen Tune solo, Bass solo, Rhythm solo and full-mix audition set as **uncomfortable, toyish, flat and basic**. Technical implementation success therefore does not make Synth Engine v1 acceptable for product testing.
+
+See `SYNTH_SOUND_ACCEPTANCE_V1_RESULT.md`.
 
 ## Outputs
 
@@ -48,7 +56,7 @@ FINISH writes:
 - `ipm-machine-<seed>.trace.json`
 - `ipm-machine-<seed>.machine.json`
 
-The WAV is now the machine's intended internal synthesizer render. MIDI remains the instrument-neutral musical output. The IPM trace remains the evidence object for how the piece was composed.
+The WAV is the machine's current internal synthesizer render, but Synth Engine v1 has **not** passed audible product acceptance. MIDI remains the instrument-neutral musical output. The IPM trace remains the evidence object for how the piece was composed.
 
 ## Run
 
@@ -77,15 +85,18 @@ Machine v0 does **not** yet provide:
 - semantic memory slots such as A/B/C return points;
 - a true branch-from-held-history operation;
 - external MIDI clock or hardware controller mapping;
+- an audibly accepted internal synth engine;
 - user-editable synth patches or external controller mapping for synth parameters.
 
 Those continuation features require an explicit continuation/state contract in the composition engine. They should not be faked at the UI layer.
 
 ## Gate order
 
-1. **Synth Engine Gate** — implementation, deterministic rendering and exact lane/timbre contract must pass.
-2. **Machine Use Gate** — only then ask whether NEW / ACTIVITY / SURPRISE / HOLD / PLAY / FINISH feels like making a piece rather than browsing generated pieces.
-3. Physical hardware design comes later.
+1. **Synth Engine implementation gate** — PASSED for v1: deterministic rendering and exact technical contract.
+2. **Synth Sound Acceptance v1** — **FAILED**: uncomfortable, toyish, flat, basic.
+3. **Machine Synth Replacement Contract v2** — next: freeze audible requirements before another synth design.
+4. **Machine Use Gate** — BLOCKED until a replacement synth passes sound acceptance.
+5. Physical hardware design comes later.
 
 ## Recruitment boundary
 
