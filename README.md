@@ -88,6 +88,20 @@ Output:
 
 The trace is part of the research object. It records the decision evidence as well as the selected music, including density opportunities, silence decisions and actual texture occupancy.
 
+## IPM Machine v0
+
+The first human-steerable product surface is now available as a local music machine:
+
+```bash
+ipm-machine
+```
+
+It exposes **NEW, ACTIVITY, SURPRISE, HOLD, PLAY, STOP and FINISH** over the existing v0.2 composer. It shows the Tune/Bass/Rhythm streams, provides an immediate dependency-free audio preview, and exports MIDI, WAV, the full IPM trace and a machine manifest.
+
+Machine v0 deliberately does **not** modify the Tune scoring formula. SURPRISE ranks a deterministic candidate pool by realised Tune surprise; HOLD pins the selected Tune seed so subsidiary activity can change around the same Tune identity.
+
+See [`MACHINE.md`](MACHINE.md) for the exact control contract and v0 boundaries.
+
 ## Historical studies
 
 Studies #001–#011 are preserved as the experimental path that produced the current instrument. They are **not** the v0.2 production architecture and the current engine does not call through them.
