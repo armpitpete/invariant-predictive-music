@@ -1,0 +1,33 @@
+name: real-synth-range-v3
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  range-audition:
+    if: github.head_ref == 'agent/real-synth-engine-v3-range-2'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install
+        run: python -m pip install -e '.[dev]'
+      - name: Render frozen v3 patch-range audition
+        run: python scripts/render_real_synth_engine_v3_range_2.py
+      - name: Verify artifact files
+        run: |
+          test -s real-synth-engine-v3-range-2/01-dry-subtractive-pluck.wav
+          test -s real-synth-engine-v3-range-2/02-hollow-organ-reed.wav
+          test -s real-synth-engine-v3-range-2/03-metallic-fm-bell.wav
+          test -s real-synth-engine-v3-range-2/acceptance.json
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ipm-real-synth-engine-v3-range-2
+          path: real-synth-engine-v3-range-2/
+          if-no-files-found: error
