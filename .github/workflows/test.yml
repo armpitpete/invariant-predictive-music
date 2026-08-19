@@ -70,3 +70,28 @@ jobs:
           name: ipm-synth-simple-material-interest-v2
           path: synth-simple-material-interest-v2/
           if-no-files-found: error
+
+  synth-sound-acceptance-v2:
+    if: github.event_name == 'pull_request' && github.head_ref == 'agent/synth-sound-acceptance-v2-full-2'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: python -m pip install -e '.[dev]'
+      - name: Render frozen v2 full audition set
+        run: python scripts/render_synth_sound_acceptance_v2_full.py
+      - name: Verify four WAVs and manifest
+        run: |
+          test -s synth-sound-acceptance-v2/01-tune-solo.wav
+          test -s synth-sound-acceptance-v2/02-bass-solo.wav
+          test -s synth-sound-acceptance-v2/03-rhythm-solo.wav
+          test -s synth-sound-acceptance-v2/04-full-mix.wav
+          test -s synth-sound-acceptance-v2/acceptance.json
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ipm-synth-sound-acceptance-v2
+          path: synth-sound-acceptance-v2/
+          if-no-files-found: error
