@@ -1,10 +1,10 @@
 # IPM Listening Experiment 1 — deployment, data collection and governance
 
-**Status:** technical pre-recruitment gate PASS; privacy/international-processing disclosure CLOSED; account-security owner attestation CLOSED; **External Listener Readiness PASS**. Actual listener recruitment remains a separate owner decision. PR #24 remains draft/unmerged unless separately authorised.
+**Status:** technical pre-recruitment gate PASS; privacy/international-processing disclosure CLOSED; account-security owner attestation CLOSED; **External Listener Readiness PASS**. Owner decision recorded 19 August 2026: **DO NOT BEGIN THE 36-LISTENER PILOT**. PR #24 remains draft/unmerged unless separately authorised.
 
 ## Authoritative frozen study object
 
-The only participant bundle eligible for use if recruitment is separately authorised is:
+The only participant bundle eligible for use if recruitment is separately authorised in the future is:
 
 - GitHub Actions artifact `9328095073` (`ipm-participant-web-v3`)
 - artifact SHA-256 `1e512e85fea0e90f1e03791897803a28d264be9a5c3a8569def9324a1d5364c6`
@@ -45,9 +45,11 @@ Participant return instruction:
 4. Do not paste ratings into the email body or add extra personal information.
 5. Sender address and mail metadata stay in the mailbox transport layer and are not copied into the research response dataset.
 
+These instructions are retained as the frozen study procedure but **must not be used for real participants while the recruitment owner decision is HOLD / DO NOT BEGIN**.
+
 ## Participant eligibility
 
-Recruit only adults aged 18 or over who can consent for themselves, can complete the study in English, and can listen through headphones in a quiet setting. Do not recruit anyone requiring a consultee/proxy-consent process. No health information or special-category data is requested.
+If recruitment is ever separately authorised, recruit only adults aged 18 or over who can consent for themselves, can complete the study in English, and can listen through headphones in a quiet setting. Do not recruit anyone requiring a consultee/proxy-consent process. No health information or special-category data is requested.
 
 ## P001–P036 issuance and duplicate control
 
@@ -56,6 +58,8 @@ The live participant-control store is private researcher material and must never
 `python -m ipm.collection_control` provides `init`, `reserve`, `ingest` and `audit` operations. One P### may be reserved once; an invitation reference must be opaque and contain no name/email; no P037 or replacement ID exists; unreserved/superseded/wrong-revision/wrong-schedule/wrong-WAV submissions are rejected; valid distinct returns are preserved content-addressably; and the earliest valid enrolled session remains canonical if duplicate enrolled submissions exist.
 
 Data-control v3 run `32147376085`: PASS. Evidence artifact `9328321516`, SHA-256 `5d84067b8a1f756f69c416a63c662674056095214205ff5580b15a96638c1eb9`.
+
+**Do not reserve or issue P001–P036 for real participants while the current owner recruitment decision remains in force.**
 
 ## Access controls and separation
 
@@ -127,4 +131,12 @@ Closed:
 
 All declared pre-recruitment readiness prerequisites are closed. This establishes readiness only.
 
-**No recruitment, invitation sending, participant contact, or PR merge is authorised by this status.** Those remain separate owner decisions.
+## Recruitment owner decision — HOLD
+
+Owner decision recorded 19 August 2026:
+
+**DO NOT BEGIN THE 36-LISTENER PILOT.**
+
+No recruitment, invitation sending, participant contact, real-participant P### reservation/issuance, or real-response intake is authorised. A later explicit owner decision is required to supersede this hold.
+
+PR merge remains a separate owner decision.
