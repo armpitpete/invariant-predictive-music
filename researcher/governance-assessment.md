@@ -1,8 +1,12 @@
 # IPM Listening Experiment 1 — pre-recruitment governance assessment
 
-Date assessed: 18 August 2026
+Date assessed: 18–19 August 2026
 
 This assessment is downstream of the frozen scientific protocol and participant v3 artifact. It does not alter stimuli, schedules, questions, consent wording or analysis.
+
+## Product / experiment compatibility — CLOSED
+
+The internal Working Product Gate has passed owner listening at **8 SHOW / 0 FAIL** across the fixed eight-piece portfolio. Counterfactual Episode v2 remains appropriate without musical redesign because it is deliberately a Tune-only mechanism isolation experiment before return to the full Tune/Bass/Rhythm texture. The working-product pass therefore removes the prior product-readiness concern without changing the frozen experiment.
 
 ## Technical evidence already closed
 
@@ -84,4 +88,4 @@ Only one governance item remains:
 2. Automatic forwarding of study mail to third parties is off.
 3. No undeclared mailbox delegate can access study responses.
 
-After that single attestation is recorded, the governance gate reaches PASS and the project moves to the separate owner decision on whether to recruit the 36 listeners. Merge remains a separate decision.
+After that single attestation is recorded, the governance gate reaches PASS and External Listener Readiness reaches PASS. Actual listener recruitment and PR merge remain separate owner decisions.
