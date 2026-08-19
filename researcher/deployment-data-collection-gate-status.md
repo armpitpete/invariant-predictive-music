@@ -22,6 +22,14 @@ The same-class real-device/browser owner regression subsequently **PASSed**: tri
 
 **Technical participant/deployment/data-control pre-recruitment gate: PASS.**
 
-Governance checks for controller context, ICO fee status, institutional/NHS/HRA scope, participant privacy/invitation information and international-processing/transfer disclosure are also closed. The only remaining governance item is the owner account-security attestation for `merrin@merrinworld.uk`: MFA/2-Step Verification enabled, automatic forwarding to third parties off, and no undeclared mailbox delegate.
+Governance checks for controller context, ICO fee status, institutional/NHS/HRA scope, participant privacy/invitation information and international-processing/transfer disclosure are closed.
 
-PR #24 remains draft and unmerged; no recruitment is authorised.
+Owner attestation recorded 19 August 2026 confirms for `merrin@merrinworld.uk`:
+
+- MFA / 2-Step Verification is enabled;
+- automatic forwarding of study mail to third parties is off;
+- no undeclared mailbox delegate can access study responses.
+
+**External Listener Readiness: PASS.**
+
+This status does not authorise actual listener recruitment, invitation sending, participant contact, or PR merge. PR #24 remains draft and unmerged pending separate owner decisions.
