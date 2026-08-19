@@ -57,6 +57,20 @@ The study necessarily uses third-party technical services:
 
 These services may process technical or account information under their own service/privacy terms. The research response dataset does not intentionally add their account, device or network identifiers to your P### ratings record.
 
+## International processing and transfers
+
+GitHub and Google operate services internationally, so personal data handled through GitHub Pages, Gmail or Google Drive may be processed outside the UK, including in the United States and other countries.
+
+GitHub's published privacy statement says that it stores and processes personal data in multiple locations and describes the transfer mechanisms it uses for international processing, including standard contractual clauses where applicable. Current details are available at:
+
+`https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement`
+
+Google states that information may be processed on servers outside the country where a person lives. Its published transfer-framework information describes reliance, as applicable, on UK adequacy regulations, the UK Extension to the EU-US Data Privacy Framework, and standard contractual clauses. Current details, including how to obtain information about the safeguards, are available at:
+
+`https://policies.google.com/privacy/frameworks?hl=en_GB`
+
+The researcher does not intentionally transfer the P### research response dataset to any additional third-party service. If the study's service providers or data flows materially change, this notice and the transfer assessment must be reviewed before further recruitment.
+
 ## Storage, access and retention
 
 Returned study files are validated and stored in the researcher's private, access-restricted study storage. Only Merrin Dream is authorised to access the live pilot data unless an additional researcher is documented before access is granted.
