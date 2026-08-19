@@ -8,6 +8,8 @@ It is intentionally an **orchestration layer**, not a new composition formula. T
 
 > Can a person steer IPM and finish a piece while retaining a clear sense of musical agency?
 
+That question is **not to be tested against a toy playback layer**. Machine use testing remains blocked unless the proper internal synth engine passes its own implementation gate.
+
 Machine v0 does not claim live continuation yet. The current engine composes complete deterministic pieces, so v0 steers whole-piece renders honestly rather than simulating a continuation API that does not exist.
 
 ## Controls
@@ -16,8 +18,26 @@ Machine v0 does not claim live continuation yet. The current engine composes com
 - **ACTIVITY** — control the existing Bass and Rhythm density governors. Tune remains the primary line.
 - **SURPRISE** — generate a small deterministic pool of IPM-mode candidate pieces, rank them by mean realised Tune surprise, and select the requested surprise quantile. This does not change the Tune scoring formula.
 - **HOLD** — pin the current selected seed. While held, Activity can change Bass/Rhythm around exactly the same Tune seed. Surprise target is stored but does not change the Tune seed until Hold is released.
-- **PLAY / STOP** — audition a built-in dependency-free WAV preview.
-- **FINISH** — write the current MIDI, preview WAV, full IPM trace and a machine manifest.
+- **PLAY / STOP** — audition the exact current piece through Machine Synth Engine v1.
+- **FINISH** — write the current MIDI, synth-rendered WAV, full IPM trace and a machine manifest.
+
+## Machine Synth Engine v1
+
+PLAY and FINISH use the same deterministic 44.1 kHz stereo synthesis engine. It is a real instrument layer rather than the original convenience oscillator.
+
+The fixed v1 signal path is:
+
+> polyphonic additive oscillator banks → lane-specific ADSR → velocity-sensitive 12 dB low-pass filtering → equal-power stereo placement → deterministic stereo room taps → DC block → soft limiter
+
+The three musical lanes have independent timbres:
+
+- **TUNE** — warm harmonically layered lead, slight detune and restrained vibrato, left-of-centre placement;
+- **BASS** — darker fundamental-led voice, slower release and low cutoff, near-centre placement;
+- **RHYTHM** — brighter short-decay pitched voice with wider detune, right-of-centre placement.
+
+The synth is deterministic: identical IPM events and synth contract must produce byte-identical WAV output. It requires no SoundFont, DAW, external synthesizer or network service.
+
+The synth is a **product renderer only**. It does not replace or alter the frozen scientific listener-study renderer.
 
 ## Outputs
 
@@ -28,7 +48,7 @@ FINISH writes:
 - `ipm-machine-<seed>.trace.json`
 - `ipm-machine-<seed>.machine.json`
 
-The WAV is a convenience preview synth. MIDI is the instrument-neutral musical output. The IPM trace remains the evidence object for how the piece was composed.
+The WAV is now the machine's intended internal synthesizer render. MIDI remains the instrument-neutral musical output. The IPM trace remains the evidence object for how the piece was composed.
 
 ## Run
 
@@ -57,9 +77,15 @@ Machine v0 does **not** yet provide:
 - semantic memory slots such as A/B/C return points;
 - a true branch-from-held-history operation;
 - external MIDI clock or hardware controller mapping;
-- production-quality internal synthesis.
+- user-editable synth patches or external controller mapping for synth parameters.
 
-Those features require an explicit continuation/state contract in the composition engine. They should not be faked at the UI layer.
+Those continuation features require an explicit continuation/state contract in the composition engine. They should not be faked at the UI layer.
+
+## Gate order
+
+1. **Synth Engine Gate** — implementation, deterministic rendering and exact lane/timbre contract must pass.
+2. **Machine Use Gate** — only then ask whether NEW / ACTIVITY / SURPRISE / HOLD / PLAY / FINISH feels like making a piece rather than browsing generated pieces.
+3. Physical hardware design comes later.
 
 ## Recruitment boundary
 
