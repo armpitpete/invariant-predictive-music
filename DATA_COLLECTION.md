@@ -1,10 +1,10 @@
 # IPM Listening Experiment 1 — deployment, data collection and governance
 
-**Status:** technical pre-recruitment gate PASS; privacy/international-processing disclosure CLOSED; governance owner gate has one remaining account-security attestation. No real participant may be invited until that final item is recorded. PR #24 remains draft/unmerged unless separately authorised.
+**Status:** technical pre-recruitment gate PASS; privacy/international-processing disclosure CLOSED; account-security owner attestation CLOSED; **External Listener Readiness PASS**. Actual listener recruitment remains a separate owner decision. PR #24 remains draft/unmerged unless separately authorised.
 
 ## Authoritative frozen study object
 
-The only participant bundle authorised for recruitment is:
+The only participant bundle eligible for use if recruitment is separately authorised is:
 
 - GitHub Actions artifact `9328095073` (`ipm-participant-web-v3`)
 - artifact SHA-256 `1e512e85fea0e90f1e03791897803a28d264be9a5c3a8569def9324a1d5364c6`
@@ -70,6 +70,8 @@ Required controls:
 - least-privilege access;
 - no live invitation mappings, returned participant exports or live SQLite database in the public GitHub repository.
 
+Owner attestation recorded 19 August 2026 confirms for `merrin@merrinworld.uk` that MFA / 2-Step Verification is enabled, automatic forwarding of study mail to third parties is off, and no undeclared mailbox delegate can access study responses.
+
 ## Privacy and lawful processing
 
 P### exports are pseudonymous personal data while separate invitation/mail linkage exists. No special-category or criminal-offence data is intentionally collected. Email metadata remains in the transport layer and browser storage is used only for protocol-critical session state.
@@ -119,9 +121,10 @@ Closed:
 - [x] Controller context: **Independent — Merrin Dream**.
 - [x] Institutional ethics: no governing institution; no additional institutional approval route.
 - [x] ICO fee self-assessment: **You don't need to pay a fee.**
+- [x] Account security owner attestation: MFA / 2-Step Verification enabled; automatic forwarding to third parties off; no undeclared mailbox delegate.
 
-Still open:
+## External Listener Readiness — PASS
 
-- [ ] **Account security:** owner must confirm that MFA / 2-Step Verification is enabled on `merrin@merrinworld.uk`, automatic forwarding of study mail to third parties is off, and no undeclared mailbox delegate can access study responses.
+All declared pre-recruitment readiness prerequisites are closed. This establishes readiness only.
 
-After that single attestation is recorded, the governance gate reaches PASS and the project reaches the separate owner decision on actual listener recruitment. Merge remains separate.
+**No recruitment, invitation sending, participant contact, or PR merge is authorised by this status.** Those remain separate owner decisions.
