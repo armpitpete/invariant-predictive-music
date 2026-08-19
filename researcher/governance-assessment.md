@@ -68,7 +68,9 @@ Evidence sources checked 19 August 2026:
 - GitHub's current General Privacy Statement records international processing and describes its international-transfer mechanisms: `https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement`.
 - Google's current data-transfer-framework page records international processing and the transfer mechanisms it uses, including UK adequacy regulations, the UK Extension to the EU-US Data Privacy Framework and standard contractual clauses where applicable: `https://policies.google.com/privacy/frameworks?hl=en_GB`.
 
-This closure is a transparency/governance repair only. It does not modify the frozen participant interface, stimuli, schedules, measures or analysis, and it does not by itself authorise recruitment. If service providers, account type, or data flows materially change, international-transfer compliance must be reassessed before further recruitment.
+This closes the **participant transparency defect** identified by External Listener Readiness. It does not assert that every platform-level data movement is a restricted transfer initiated by this controller, and it is not a substitute for any provider/account-specific transfer mechanism that may apply under UK GDPR. If service providers, account type, contractual terms or data flows materially change, international-transfer compliance must be reassessed before further recruitment.
+
+This closure is a governance-text repair only. It does not modify the frozen participant interface, stimuli, schedules, measures or analysis, and it does not by itself authorise recruitment.
 
 ## Storage and mailbox
 
