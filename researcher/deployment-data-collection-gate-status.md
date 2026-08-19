@@ -1,4 +1,4 @@
-# Deployment / data-collection gate status — 18 August 2026
+# Deployment / data-collection gate status — 19 August 2026
 
 Current authoritative participant interface evidence revision: `e6b07579878350c80fb6548107290898b48501ca`.
 
@@ -18,6 +18,10 @@ Participant v3 fetches and SHA-verifies each frozen WAV before enabling Play; ca
 
 Automated v3 participant, data-control, HTTPS 79/79 byte verification and deployed P001/P002/P003 browser gates all pass, with no autoplay-policy override and 0 real participants recruited.
 
-**Overall technical pre-recruitment gate remains OPEN only for the same-class real-device/browser owner retest of v3.** Required evidence: trial-1 Play audibly starts without `NotAllowedError`; any returned export is version 2 with interface revision `e6b07579878350c80fb6548107290898b48501ca`; enrolment/start events exist only if actual playback begins.
+The same-class real-device/browser owner regression subsequently **PASSed**: trial-1 playback began successfully on the device/browser class that exposed the v1 defect; the returned QA export was version 2 with exact interface revision provenance; enrolment/start events were recorded only after actual playback began. Owner-QA ratings are not study data.
 
-This is owner QA, not recruitment. After it passes, governance owner checks still remain: controller/sponsorship context, ICO fee assessment, applicable ethics/institutional status, and mailbox MFA/forwarding/delegation. PR #24 remains draft and unmerged; no recruitment is authorised.
+**Technical participant/deployment/data-control pre-recruitment gate: PASS.**
+
+Governance checks for controller context, ICO fee status, institutional/NHS/HRA scope, participant privacy/invitation information and international-processing/transfer disclosure are also closed. The only remaining governance item is the owner account-security attestation for `merrin@merrinworld.uk`: MFA/2-Step Verification enabled, automatic forwarding to third parties off, and no undeclared mailbox delegate.
+
+PR #24 remains draft and unmerged; no recruitment is authorised.
