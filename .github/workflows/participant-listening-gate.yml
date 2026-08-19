@@ -1,0 +1,159 @@
+name: participant-listening-gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "PARTICIPANT.md"
+      - "participant-ui/**"
+      - "src/ipm/experiment_participant.py"
+      - "src/ipm/experiment.py"
+      - "src/ipm/experiment_v2.py"
+      - "src/ipm/experiment_v2_articulation.py"
+      - "src/ipm/experiment_audio.py"
+      - "src/ipm/micro_rhythm.py"
+      - "src/ipm/midi.py"
+      - "src/ipm/sequential_bar.py"
+      - "tests/test_experiment_participant.py"
+      - ".github/workflows/participant-listening-gate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  participant-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install IPM
+        run: python -m pip install -e '.[dev]'
+      - name: Test participant contract helpers
+        run: pytest -q tests/test_experiment_participant.py
+      - name: Build frozen Counterfactual Episode v2 pilot
+        shell: bash
+        run: |
+          set -euo pipefail
+          revision="$(git rev-parse HEAD)"
+          python -m ipm.experiment_v2_articulation \
+            --output listening-pilot \
+            --source-revision "$revision"
+      - name: Install fixed audio renderer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fluidsynth fluid-soundfont-gm
+      - name: Render PCM-isolated WAV stimuli
+        shell: bash
+        run: |
+          set -euo pipefail
+          soundfont=/usr/share/sounds/sf2/FluidR3_GM.sf2
+          test -f "$soundfont"
+          python -m ipm.experiment_audio \
+            --pilot-dir listening-pilot \
+            --soundfont "$soundfont"
+      - name: Build participant-safe bundle and Python dry-run
+        shell: bash
+        run: |
+          set -euo pipefail
+          revision="$(git rev-parse HEAD)"
+          python -m ipm.experiment_participant \
+            --pilot-dir listening-pilot \
+            --ui-dir participant-ui \
+            --contract participant-ui/frozen-participant-contract.json \
+            --output participant-web \
+            --source-revision "$revision" \
+            --dry-run-report listening-pilot/researcher/participant-interface-dry-run.json
+      - name: Run participant JavaScript state-machine dry-run
+        shell: bash
+        run: |
+          set -euo pipefail
+          node participant-ui/dry-run.mjs participant-web \
+            > listening-pilot/researcher/participant-js-dry-run.json
+      - name: Enforce participant dry-run gate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          for name in (
+              "participant-interface-dry-run.json",
+              "participant-js-dry-run.json",
+          ):
+              record = json.loads((Path("listening-pilot/researcher") / name).read_text())
+              assert record["passed"] is True
+              assert record["participant_count"] == 36
+              assert record["total_trial_count"] == 432
+          js = json.loads((Path("listening-pilot/researcher") / "participant-js-dry-run.json").read_text())
+          assert "rejected-pre-start-playback-remains-unenrolled" in js["checked"]
+          sample = js["sample_export"]
+          config = json.loads(Path("participant-web/config.json").read_text())
+          assert sample["export_version"] == 2
+          assert sample["participant_interface_source_revision"] == config["participant_interface_source_revision"]
+          PY
+      - name: Install pinned browser acceptance runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run complete three-group browser delivery acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          node participant-ui/browser-acceptance.mjs \
+            participant-web participant-browser-acceptance
+          cp participant-browser-acceptance/participant-browser-acceptance.json \
+            listening-pilot/researcher/participant-browser-acceptance.json
+      - name: Enforce browser delivery acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          record = json.loads(Path("participant-browser-acceptance/participant-browser-acceptance.json").read_text())
+          config = json.loads(Path("participant-web/config.json").read_text())
+          assert record["passed"] is True
+          assert record["synthetic_nonhuman_sessions"] is True
+          assert record["real_participants_recruited"] == 0
+          assert record["groups_covered"] == [1, 2, 3]
+          assert record["total_trial_count"] == 36
+          assert record["unique_stimulus_count"] == 36
+          assert record["browser_webcrypto_delivery_hash_check"] is True
+          assert record["actual_browser_playback_to_ended"] is True
+          assert record["direct_user_gesture_playback_gate"] is True
+          assert record["autoplay_policy_override_used"] is False
+          assert record["exported_records_verified"] is True
+          assert record["condition_mapping_leak_detected"] is False
+          assert len(record["sessions"]) == 3
+          assert all(item["passed"] for item in record["sessions"])
+          assert all(item["trial_count"] == 12 for item in record["sessions"])
+          assert all(item["wav_sha256_verified_from_browser_audit"] == 12 for item in record["sessions"])
+          assert all(item["direct_user_gesture_play_calls"] == 12 for item in record["sessions"])
+          assert all(item["direct_user_gesture_gate_passed"] is True for item in record["sessions"])
+          for pid in ("P001", "P002", "P003"):
+              exported = json.loads(Path("participant-browser-acceptance", f"{pid}-synthetic-export.json").read_text())
+              assert exported["export_version"] == 2
+              assert exported["participant_interface_source_revision"] == config["participant_interface_source_revision"]
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipm-participant-web-v3
+          path: participant-web
+      - uses: actions/upload-artifact@v4
+        with:
+          name: participant-interface-gate-v3
+          path: |
+            listening-pilot/researcher/participant-interface-dry-run.json
+            listening-pilot/researcher/participant-js-dry-run.json
+            listening-pilot/researcher/participant-browser-acceptance.json
+            participant-browser-acceptance/*.json
+            participant-ui/frozen-participant-contract.json

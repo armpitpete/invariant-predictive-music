@@ -1,0 +1,94 @@
+name: render-listening-pilot
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "EXPERIMENT.md"
+      - "src/ipm/experiment.py"
+      - "src/ipm/experiment_v2.py"
+      - "src/ipm/experiment_v2_articulation.py"
+      - "src/ipm/experiment_audio.py"
+      - "src/ipm/engine.py"
+      - "src/ipm/micro_rhythm.py"
+      - "src/ipm/midi.py"
+      - "src/ipm/sequential_bar.py"
+      - "pyproject.toml"
+      - ".github/workflows/render-listening-pilot.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install IPM
+        run: python -m pip install -e '.[dev]'
+      - name: Build Counterfactual Episode v2 pilot set
+        shell: bash
+        run: |
+          set -euo pipefail
+          revision="$(git rev-parse HEAD)"
+          python -m ipm.experiment_v2_articulation \
+            --output listening-pilot \
+            --source-revision "$revision"
+      - name: Install fixed audio renderer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fluidsynth fluid-soundfont-gm
+      - name: Render PCM-isolated WAV stimuli
+        shell: bash
+        run: |
+          set -euo pipefail
+          soundfont=/usr/share/sounds/sf2/FluidR3_GM.sf2
+          test -f "$soundfont"
+          python -m ipm.experiment_audio \
+            --pilot-dir listening-pilot \
+            --soundfont "$soundfont"
+      - name: Enforce sample-isolation gate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          gate = json.loads(
+              Path("listening-pilot/researcher/audio-isolation-gate.json").read_text()
+          )
+          assert gate["passed"] is True
+          assert gate["required_seed_count"] == 12
+          assert gate["passed_seed_count"] == 12
+          assert all(item["prefix_sample_identical"] for item in gate["seeds"])
+          assert all(item["suffix_sample_identical"] for item in gate["seeds"])
+          assert all(item["ipm_control_target_audio_differs"] for item in gate["seeds"])
+          PY
+      - name: Record renderer identity and hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          soundfont=/usr/share/sounds/sf2/FluidR3_GM.sf2
+          {
+            echo "source_revision=$(git rev-parse HEAD)"
+            echo "fluidsynth=$(fluidsynth --version 2>&1 | head -n 1)"
+            echo "renderer_effects=chorus:no,reverb:no"
+            echo "pcm_assembler=ipm.experiment_audio"
+            echo "normalization=shared-triplet-peak:-1.5dBFS"
+            echo "soundfont=$soundfont"
+            sha256sum "$soundfont"
+          } > listening-pilot/researcher/audio-renderer.txt
+          find listening-pilot/stimuli -type f \( -name '*.mid' -o -name '*.wav' \) -print0 \
+            | sort -z | xargs -0 sha256sum \
+            > listening-pilot/researcher/stimulus-sha256.txt
+          find listening-pilot/researcher/audio-components -type f -name '*.mid' -print0 \
+            | sort -z | xargs -0 sha256sum \
+            > listening-pilot/researcher/audio-component-sha256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipm-listening-pilot-v2
+          path: listening-pilot

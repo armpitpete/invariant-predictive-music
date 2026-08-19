@@ -1,0 +1,37 @@
+name: diagnose-listening-controls
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/diagnose_counterfactual_episode_v2.py"
+      - "src/ipm/experiment.py"
+      - "src/ipm/experiment_v2.py"
+      - "src/ipm/experiment_v2_articulation.py"
+      - "src/ipm/engine.py"
+      - "src/ipm/sequential_bar.py"
+      - ".github/workflows/diagnose-listening-controls.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install IPM
+        run: python -m pip install -e '.[dev]'
+      - name: Run frozen 512-seed Counterfactual Episode v2 gate
+        run: >-
+          python scripts/diagnose_counterfactual_episode_v2.py
+          --output counterfactual-v2-corpus-gate.json
+      - name: Upload v2 corpus-gate record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: counterfactual-v2-corpus-gate
+          path: counterfactual-v2-corpus-gate.json

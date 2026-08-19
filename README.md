@@ -36,6 +36,16 @@ The same high-level configuration can generate three experimental conditions:
 
 That makes the central claim testable rather than merely aesthetic.
 
+## Listening Experiment 1
+
+The active pre-listening experiment is **Counterfactual Episode v2**.
+
+[`EXPERIMENT.md`](EXPERIMENT.md) freezes the causal construction, corpus, PCM-isolated listener artifact, human measures, recruitment stopping rule and analysis plan. [`PARTICIPANT.md`](PARTICIPANT.md) defines the participant-facing implementation, consent screen, single-play/reload behavior, frozen asset trust anchor and pre-recruitment browser acceptance gate.
+
+The participant implementation is deliberately downstream of the frozen musical object: it may advance only while all 36 listener WAVs, P001–P036 schedules and export schemas reproduce the frozen hashes exactly.
+
+No actual listener result is claimed by any construction, participant or browser acceptance gate.
+
 ## Musical controls
 
 Bass and Rhythm are instrument parameters, not hard-coded Study behaviour.
