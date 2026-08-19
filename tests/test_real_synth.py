@@ -72,7 +72,13 @@ def _samples(path: Path) -> np.ndarray:
 def _dry_patch(name: str, waveform: str = "sine", *, filter_mode: str = "lowpass") -> SynthPatch:
     return SynthPatch(
         name=name,
-        oscillators=(OscillatorSpec(waveform=waveform, gain=0.7),),
+        oscillators=(
+            OscillatorSpec(
+                waveform=waveform,
+                gain=0.7,
+                pulse_width=0.31 if waveform == "pulse" else 0.5,
+            ),
+        ),
         amp_env=EnvelopeSpec(attack=0.005, decay=0.04, sustain=0.7, release=0.05),
         filter_env=EnvelopeSpec(attack=0.005, decay=0.04, sustain=0.2, release=0.05),
         filter=FilterSpec(
