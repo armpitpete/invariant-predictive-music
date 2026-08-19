@@ -54,6 +54,18 @@ Owner reports completion of the ICO data-protection-fee self-assessment for the 
 
 This outcome is recorded as the controller's self-assessment result; no fee payment is required by this gate unless the controller's circumstances or processing materially change.
 
+## International processing / transfer transparency — CLOSED
+
+The participant invitation/privacy template now explicitly states that GitHub and Google operate internationally and that data handled through GitHub Pages, Gmail or Google Drive may be processed outside the UK. It identifies the service roles and points participants to the providers' current published transfer-framework information and safeguards.
+
+Evidence sources checked 19 August 2026:
+
+- ICO right-to-be-informed guidance requires details of transfers to third countries or international organisations, including the applicable safeguard information where relevant: `https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/individual-rights/the-right-to-be-informed/what-privacy-information-should-we-provide/`.
+- GitHub's current General Privacy Statement records international processing and describes its international-transfer mechanisms: `https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement`.
+- Google's current data-transfer-framework page records international processing and the transfer mechanisms it uses, including UK adequacy regulations, the UK Extension to the EU-US Data Privacy Framework and standard contractual clauses where applicable: `https://policies.google.com/privacy/frameworks?hl=en_GB`.
+
+This closure is a transparency/governance repair only. It does not modify the frozen participant interface, stimuli, schedules, measures or analysis, and it does not by itself authorise recruitment. If service providers, account type, or data flows materially change, international-transfer compliance must be reassessed before further recruitment.
+
 ## Storage and mailbox
 
 Private research storage: Google Drive folder `IPM Listening Study - Private Data`, verified at creation as not shared with one owner permission only (`merrin@merrinworld.uk`).
