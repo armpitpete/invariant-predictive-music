@@ -1,6 +1,6 @@
 # IPM Listening Experiment 1 — deployment, data collection and governance
 
-**Status:** technical pre-recruitment gate PASS; governance owner gate has one remaining account-security attestation. No real participant may be invited until that final item is recorded. PR #24 remains draft/unmerged unless separately authorised.
+**Status:** technical pre-recruitment gate PASS; privacy/international-processing disclosure CLOSED; governance owner gate has one remaining account-security attestation. No real participant may be invited until that final item is recorded. PR #24 remains draft/unmerged unless separately authorised.
 
 ## Authoritative frozen study object
 
@@ -76,6 +76,8 @@ P### exports are pseudonymous personal data while separate invitation/mail linka
 
 Working UK GDPR Article 6 basis for this independent controller: **legitimate interests**. Participation consent is the ethical agreement to participate, not the Article 6 basis. The LIA records purpose, necessity and balancing; safeguards include minimisation, pseudonymisation, linkage separation, access restriction, bounded retention and no consequential individual decisions.
 
+The participant invitation/privacy template now also discloses that GitHub and Google operate internationally and that personal data handled through GitHub Pages, Gmail or Google Drive may be processed outside the UK. It points participants to the providers' current published transfer-framework and safeguard information. This is downstream governance text only; the frozen participant artifact is unchanged.
+
 A mandatory DPIA is not indicated on the frozen scope. Re-screen if the study expands into vulnerable participants, sensitive data, data matching, profiling, consequential automation, large-scale collection or new tracking/analytics.
 
 ## Retention and withdrawal
@@ -112,6 +114,7 @@ Closed:
 - [x] Adults 18+ / able-to-consent boundary.
 - [x] Private researcher storage selected and access checked.
 - [x] Participant privacy/invitation information established.
+- [x] International-processing / transfer disclosure established in the invitation/privacy layer.
 - [x] NHS/HRA REC route assessed as not applicable.
 - [x] Controller context: **Independent — Merrin Dream**.
 - [x] Institutional ethics: no governing institution; no additional institutional approval route.
