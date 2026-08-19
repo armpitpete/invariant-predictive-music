@@ -78,16 +78,22 @@ Private research storage: Google Drive folder `IPM Listening Study - Private Dat
 
 Response return mailbox: `merrin@merrinworld.uk`; study label `IPM Listening Study/Responses`.
 
-The connector confirms the mailbox identity but cannot inspect Google Account MFA state, Gmail automatic-forwarding configuration or mailbox delegation. Those remain owner-attestation facts.
+The connector confirms the mailbox identity but cannot inspect Google Account MFA state, Gmail automatic-forwarding configuration or mailbox delegation. Those are owner-attestation facts.
 
-## Remaining owner attestation before recruitment
+## Account security — CLOSED
 
-Only one governance item remains:
+Owner attestation recorded 19 August 2026 for `merrin@merrinworld.uk`:
 
-**Account security:** confirm all three statements are true for `merrin@merrinworld.uk`:
+1. **MFA / 2-Step Verification is enabled.**
+2. **Automatic forwarding of study mail to third parties is off.**
+3. **No undeclared mailbox delegate can access study responses.**
 
-1. MFA / 2-Step Verification is enabled.
-2. Automatic forwarding of study mail to third parties is off.
-3. No undeclared mailbox delegate can access study responses.
+The owner confirmed all three statements directly. No contrary evidence is known.
 
-After that single attestation is recorded, the governance gate reaches PASS and External Listener Readiness reaches PASS. Actual listener recruitment and PR merge remain separate owner decisions.
+## External Listener Readiness — PASS
+
+All declared scientific, product, participant-interface, deployment, data-control, privacy/governance and owner-attestation prerequisites for external listener readiness are closed.
+
+**External Listener Readiness: PASS.**
+
+This pass means the frozen Counterfactual Episode v2 study is ready to be used if the owner separately authorises recruitment. It does **not** itself authorise recruitment, invitation sending, participant contact, PR merge, or any change to the frozen scientific object.
