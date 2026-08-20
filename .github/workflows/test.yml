@@ -120,3 +120,25 @@ jobs:
           name: ipm-real-synth-engine-v3-audition
           path: real-synth-engine-v3-audition/
           if-no-files-found: error
+
+  real-synth-engine-v4-gate-c-materialize:
+    if: github.event_name == 'pull_request' && github.head_ref == 'real-synth-v4-gate-c'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: python -m pip install -e '.[dev]'
+      - name: Materialise pre-v4 frozen Tune ledger
+        run: python scripts/materialize_real_synth_v4_gate_c_fixture.py
+      - name: Verify materialised ledger only
+        run: |
+          test -s gate-c-materialization/REAL_SYNTH_ENGINE_V4_GATE_C_TUNE_LEDGER_v0_1.json
+          test ! -e gate-c-materialization/*.wav
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ipm-real-synth-engine-v4-gate-c-materialization
+          path: gate-c-materialization/
+          if-no-files-found: error
