@@ -1,0 +1,88 @@
+{
+  "architecture_commit": "a53980fb6b9358aee985cf4bdccd61d63bb36365",
+  "audition_audio_created": false,
+  "environment": {
+    "numpy": "2.3.5",
+    "platform": "Linux-6.18.35-x86_64-with-glibc2.41",
+    "python": "3.13.5"
+  },
+  "files": {
+    "scripts/run_real_synth_v4_gate_ab.py": "5ff7994113e044c8d47d9f8675fc9a7074ebd7e835176a3219e7b68ae521d042",
+    "src/ipm/real_synth_v4.py": "9c5816ba0766f9aab35e4b08920f340bb8836d865bd7ccaf3492e3078e75943c",
+    "src/ipm/real_synth_v4_dsp.py": "30a76b14aff7ca1dc02f052ccca60c82cb8a1fc39f1f7aa43b95fa81ddd303a5",
+    "src/ipm/real_synth_v4_engine.py": "8ec51dca19448b98b31b8d8cb49237c6ecf612e3db47a30b3ba1946e996ab7a1",
+    "src/ipm/real_synth_v4_host.py": "1615e514ec347610c9b93c74a5767e69841bbb90a339644b6acbcf094cd47fd2",
+    "src/ipm/real_synth_v4_lifecycle_base.py": "bc9c6c91b4135b846add3dcd46d4a6b9ada4be6207234d46e611433e85c853e5",
+    "src/ipm/real_synth_v4_lifecycle_start.py": "630ce59af64114ee353eb2ffa56609b32c993bef2f552b7f863d506699d78fec",
+    "src/ipm/real_synth_v4_model.py": "2e3c9b5d4596b2fba7d3c8cbd5ebcb33f39f7638ec7ede211a9c64e013c7ece2",
+    "src/ipm/real_synth_v4_process.py": "9759251295868189b209c2dbb5a6283b2d3657ca0c343b2dbee21233674455ef",
+    "src/ipm/real_synth_v4_state.py": "369b9ab418a97d420caa0e37631ea2a05d58e162b5cee22bcda61f3e1c9769f4",
+    "tests/v4_gate_ab/test_b1_b3.py": "84edbaceb2738306ae47a327558c7153461ff19fd557fbd59d58ba34257bb8a1",
+    "tests/v4_gate_ab/test_b4_b6.py": "81444025deab59e3f4e48e90fc72d1ea0e0a896a176799087a88ec8282adace4",
+    "tests/v4_gate_ab/test_b7_b8.py": "e1366e211efe8e1e0534840dab8b97965eff0f6c7e95a424092a3654fc20e031",
+    "tests/v4_gate_ab/test_gate_a.py": "9038d8aef749aecd22209d239003d7fa66e4190382ff98e009470bf4add5f651"
+  },
+  "gate": "RealSynthEngine v4 Gate A / Gate B technical acceptance",
+  "gate_A": "PASS",
+  "gate_B": "PASS",
+  "human_audition_performed": false,
+  "implementation_commit": "9ca6e720f9a90d917b1420b794d76a07408cd7bb",
+  "status": "PASS",
+  "stop_rule": "No Gate C/D/E/F/G audition or human listening performed by this harness.",
+  "subgates": {
+    "A": {
+      "command": "/opt/pyvenv/bin/python -m pytest -q tests/v4_gate_ab -k test_gate_a_",
+      "output": "...                                                                      [100%]\n3 passed, 10 deselected in 0.68s",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    "B1": {
+      "command": "/opt/pyvenv/bin/python -m pytest -q tests/v4_gate_ab -k b1_",
+      "output": ".....                                                                    [100%]\n5 passed, 8 deselected in 4.53s",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    "B2": {
+      "command": "/opt/pyvenv/bin/python -m pytest -q tests/v4_gate_ab -k b2_",
+      "output": ".                                                                        [100%]\n1 passed, 12 deselected in 0.09s",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    "B3": {
+      "command": "/opt/pyvenv/bin/python -m pytest -q tests/v4_gate_ab -k b3_",
+      "output": ".                                                                        [100%]\n1 passed, 12 deselected in 1.37s",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    "B4": {
+      "command": "/opt/pyvenv/bin/python -m pytest -q tests/v4_gate_ab -k b4_",
+      "output": "...                                                                      [100%]\n3 passed, 10 deselected in 0.16s",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    "B5": {
+      "command": "/opt/pyvenv/bin/python -m pytest -q tests/v4_gate_ab -k b5_",
+      "output": ".                                                                        [100%]\n1 passed, 12 deselected in 0.05s",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    "B6": {
+      "command": "/opt/pyvenv/bin/python -m pytest -q tests/v4_gate_ab -k b6_",
+      "output": ".                                                                        [100%]\n1 passed, 12 deselected in 0.08s",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    "B7": {
+      "command": "/opt/pyvenv/bin/python -m pytest -q tests/v4_gate_ab -k b7_",
+      "output": "..                                                                       [100%]\n2 passed, 11 deselected in 1.07s",
+      "returncode": 0,
+      "status": "PASS"
+    },
+    "B8": {
+      "command": "/opt/pyvenv/bin/python -m pytest -q tests/v4_gate_ab -k b8_",
+      "output": ".                                                                        [100%]\n1 passed, 12 deselected in 0.75s",
+      "returncode": 0,
+      "status": "PASS"
+    }
+  }
+}
