@@ -8,6 +8,7 @@ on:
     paths:
       - "src/ipm/real_synth_v4*.py"
       - "scripts/real_synth_v4r1_pre_audition_package.py"
+      - "scripts/real_synth_v4r1_diagnostics.py"
       - "scripts/run_real_synth_v4r1_*.py"
       - "scripts/aggregate_real_synth_v4r1_pre_audition.py"
       - "scripts/render_real_synth_v4r1_gate_*.py"
@@ -21,6 +22,7 @@ on:
     paths:
       - "src/ipm/real_synth_v4*.py"
       - "scripts/real_synth_v4r1_pre_audition_package.py"
+      - "scripts/real_synth_v4r1_diagnostics.py"
       - "scripts/run_real_synth_v4r1_*.py"
       - "scripts/aggregate_real_synth_v4r1_pre_audition.py"
       - "scripts/render_real_synth_v4r1_gate_*.py"
@@ -28,6 +30,10 @@ on:
       - "REAL_SYNTH_ENGINE_V4R1_CONTROL_DIAGNOSTICS_v0_1.md"
       - "REAL_SYNTH_ENGINE_V4R1_REDESIGN_CONTRACT_v0_2.md"
       - ".github/workflows/real-synth-v4r1-*.yml"
+
+concurrency:
+  group: real-synth-v4r1-pre-audition-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   structure:
