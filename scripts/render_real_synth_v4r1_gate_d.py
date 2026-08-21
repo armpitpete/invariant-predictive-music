@@ -1,6 +1,6 @@
 """Materialise the frozen v4R1 R-D macro-authority audition later.
 
-Not invoked by the pre-audition freeze.  R-C must already be frozen PASS.
+Not invoked by the pre-audition freeze. R-C must already be frozen PASS.
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from real_synth_v4r1_pre_audition_package import (  # noqa: E402
     BLOCK_SIZE, R_D_CONTROL_PREROLL_SECONDS, R_D_NOTE_PITCH, R_D_NOTE_VELOCITY,
     R_D_VALUES, SAMPLE_RATE, r_d_bank, reference_patches,
 )
-from run_real_synth_v4r1_pre_audition_preflight import family_pass, metric_for  # noqa: E402
+from real_synth_v4r1_diagnostics import family_pass, metric_for  # noqa: E402
 
 FREEZE_PATH=Path("REAL_SYNTH_ENGINE_V4R1_PRE_AUDITION_FREEZE_v0_1.json")
 R_C_RESULT_PATH=Path("REAL_SYNTH_ENGINE_V4R1_GATE_C_RESULT_v0_1.json")
