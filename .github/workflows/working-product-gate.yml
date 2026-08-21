@@ -1,0 +1,112 @@
+name: working-product-gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "PRODUCT_GATE.md"
+      - "src/ipm/product_gate.py"
+      - "src/ipm/engine.py"
+      - "src/ipm/midi.py"
+      - "tests/test_product_gate.py"
+      - ".github/workflows/working-product-gate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Install IPM
+        run: python -m pip install -e '.[dev]'
+
+      - name: Run regression suite
+        run: pytest
+
+      - name: Install fixed audio renderer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fluidsynth fluid-soundfont-gm
+
+      - name: Render frozen portfolio twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          revision="$(git rev-parse HEAD)"
+          soundfont=/usr/share/sounds/sf2/FluidR3_GM.sf2
+          test -f "$soundfont"
+
+          python -m ipm.product_gate \
+            --output working-product-a \
+            --source-revision "$revision" \
+            --soundfont "$soundfont"
+
+          python -m ipm.product_gate \
+            --output working-product-b \
+            --source-revision "$revision" \
+            --soundfont "$soundfont"
+
+          diff -r working-product-a working-product-b
+
+      - name: Enforce product-artifact contract
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          root = Path("working-product-a")
+          manifest_path = root / "manifest.json"
+          manifest = json.loads(manifest_path.read_text())
+          review = json.loads((root / "review-sheet.json").read_text())
+
+          assert manifest["gate_id"] == "ipm-working-product-v1"
+          assert manifest["frozen_before_listening"] is True
+          assert len(manifest["pieces"]) == 8
+          assert len({row["piece_id"] for row in manifest["pieces"]}) == 8
+          assert all(row["validation"]["passed"] for row in manifest["pieces"])
+          assert all(row["renderer_repeat_pcm_identical"] for row in manifest["pieces"])
+          assert all((root / row["wav"]).is_file() for row in manifest["pieces"])
+          assert all((root / row["midi"]).is_file() for row in manifest["pieces"])
+          assert all((root / row["trace"]).is_file() for row in manifest["pieces"])
+
+          manifest_sha = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+          assert review["manifest_sha256"] == manifest_sha
+          assert review["renderer_frozen"] is True
+          assert review["pass_rule"] == "8 SHOW / 0 FAIL"
+          assert all(row["decision"] is None for row in review["pieces"])
+          PY
+
+      - name: Record exact renderer packages and artifact hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "source_revision=$(git rev-parse HEAD)"
+            dpkg-query -W -f='${Package}=${Version}\n' fluidsynth fluid-soundfont-gm
+            fluidsynth --version 2>&1 | head -n 1
+            sha256sum /usr/share/sounds/sf2/FluidR3_GM.sf2
+          } > working-product-a/renderer-packages.txt
+
+          (
+            cd working-product-a
+            tmp="$(mktemp)"
+            find . -type f ! -name 'files.sha256' -print0 \
+              | sort -z | xargs -0 sha256sum > "$tmp"
+            mv "$tmp" files.sha256
+            sha256sum -c files.sha256
+          )
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipm-working-product-gate-v1
+          path: working-product-a
