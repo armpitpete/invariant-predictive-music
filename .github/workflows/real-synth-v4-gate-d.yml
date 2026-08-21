@@ -2,6 +2,17 @@ name: RealSynthEngine v4 Gate D
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - real-synth-v4-gate-d
+    paths:
+      - "REAL_SYNTH_ENGINE_V4_GATE_C_RESULT_v0_1.json"
+      - "REAL_SYNTH_ENGINE_V4_GATE_AB_RESULTS_v0_1.json"
+      - "fixtures/real_synth_v4_gate_c/**"
+      - "src/ipm/real_synth_v4*.py"
+      - "scripts/render_real_synth_v4_gate_d.py"
+      - "tests/v4_gate_d/**"
+      - ".github/workflows/real-synth-v4-gate-d.yml"
   pull_request:
     branches:
       - real-synth-v4-gate-c
