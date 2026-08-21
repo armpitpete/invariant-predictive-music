@@ -28,24 +28,31 @@ on:
 jobs:
   mechanical-gate:
     runs-on: ubuntu-latest
+    env:
+      V4R1_EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.V4R1_EXACT_HEAD }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
       - name: Install package and test dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Run complete R-A and R-B gate
+      - name: Run complete R-A and R-B gate at exact head
         env:
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
-        run: python scripts/run_real_synth_v4r1_gate_ab.py --implementation-commit "$GITHUB_SHA" --output REAL_SYNTH_ENGINE_V4R1_GATE_AB_RESULTS_v0_1.json
-      - name: Verify no audition evidence was created
+        run: python scripts/run_real_synth_v4r1_gate_ab.py --implementation-commit "$V4R1_EXACT_HEAD" --output REAL_SYNTH_ENGINE_V4R1_GATE_AB_RESULTS_v0_1.json
+      - name: Verify exact-head provenance and no audition evidence
         run: |
           python - <<'PY'
-          import json
+          import json, os, subprocess
           from pathlib import Path
-          p=Path("REAL_SYNTH_ENGINE_V4R1_GATE_AB_RESULTS_v0_1.json")
-          d=json.loads(p.read_text())
+          exact=os.environ["V4R1_EXACT_HEAD"]
+          actual=subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip()
+          d=json.loads(Path("REAL_SYNTH_ENGINE_V4R1_GATE_AB_RESULTS_v0_1.json").read_text())
+          assert actual == exact
+          assert d["implementation_commit"] == exact
           assert d["status"] == "PASS"
           assert d["gate_R_A"] == "PASS"
           assert d["gate_R_B"] == "PASS"
