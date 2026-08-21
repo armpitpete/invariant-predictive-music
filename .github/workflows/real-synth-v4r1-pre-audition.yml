@@ -1,0 +1,12 @@
+name: RealSynthEngine v4R1 pre-audition serial (superseded)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  superseded:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Superseded by .github/workflows/real-synth-v4r1-pre-audition-matrix.yml"
+          echo "No synthesis or audio is performed by this compatibility workflow."

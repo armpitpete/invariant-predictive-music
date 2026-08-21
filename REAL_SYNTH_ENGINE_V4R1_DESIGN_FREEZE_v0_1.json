@@ -1,0 +1,28 @@
+{
+  "status": "FROZEN_BEFORE_V4R1_IMPLEMENTATION",
+  "version": "v4R1-design-v0.1",
+  "historical_failed_v4_result_commit": "3d247ef5696140b2b8f69764869fbb81e4aeb130",
+  "frozen_design_parent_head": "65a3c7d0290c9df9768c95b76ce3791eaff8ea2c",
+  "documents": {
+    "REAL_SYNTH_ENGINE_V4R1_FAILURE_ANALYSIS_v0_1.md": {
+      "git_blob_sha1": "2c0839789bacc79b80301daf40a43e11aa6f6084",
+      "role": "failure interpretation and competing root-cause hypotheses"
+    },
+    "REAL_SYNTH_ENGINE_V4R1_CONTRACT_HOSTILE_REVIEW_v0_1.md": {
+      "git_blob_sha1": "417eb37fe02314b8bd26ee65ee881671b9cd09c3",
+      "role": "hostile review of first redesign contract"
+    },
+    "REAL_SYNTH_ENGINE_V4R1_REDESIGN_CONTRACT_v0_2.md": {
+      "git_blob_sha1": "5ac052ac402b983c7aec4a4ad3e807a25174e172",
+      "role": "superseding architecture and acceptance contract"
+    },
+    "REAL_SYNTH_ENGINE_V4R1_CONTROL_DIAGNOSTICS_v0_1.md": {
+      "git_blob_sha1": "39d9027a5b11b26946035322ff4e895da1f8ad4a",
+      "role": "pre-implementation semantic metrics and effect-size thresholds"
+    }
+  },
+  "superseded_document": "REAL_SYNTH_ENGINE_V4R1_REDESIGN_CONTRACT_v0_1.md",
+  "implementation_changed": false,
+  "human_v4r1_audition_performed": false,
+  "next_gate": "Implement v4R1 architecture delta and prove R-A/R-B mechanically before generating or exposing new audition audio."
+}

@@ -1,0 +1,37 @@
+name: RealSynthEngine v4R1 R-C
+
+on:
+  workflow_dispatch:
+
+jobs:
+  blind-family-render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: real-synth-v4r1-redesign
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: python -m pip install -e '.[dev]'
+      - name: Materialise frozen blind R-C package
+        run: python scripts/render_real_synth_v4r1_gate_c.py
+      - name: Verify public/private split
+        run: |
+          test -s real-synth-engine-v4r1-gate-c/acceptance.json
+          test -s real-synth-engine-v4r1-gate-c/blind/blind-1.wav
+          test -s real-synth-engine-v4r1-gate-c/blind/blind-2.wav
+          test -s real-synth-engine-v4r1-gate-c/blind/blind-3.wav
+          test -s real-synth-engine-v4r1-gate-c-private/mapping.json
+          test ! -e real-synth-engine-v4r1-gate-c/mapping.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipm-real-synth-engine-v4r1-gate-c-blind
+          path: real-synth-engine-v4r1-gate-c/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipm-real-synth-engine-v4r1-gate-c-private
+          path: real-synth-engine-v4r1-gate-c-private/
+          if-no-files-found: error

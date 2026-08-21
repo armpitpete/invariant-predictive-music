@@ -1,0 +1,152 @@
+name: RealSynthEngine v4R1 pre-audition matrix
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - real-synth-v4r1-redesign
+    paths:
+      - "src/ipm/real_synth_v4*.py"
+      - "scripts/real_synth_v4r1_pre_audition_package.py"
+      - "scripts/real_synth_v4r1_diagnostics.py"
+      - "scripts/run_real_synth_v4r1_*.py"
+      - "scripts/aggregate_real_synth_v4r1_pre_audition.py"
+      - "scripts/render_real_synth_v4r1_gate_*.py"
+      - "fixtures/real_synth_v4_gate_c/**"
+      - "REAL_SYNTH_ENGINE_V4R1_CONTROL_DIAGNOSTICS_v0_1.md"
+      - "REAL_SYNTH_ENGINE_V4R1_REDESIGN_CONTRACT_v0_2.md"
+      - ".github/workflows/real-synth-v4r1-*.yml"
+  pull_request:
+    branches:
+      - real-synth-v4-gate-d
+    paths:
+      - "src/ipm/real_synth_v4*.py"
+      - "scripts/real_synth_v4r1_pre_audition_package.py"
+      - "scripts/real_synth_v4r1_diagnostics.py"
+      - "scripts/run_real_synth_v4r1_*.py"
+      - "scripts/aggregate_real_synth_v4r1_pre_audition.py"
+      - "scripts/render_real_synth_v4r1_gate_*.py"
+      - "fixtures/real_synth_v4_gate_c/**"
+      - "REAL_SYNTH_ENGINE_V4R1_CONTROL_DIAGNOSTICS_v0_1.md"
+      - "REAL_SYNTH_ENGINE_V4R1_REDESIGN_CONTRACT_v0_2.md"
+      - ".github/workflows/real-synth-v4r1-*.yml"
+
+concurrency:
+  group: real-synth-v4r1-pre-audition-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install -e '.[dev]'
+      - name: Full R-A/R-B regression
+        env:
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+        run: python -m pytest -q tests/v4_gate_ab tests/v4r1_gate_ab
+      - name: Compile-check frozen future materialisers
+        run: python -m py_compile scripts/render_real_synth_v4r1_gate_c.py scripts/render_real_synth_v4r1_gate_d.py scripts/render_real_synth_v4r1_gate_e.py
+      - name: Structural R-C/R-E preflight
+        run: |
+          python - <<'PY'
+          import json,sys
+          from pathlib import Path
+          sys.path.insert(0,'scripts')
+          from ipm.real_synth_v4 import patch_to_dict
+          from real_synth_v4r1_pre_audition_package import structural_manifest,reference_patches,r_c_bank,r_e_patches
+          root=Path('.')
+          manifest=structural_manifest(root)
+          patches=reference_patches(); va,fm,modal=patches['VA'],patches['FM'],patches['MODAL']
+          rc=bool(va.va and not va.fm.get('enabled') and not va.modal.get('enabled') and not fm.va and fm.fm.get('enabled') and not fm.modal.get('enabled') and not modal.va and not modal.fm.get('enabled') and modal.modal.get('enabled'))
+          for p in patches.values():
+              b=r_c_bank(p); rc &= b.chorus.get('wet',0)==0 and b.delay.get('wet',0)==0 and b.reverb.get('wet',0)==0 and not p.evolution
+          static,evolving=r_e_patches(); sd,ed=patch_to_dict(static),patch_to_dict(evolving); diff=sorted(k for k in sd if sd[k]!=ed[k]); scopes={c.scope for c in evolving.evolution}; targets={c.target for c in evolving.evolution}
+          re_ok=diff==['evolution'] and scopes=={'note','phrase','piece'} and bool(targets & {'BRIGHTNESS','BODY','CHARACTER'}) and bool(targets & {'MOTION','ATTACK'}) and bool(targets & {'WIDTH','SPACE'})
+          d={'manifest':manifest,'r_c_structural_preflight':'PASS' if rc else 'FAIL','r_e_structural_preflight':'PASS' if re_ok else 'FAIL','r_e':{'targets':sorted(targets),'scopes':sorted(scopes),'differing_patch_keys':diff}}
+          Path('structural-preflight.json').write_text(json.dumps(d,sort_keys=True,indent=2)+'\n')
+          assert rc and re_ok
+          PY
+      - name: Prove no audio files
+        run: |
+          if find . -type f \( -iname '*.wav' -o -iname '*.aiff' -o -iname '*.flac' -o -iname '*.mp3' \) | grep -q .; then exit 1; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v4r1-structural-preflight
+          path: structural-preflight.json
+          if-no-files-found: error
+
+  macro-case:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 24
+      matrix:
+        macro: [BRIGHTNESS, BODY, MOTION, ATTACK, CHARACTER, DRIVE, WIDTH, SPACE]
+        family: [VA, FM, MODAL]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install -e '.[dev]'
+      - name: Run frozen macro/family case in memory
+        run: python scripts/run_real_synth_v4r1_macro_case.py --macro "${{ matrix.macro }}" --family "${{ matrix.family }}" --output case.json
+      - name: Prove no audio files
+        run: |
+          if find . -type f \( -iname '*.wav' -o -iname '*.aiff' -o -iname '*.flac' -o -iname '*.mp3' \) | grep -q .; then exit 1; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: diag-${{ matrix.macro }}-${{ matrix.family }}
+          path: case.json
+          if-no-files-found: error
+
+  aggregate:
+    needs: [structure, macro-case]
+    if: always() && needs.structure.result == 'success' && needs.macro-case.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install -e '.[dev]'
+      - uses: actions/download-artifact@v4
+        with:
+          name: v4r1-structural-preflight
+          path: structural
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: diag-*
+          path: macro-cases
+      - name: Flatten case artifacts
+        run: |
+          find macro-cases -name case.json -print0 | while IFS= read -r -d '' f; do d=$(basename "$(dirname "$f")"); cp "$f" "macro-cases/${d}.json"; done
+      - name: Aggregate and enforce all frozen thresholds
+        run: python scripts/aggregate_real_synth_v4r1_pre_audition.py --cases-dir macro-cases --structural structural/structural-preflight.json --output REAL_SYNTH_ENGINE_V4R1_PRE_AUDITION_PREFLIGHT_v0_1.json
+      - name: Prove aggregate contains no audition evidence
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('REAL_SYNTH_ENGINE_V4R1_PRE_AUDITION_PREFLIGHT_v0_1.json'))
+          assert d['status']=='PASS'
+          assert d['human_audition_performed'] is False
+          assert d['audition_audio_created'] is False
+          assert d['wav_files_written']==0
+          assert all(d['r_e_target_full_threshold_pass'].values())
+          PY
+          if find . -type f \( -iname '*.wav' -o -iname '*.aiff' -o -iname '*.flac' -o -iname '*.mp3' \) | grep -q .; then exit 1; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipm-real-synth-engine-v4r1-pre-audition-preflight-matrix
+          path: REAL_SYNTH_ENGINE_V4R1_PRE_AUDITION_PREFLIGHT_v0_1.json
+          if-no-files-found: error
