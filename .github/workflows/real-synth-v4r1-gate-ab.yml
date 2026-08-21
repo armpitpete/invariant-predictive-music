@@ -1,0 +1,61 @@
+name: RealSynthEngine v4R1 R-A / R-B
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - real-synth-v4r1-redesign
+    paths:
+      - "REAL_SYNTH_ENGINE_V4R1_*.md"
+      - "REAL_SYNTH_ENGINE_V4R1_*.json"
+      - "src/ipm/real_synth_v4*.py"
+      - "scripts/run_real_synth_v4r1_gate_ab.py"
+      - "tests/v4_gate_ab/**"
+      - "tests/v4r1_gate_ab/**"
+      - ".github/workflows/real-synth-v4r1-gate-ab.yml"
+  pull_request:
+    branches:
+      - real-synth-v4-gate-d
+    paths:
+      - "REAL_SYNTH_ENGINE_V4R1_*.md"
+      - "REAL_SYNTH_ENGINE_V4R1_*.json"
+      - "src/ipm/real_synth_v4*.py"
+      - "scripts/run_real_synth_v4r1_gate_ab.py"
+      - "tests/v4_gate_ab/**"
+      - "tests/v4r1_gate_ab/**"
+      - ".github/workflows/real-synth-v4r1-gate-ab.yml"
+
+jobs:
+  mechanical-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install package and test dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Run complete R-A and R-B gate
+        env:
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+        run: python scripts/run_real_synth_v4r1_gate_ab.py --implementation-commit "$GITHUB_SHA" --output REAL_SYNTH_ENGINE_V4R1_GATE_AB_RESULTS_v0_1.json
+      - name: Verify no audition evidence was created
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("REAL_SYNTH_ENGINE_V4R1_GATE_AB_RESULTS_v0_1.json")
+          d=json.loads(p.read_text())
+          assert d["status"] == "PASS"
+          assert d["gate_R_A"] == "PASS"
+          assert d["gate_R_B"] == "PASS"
+          assert d["human_audition_performed"] is False
+          assert d["audition_audio_created"] is False
+          assert not list(Path(".").glob("**/*.wav"))
+          PY
+      - name: Upload mechanical evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipm-real-synth-engine-v4r1-gate-ab
+          path: REAL_SYNTH_ENGINE_V4R1_GATE_AB_RESULTS_v0_1.json
+          if-no-files-found: error
