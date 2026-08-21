@@ -1,0 +1,40 @@
+{
+  "gate": "RealSynthEngine v4 Gate C — synthesis-family separation",
+  "status": "PASS",
+  "owner_judgment": "PASS",
+  "judgment_date": "2026-08-21",
+  "judgment_date_precision": "day",
+  "human_audition_performed": true,
+  "question": "Do these sound like three genuinely different instruments whose identities come from three different synthesis families, rather than three presets of essentially the same voice?",
+  "allowed_judgments": [
+    "PASS",
+    "FAIL"
+  ],
+  "gate_ab_freeze_commit": "1d590990d312a63ebd82e83ce0ea37b267d234eb",
+  "implementation_commit": "9ca6e720f9a90d917b1420b794d76a07408cd7bb",
+  "pre_audition_render_head": "cad07e12207b8f0f11b57f597e67066660b5305e",
+  "tune_event_ledger_sha256": "1bee94ac3d65ce6a01efd6ec2921f2cae82238ddbeaaab79fcee38dc4726bd31",
+  "blind_artifact": {
+    "name": "ipm-real-synth-engine-v4-gate-c-blind",
+    "artifact_id": 9422762625,
+    "artifact_digest": "sha256:428e6aabe32edf1f34d2f6ee17fa7fad5664e25da6f9cda69eafe44bb2847308",
+    "wav_sha256": {
+      "blind-1.wav": "60440e7ddc9ad61e919292d4cd8e75c4b7727805e825d94443719c506f284b70",
+      "blind-2.wav": "a3c9901ab963b7da9e3b11bc3abf69c4947ffe3faa4489ec4a1615e72192afe4",
+      "blind-3.wav": "5c1b9eb2daaa3fcced425be670bdb49f2859062cd78f499c251ca604e2484bad"
+    }
+  },
+  "private_mapping": {
+    "artifact_id": 9422763395,
+    "artifact_digest": "sha256:88cee37c094da3406f776bbfbbc7c9c319f89b61509f71b15f5103d6ffc7a3a1",
+    "mapping_file_sha256": "bf4d6033b89e0c89fa00e059473769e3bf6336aad8da522fc69e3367b38c18b6",
+    "opened_only_after_owner_judgment": true,
+    "mapping": {
+      "blind-1.wav": "MODAL",
+      "blind-2.wav": "FM",
+      "blind-3.wav": "VA"
+    }
+  },
+  "no_post_audition_parameter_tuning_before_judgment": true,
+  "next_gate": "Gate D — musical evolution"
+}
