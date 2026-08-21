@@ -23,7 +23,7 @@ def test_plain_tune_is_pre_v4_and_exact():
     payload = gate_d.load_frozen_ledger(ROOT)
     assert payload["tune_event_count"] == 122
     assert payload["tune_event_ledger_sha256"] == gate_d.EXPECTED_LEDGER_SHA256
-    assert payload["source"]["selected_seed"] == 1693196453
+    assert payload["historic_source"]["selected_seed"] == 1693196453
 
 
 def test_gate_d_does_not_reenter_composition_selection():
