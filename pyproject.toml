@@ -15,6 +15,7 @@ dev = ["pytest>=8"]
 [project.scripts]
 ipm = "ipm.engine:main"
 ipm-machine = "ipm.machine:main"
+ipm-moment = "ipm.moment_machine:main"
 ipm-study = "ipm.engine:main"
 ipm-study-001 = "ipm.study:main"
 ipm-study-004 = "ipm.study4:main"
