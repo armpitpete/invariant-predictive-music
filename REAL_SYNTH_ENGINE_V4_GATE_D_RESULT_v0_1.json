@@ -1,0 +1,34 @@
+{
+  "gate": "RealSynthEngine v4 Gate D — musical evolution",
+  "status": "FAIL",
+  "owner_judgment": "FAIL",
+  "judgment_date": "2026-08-21",
+  "judgment_date_precision": "day",
+  "human_audition_performed": true,
+  "gate_c_pass_freeze_commit": "a95a23937f3e7a3a2f13b6a31642d553625b3632",
+  "implementation_commit": "9ca6e720f9a90d917b1420b794d76a07408cd7bb",
+  "pre_audition_gate_d_head": "974eb27f762beb09d1d8693b059a150ff83ab963",
+  "artifact": {
+    "name": "ipm-real-synth-engine-v4-gate-d-audition",
+    "artifact_id": 9437899937,
+    "artifact_digest": "sha256:51348ab97ae96ec1f4966f8e789b2df550af626bc15162101c974c006be01c4c",
+    "static_wav_sha256": "60440e7ddc9ad61e919292d4cd8e75c4b7727805e825d94443719c506f284b70",
+    "evolving_wav_sha256": "ba0fe3af13cfeddc83ef6dc19bc651ea0f454270bb4abf8e2bc9f165be1a1e8c",
+    "automation_ledger_sha256": "de3dc2a610dde9ab0fd3bf5b66b12da78265d414d5ae57c6e604a6d7ad29cc1c"
+  },
+  "questions": {
+    "q1": {
+      "question": "Can you hear coherent sonic development over time in EVOLVING that is absent or materially weaker in STATIC?",
+      "judgment": "FAIL"
+    },
+    "q2": {
+      "question": "Does that development preserve recognition of the same written musical material rather than sounding like a hidden replacement composition?",
+      "judgment": "NOT_RECORDED",
+      "reason": "Gate D already failed on Q1; no second judgment is inferred from the owner's single FAIL verdict."
+    }
+  },
+  "owner_observation_before_verdict": "Both are detuned bells.",
+  "failure_classification": "EVOLUTION",
+  "no_post_audition_retuning": true,
+  "stop_rule": "Do not retune the v4 Gate D audition patch after hearing the failure. Do not proceed to Gate E, F, or G under this failed v4 acceptance sequence. Return only through a separately governed redesign/revision lane."
+}

@@ -1,0 +1,66 @@
+name: RealSynthEngine v4 Gate D
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - real-synth-v4-gate-d
+    paths:
+      - "REAL_SYNTH_ENGINE_V4_GATE_C_RESULT_v0_1.json"
+      - "REAL_SYNTH_ENGINE_V4_GATE_AB_RESULTS_v0_1.json"
+      - "fixtures/real_synth_v4_gate_c/**"
+      - "src/ipm/real_synth_v4*.py"
+      - "scripts/render_real_synth_v4_gate_d.py"
+      - "tests/v4_gate_d/**"
+      - ".github/workflows/real-synth-v4-gate-d.yml"
+  pull_request:
+    branches:
+      - real-synth-v4-gate-c
+    paths:
+      - "REAL_SYNTH_ENGINE_V4_GATE_C_RESULT_v0_1.json"
+      - "REAL_SYNTH_ENGINE_V4_GATE_AB_RESULTS_v0_1.json"
+      - "fixtures/real_synth_v4_gate_c/**"
+      - "src/ipm/real_synth_v4*.py"
+      - "scripts/render_real_synth_v4_gate_d.py"
+      - "tests/v4_gate_d/**"
+      - ".github/workflows/real-synth-v4-gate-d.yml"
+
+jobs:
+  gate-d-pre-audition:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install package and test dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Gate D mechanical preflight
+        env:
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+        run: python -m pytest -q tests/v4_gate_d
+      - name: Render frozen STATIC and EVOLVING pair
+        run: python scripts/render_real_synth_v4_gate_d.py --output-dir real-synth-engine-v4-gate-d
+      - name: Verify pre-audition manifest
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("real-synth-engine-v4-gate-d/acceptance.json")
+          d = json.loads(p.read_text())
+          assert d["status"] == "READY_FOR_GATE_D_AUDITION_NOT_JUDGED"
+          assert d["human_audition_performed"] is False
+          assert d["mechanical_requirements"]["written_event_ledgers_hash_identically"] is True
+          assert d["mechanical_requirements"]["automation_ledger_exported"] is True
+          assert d["mechanical_requirements"]["EVOLVING_nonzero_scopes"] == ["note", "phrase", "piece"]
+          assert d["mechanical_requirements"]["STATIC_nonzero_scopes"] == []
+          assert d["mechanical_requirements"]["per_piece_manual_changes"] is False
+          assert d["mechanical_requirements"]["transport_stream_identical"] is True
+          assert d["files"]["STATIC.wav"]["sha256"] != d["files"]["EVOLVING.wav"]["sha256"]
+          PY
+      - name: Upload Gate D audition package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipm-real-synth-engine-v4-gate-d-audition
+          path: real-synth-engine-v4-gate-d/
+          if-no-files-found: error
