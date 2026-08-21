@@ -1,6 +1,6 @@
 """Frozen RealSynthEngine v4R1 pre-audition package definitions.
 
-This module defines data only and performs no audition rendering.  It reuses the
+This module defines data only and performs no audition rendering. It reuses the
 already-frozen pre-v4 Tune ledger and fixes every reference patch, macro mapping,
 R-C blinding procedure, R-D diagnostic fixture and R-E evolution curve before
 any v4R1 human listening occurs.
@@ -24,7 +24,7 @@ from ipm.real_synth_v4 import (
 )
 
 PACKAGE_VERSION = "0.1"
-PACKAGE_PARENT = "9148ba552f236f865181996539cf839117f268b2"
+INITIAL_R_A_B_ACCEPTED_HEAD = "9148ba552f236f865181996539cf839117f268b2"
 DESIGN_FREEZE = "9189116cdf34937f1212d052378b36f5d4bd503f"
 HISTORICAL_V4_FAIL = "3d247ef5696140b2b8f69764869fbb81e4aeb130"
 LEDGER_PATH = Path("fixtures/real_synth_v4_gate_c/REAL_SYNTH_ENGINE_V4_GATE_C_TUNE_LEDGER_v0_1.json")
@@ -179,7 +179,7 @@ def r_e_patches() -> tuple[SynthPatchV4, SynthPatchV4]:
         EvolutionCurveV4("piece", "WIDTH", ((0.00, -0.22), (0.30, -0.06), (0.68, 0.22), (1.00, 0.08))),
         EvolutionCurveV4("piece", "CHARACTER", ((0.00, -0.10), (0.42, 0.04), (0.76, 0.18), (1.00, -0.02))),
     )
-    return static, replace(static, name="v4r1-modal-wood-evolving", evolution=curves)
+    return static, replace(static, evolution=curves)
 
 
 def r_e_bank(patch: SynthPatchV4) -> PatchBankV4:
@@ -232,7 +232,7 @@ def structural_manifest(root: Path) -> dict[str, Any]:
     return {
         "status": "FROZEN_INPUTS_NOT_YET_AUDITIONED",
         "package_version": PACKAGE_VERSION,
-        "package_parent": PACKAGE_PARENT,
+        "initial_r_a_b_accepted_head": INITIAL_R_A_B_ACCEPTED_HEAD,
         "design_freeze": DESIGN_FREEZE,
         "historical_v4_fail": HISTORICAL_V4_FAIL,
         "engine_version": ENGINE_VERSION,
@@ -261,7 +261,7 @@ def structural_manifest(root: Path) -> dict[str, Any]:
         "r_e": {
             "static_patch_sha256": canonical_sha(patch_to_dict(static)),
             "evolving_patch_sha256": canonical_sha(patch_to_dict(evolving)),
-            "condition_diff": ["name", "evolution"],
+            "condition_diff": ["evolution"],
             "phrase_bars": R_E_PHRASE_BARS,
             "curve_count": len(evolving.evolution),
             "curves": [dict(scope=c.scope, target=c.target, anchors=[list(a) for a in c.anchors]) for c in evolving.evolution],
