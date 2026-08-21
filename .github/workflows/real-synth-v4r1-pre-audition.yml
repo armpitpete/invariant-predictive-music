@@ -1,0 +1,65 @@
+name: RealSynthEngine v4R1 pre-audition freeze
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - real-synth-v4r1-redesign
+    paths:
+      - "src/ipm/real_synth_v4*.py"
+      - "scripts/real_synth_v4r1_pre_audition_package.py"
+      - "scripts/run_real_synth_v4r1_pre_audition_preflight.py"
+      - "fixtures/real_synth_v4_gate_c/**"
+      - "REAL_SYNTH_ENGINE_V4R1_CONTROL_DIAGNOSTICS_v0_1.md"
+      - "REAL_SYNTH_ENGINE_V4R1_REDESIGN_CONTRACT_v0_2.md"
+      - ".github/workflows/real-synth-v4r1-pre-audition.yml"
+
+jobs:
+  mechanical-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install package and tests
+        run: python -m pip install -e '.[dev]'
+      - name: Re-run complete R-A/R-B mechanical regression
+        env:
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+        run: python -m pytest -q tests/v4_gate_ab tests/v4r1_gate_ab
+      - name: Run R-C/R-D/R-E no-audio preflight
+        run: |
+          set +e
+          python scripts/run_real_synth_v4r1_pre_audition_preflight.py --output REAL_SYNTH_ENGINE_V4R1_PRE_AUDITION_PREFLIGHT_v0_1.json
+          echo $? > preflight-exit-code.txt
+          exit 0
+      - name: Prove no audition file was created
+        run: |
+          test -s REAL_SYNTH_ENGINE_V4R1_PRE_AUDITION_PREFLIGHT_v0_1.json
+          test "$(cat preflight-exit-code.txt)" -ge 0
+          if find . -type f \( -iname '*.wav' -o -iname '*.aiff' -o -iname '*.flac' -o -iname '*.mp3' \) | grep -q .; then
+            echo "Forbidden audition/audio file exists in pre-audition workspace" >&2
+            exit 1
+          fi
+      - name: Upload mechanical evidence even on threshold failure
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipm-real-synth-engine-v4r1-pre-audition-preflight
+          path: |
+            REAL_SYNTH_ENGINE_V4R1_PRE_AUDITION_PREFLIGHT_v0_1.json
+            preflight-exit-code.txt
+          if-no-files-found: error
+      - name: Enforce preflight PASS
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('REAL_SYNTH_ENGINE_V4R1_PRE_AUDITION_PREFLIGHT_v0_1.json'))
+          assert d['human_audition_performed'] is False
+          assert d['audition_audio_created'] is False
+          assert d['wav_files_written'] == 0
+          assert d['r_c_structural_preflight'] == 'PASS'
+          assert d['r_e_structural_preflight']['status'] == 'PASS'
+          assert all(v['family_rule_pass'] for v in d['r_d_mechanical_diagnostics'].values())
+          assert d['status'] == 'PASS'
+          PY
