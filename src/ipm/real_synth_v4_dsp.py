@@ -4,10 +4,16 @@ import numpy as np
 from .real_synth_v4_model import _clip, _freq, _noise, MACRO_NAMES
 
 class _VoiceDSPMixin:
+    def _note_evolution_position(self,v,p):
+        return _clip((v.age/self.sr)/float(p.note_evolution_seconds),0,1)
     def _macros(self,v,p):
-        values=[_clip(d+r.current-.5,0,1) for d,r in zip(p.macro_defaults,self.ramps)]; pos={"note":_clip(v.age/self.sr,0,1),"phrase":self.transport["phrase_position"],"piece":self.transport["piece_position"]}
+        live=[_clip(d+r.current-.5,0,1) for d,r in zip(p.macro_defaults,self.ramps)]
+        values=[live[i] if p.macro_application[i]=="continuous" else v.macro_start[i] for i in range(len(MACRO_NAMES))]
+        pos={"note":self._note_evolution_position(v,p),"phrase":self.transport["phrase_position"],"piece":self.transport["piece_position"]}
         for c in p.evolution:
-            xs=[a[0] for a in c.anchors]; ys=[a[1] for a in c.anchors]; i=MACRO_NAMES.index(c.target); values[i]=_clip(values[i]+float(np.interp(pos[c.scope],xs,ys)),0,1)
+            i=MACRO_NAMES.index(c.target)
+            if p.macro_application[i]!="continuous": continue
+            xs=[a[0] for a in c.anchors]; ys=[a[1] for a in c.anchors]; values[i]=_clip(values[i]+float(np.interp(pos[c.scope],xs,ys)),0,1)
         return values
     def _lfo(self,v,spec,i):
         rate=float(spec.get("rate_hz",.25)); sync=spec.get("sync_beats")
@@ -17,7 +23,7 @@ class _VoiceDSPMixin:
         return x if spec.get("bipolar",True) else .5*(x+1)
     def _mods(self,v,p,amp,e1,e2,l1,l2,mac):
         out={k:0. for k in ("va_pitch","va_gain","pulse_width","fm_index","fm_level","modal_gain","modal_decay","filter_cutoff","filter_resonance","drive","vca","pan","width","chorus_send","delay_send","reverb_send")}
-        src={"velocity":v.velocity/127.,"keytrack":_clip((v.pitch-60)/24,-1,1),"note_age":_clip(v.age/self.sr/30,0,1),"amp_env":amp,"env1":e1,"env2":e2,"lfo1":l1,"lfo2":l2,"note_position":_clip(v.age/self.sr,0,1),"phrase_position":self.transport["phrase_position"],"piece_position":self.transport["piece_position"]}; src.update({f"macro{i+1}":x for i,x in enumerate(mac)})
+        src={"velocity":v.velocity/127.,"keytrack":_clip((v.pitch-60)/24,-1,1),"note_age":_clip(v.age/self.sr/30,0,1),"amp_env":amp,"env1":e1,"env2":e2,"lfo1":l1,"lfo2":l2,"note_position":self._note_evolution_position(v,p),"phrase_position":self.transport["phrase_position"],"piece_position":self.transport["piece_position"]}; src.update({f"macro{i+1}":x for i,x in enumerate(mac)})
         for r in p.routes:
             if r.get("source") not in src or r.get("destination") not in out: raise ValueError("mod route")
             x=src[r["source"]]; x=.5*(x+1) if r.get("unipolar") and x<0 else x; out[r["destination"]]+=x*float(r.get("amount",0))
@@ -52,7 +58,10 @@ class _VoiceDSPMixin:
         if not p.modal.get("enabled"): return 0.
         z=0.; gs=max(0,1+.1*m["modal_gain"]); ds=max(.05,1+.1*m["modal_decay"])
         for i,o in enumerate(p.modal["modes"]):
-            f=float(o["fixed_hz"]) if o.get("fixed_hz") is not None else _freq(v.current_pitch)*float(o.get("ratio",1)); f=min(self.sr*.45,f*2**(float(o.get("detune_cents",0))/1200)); z+=math.sin(2*math.pi*v.modal_phase[i])*v.modal_amp[i]*gs*(.75+.5*mac[0]); v.modal_phase[i]=(v.modal_phase[i]+f/self.sr)%1; v.modal_amp[i]*=math.exp(-1/(max(.001,float(o.get("decay",.5))*ds)*self.sr))
+            f=float(o["fixed_hz"]) if o.get("fixed_hz") is not None else _freq(v.current_pitch)*float(o.get("ratio",1)); f=min(self.sr*.45,f*2**(float(o.get("detune_cents",0))/1200))
+            brightness_weight=max(0.,1+float(o.get("brightness_sensitivity",0))*(mac[0]-.5))
+            z+=math.sin(2*math.pi*v.modal_phase[i])*v.modal_amp[i]*gs*(.75+.5*mac[0])*brightness_weight
+            v.modal_phase[i]=(v.modal_phase[i]+f/self.sr)%1; v.modal_amp[i]*=math.exp(-1/(max(.001,float(o.get("decay",.5))*ds)*self.sr))
         return z*float(p.modal.get("return_gain",.8))
     def _exciter(self,v,p):
         e=p.exciter; n=round(float(e.get("duration",.02))*self.sr)
