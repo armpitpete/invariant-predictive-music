@@ -8,22 +8,24 @@ on:
     paths:
       - "src/ipm/real_synth_v4*.py"
       - "scripts/real_synth_v4r1_pre_audition_package.py"
-      - "scripts/run_real_synth_v4r1_pre_audition_preflight.py"
+      - "scripts/run_real_synth_v4r1_pre_audition_preflight*.py"
+      - "scripts/render_real_synth_v4r1_gate_*.py"
       - "fixtures/real_synth_v4_gate_c/**"
       - "REAL_SYNTH_ENGINE_V4R1_CONTROL_DIAGNOSTICS_v0_1.md"
       - "REAL_SYNTH_ENGINE_V4R1_REDESIGN_CONTRACT_v0_2.md"
-      - ".github/workflows/real-synth-v4r1-pre-audition.yml"
+      - ".github/workflows/real-synth-v4r1-*.yml"
   pull_request:
     branches:
       - real-synth-v4-gate-d
     paths:
       - "src/ipm/real_synth_v4*.py"
       - "scripts/real_synth_v4r1_pre_audition_package.py"
-      - "scripts/run_real_synth_v4r1_pre_audition_preflight.py"
+      - "scripts/run_real_synth_v4r1_pre_audition_preflight*.py"
+      - "scripts/render_real_synth_v4r1_gate_*.py"
       - "fixtures/real_synth_v4_gate_c/**"
       - "REAL_SYNTH_ENGINE_V4R1_CONTROL_DIAGNOSTICS_v0_1.md"
       - "REAL_SYNTH_ENGINE_V4R1_REDESIGN_CONTRACT_v0_2.md"
-      - ".github/workflows/real-synth-v4r1-pre-audition.yml"
+      - ".github/workflows/real-synth-v4r1-*.yml"
 
 jobs:
   mechanical-preflight:
@@ -41,10 +43,12 @@ jobs:
         env:
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
         run: python -m pytest -q tests/v4_gate_ab tests/v4r1_gate_ab
+      - name: Compile-check all frozen future materialisers
+        run: python -m py_compile scripts/render_real_synth_v4r1_gate_c.py scripts/render_real_synth_v4r1_gate_d.py scripts/render_real_synth_v4r1_gate_e.py
       - name: Run R-C/R-D/R-E no-audio preflight
         run: |
           set +e
-          python scripts/run_real_synth_v4r1_pre_audition_preflight.py --output REAL_SYNTH_ENGINE_V4R1_PRE_AUDITION_PREFLIGHT_v0_1.json
+          python scripts/run_real_synth_v4r1_pre_audition_preflight_parallel.py --output REAL_SYNTH_ENGINE_V4R1_PRE_AUDITION_PREFLIGHT_v0_1.json
           echo $? > preflight-exit-code.txt
           exit 0
       - name: Prove no audition file was created
