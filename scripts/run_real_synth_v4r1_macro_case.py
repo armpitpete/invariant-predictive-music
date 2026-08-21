@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from real_synth_v4r1_pre_audition_package import R_D_VALUES, reference_patches  # noqa: E402
-from run_real_synth_v4r1_pre_audition_preflight import family_pass, metric_for, residual_ok  # noqa: E402
+from real_synth_v4r1_diagnostics import family_pass, metric_for, residual_ok  # noqa: E402
 
 
 def _metric(args):
