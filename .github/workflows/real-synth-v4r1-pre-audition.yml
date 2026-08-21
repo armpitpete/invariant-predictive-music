@@ -13,12 +13,25 @@ on:
       - "REAL_SYNTH_ENGINE_V4R1_CONTROL_DIAGNOSTICS_v0_1.md"
       - "REAL_SYNTH_ENGINE_V4R1_REDESIGN_CONTRACT_v0_2.md"
       - ".github/workflows/real-synth-v4r1-pre-audition.yml"
+  pull_request:
+    branches:
+      - real-synth-v4-gate-d
+    paths:
+      - "src/ipm/real_synth_v4*.py"
+      - "scripts/real_synth_v4r1_pre_audition_package.py"
+      - "scripts/run_real_synth_v4r1_pre_audition_preflight.py"
+      - "fixtures/real_synth_v4_gate_c/**"
+      - "REAL_SYNTH_ENGINE_V4R1_CONTROL_DIAGNOSTICS_v0_1.md"
+      - "REAL_SYNTH_ENGINE_V4R1_REDESIGN_CONTRACT_v0_2.md"
+      - ".github/workflows/real-synth-v4r1-pre-audition.yml"
 
 jobs:
   mechanical-preflight:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
