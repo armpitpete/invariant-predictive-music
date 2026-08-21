@@ -1,0 +1,26 @@
+name: RealSynthEngine v4R1 R-D
+
+on:
+  workflow_dispatch:
+
+jobs:
+  macro-authority-render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: real-synth-v4r1-redesign
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: python -m pip install -e '.[dev]'
+      - name: Materialise frozen R-D macro package
+        run: python scripts/render_real_synth_v4r1_gate_d.py
+      - name: Verify manifest
+        run: test -s real-synth-engine-v4r1-gate-d/acceptance.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipm-real-synth-engine-v4r1-gate-d
+          path: real-synth-engine-v4r1-gate-d/
+          if-no-files-found: error
