@@ -34,6 +34,7 @@ class _Voice:
     amp:_Env|None=None; env1:_Env|None=None; env2:_Env|None=None; current_pitch:float=60.; target_pitch:float=60.; glide_left:int=0; glide_step:float=0.
     va_phase:list[float]=field(default_factory=list); fm_phase:list[float]=field(default_factory=lambda:[0.]*4); fm_prev:list[float]=field(default_factory=lambda:[0.]*4)
     modal_phase:list[float]=field(default_factory=list); modal_amp:list[float]=field(default_factory=list); fi1:float=0.; fi2:float=0.; lfo_phase:list[float]=field(default_factory=lambda:[0.,0.])
+    macro_start:tuple[float,...]=field(default_factory=lambda:(.5,)*8)
     seed:int=0; noise_n:int=0; last_l:float=0.; last_r:float=0.; tail_l:float=0.; tail_r:float=0.; tail_left:int=0; tail_total:int=0
     @property
     def idle(self): return self.patch is None or (not self.held and self.amp is not None and self.amp.stage=="idle")
@@ -65,5 +66,3 @@ class _FX:
         pd=max(1,round(v.get("predelay",.015)*self.sr)); ql=self.read(self.rl,pd); qr=self.read(self.rr,pd); damp=v.get("damping",.45); self.rlp[0]+=(1-damp)*(ql-self.rlp[0]); self.rlp[1]+=(1-damp)*(qr-self.rlp[1]); g=math.exp(-1/max(1,v.get("decay",.9)*self.sr))
         self.rl[self.pos]=l*rs+g*(.73*self.rlp[0]+.19*self.rlp[1]); self.rr[self.pos]=r*rs+g*(.73*self.rlp[1]+.19*self.rlp[0]); self.pos=(self.pos+1)%self.n
         return l+c.get("wet",0)*cw_l+d.get("wet",0)*dw_l+v.get("wet",0)*self.rlp[0], r+c.get("wet",0)*cw_r+d.get("wet",0)*dw_r+v.get("wet",0)*self.rlp[1]
-
-
