@@ -64,12 +64,12 @@ class _FX:
         dl=max(1,round(d.get("left",.25)*self.sr)); dr=max(1,round(d.get("right",.375)*self.sr)); dw_l=self.read(self.dl,dl); dw_r=self.read(self.dr,dr)
         self.dl[self.pos]=l*ds+d.get("feedback",.25)*dw_l+d.get("cross",.1)*dw_r; self.dr[self.pos]=r*ds+d.get("feedback",.25)*dw_r+d.get("cross",.1)*dw_l
         pd=max(1,round(v.get("predelay",.015)*self.sr)); ql=self.read(self.rl,pd); qr=self.read(self.rr,pd); damp=v.get("damping",.45); self.rlp[0]+=(1-damp)*(ql-self.rlp[0]); self.rlp[1]+=(1-damp)*(qr-self.rlp[1])
-        # Feedback returns once per predelay loop, not once per sample. Map the
-        # declared decay time onto that loop and compensate the fixed 0.92
-        # maximum eigenvalue of the stereo feedback matrix. The resulting loop
-        # eigenvalue remains <1, so the tank is stable while decay has the
-        # intended time-scale instead of collapsing in a few short loops.
-        decay=max(1e-3,float(v.get("decay",.9))); matrix_gain=.92; loop_gain=math.exp(-(pd/self.sr)/decay); g=loop_gain/matrix_gain
+        # SPACE controls both amount and persistence. A fixed 1.35 s reverb is
+        # shorter than the 3.6-9 s modal resonances, so send-only SPACE cannot
+        # create meaningful extra late energy on that family. Scale the common
+        # tank decay from 0.5x to 4.5x with reverb send; the path stays shared
+        # across VA/FM/MODAL and the feedback eigenvalue remains below unity.
+        base_decay=max(1e-3,float(v.get("decay",.9))); decay=base_decay*(.5+4.0*_clip(rs,0,1)); matrix_gain=.92; loop_gain=math.exp(-(pd/self.sr)/decay); g=loop_gain/matrix_gain
         self.rl[self.pos]=l*rs+g*(.73*self.rlp[0]+.19*self.rlp[1]); self.rr[self.pos]=r*rs+g*(.73*self.rlp[1]+.19*self.rlp[0]); self.pos=(self.pos+1)%self.n
         # SPACE is a true wet/dry effect-depth control. With reverb wet=0
         # (R-C), dry is exactly unchanged; at full send the fixed bank wet
