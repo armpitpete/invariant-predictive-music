@@ -18,18 +18,17 @@ import numpy as np
 from ipm.real_synth_v4 import RealSynthEngineV4, patch_to_dict
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from real_synth_v4r1_freeze import require_frozen_package  # noqa: E402
 from real_synth_v4r1_pre_audition_package import (  # noqa: E402
     BLOCK_SIZE, LEDGER_SHA256, R_E_PHRASE_BARS, SAMPLE_RATE, canonical_sha,
     load_frozen_ledger, r_e_bank, r_e_patches,
 )
 
-FREEZE_PATH=Path("REAL_SYNTH_ENGINE_V4R1_PRE_AUDITION_FREEZE_v0_1.json")
 R_D_RESULT_PATH=Path("REAL_SYNTH_ENGINE_V4R1_GATE_D_RESULT_v0_1.json")
 
 
 def require_provenance(root:Path):
-    freeze=json.loads((root/FREEZE_PATH).read_text()); rd=json.loads((root/R_D_RESULT_PATH).read_text())
-    if freeze.get("status")!="FROZEN_PRE_AUDITION_PACKAGE": raise RuntimeError("package not frozen")
+    freeze=require_frozen_package(root); rd=json.loads((root/R_D_RESULT_PATH).read_text())
     if rd.get("status")!="PASS": raise RuntimeError("R-D is not frozen PASS")
     if rd.get("package_freeze_head")!=freeze.get("package_freeze_head"): raise RuntimeError("R-D package mismatch")
     return freeze,rd
