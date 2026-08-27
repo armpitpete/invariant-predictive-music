@@ -74,5 +74,5 @@ class _FX:
         # The compact two-line tank has a lower return density than a full
         # reverb network. Normalize only its output; decay, damping, send depth
         # and the stable internal feedback loop remain unchanged.
-        rg=2.5
+        rg=4.0
         return l+c.get("wet",0)*cw_l+d.get("wet",0)*dw_l+rg*v.get("wet",0)*self.rlp[0], r+c.get("wet",0)*cw_r+d.get("wet",0)*dw_r+rg*v.get("wet",0)*self.rlp[1]
