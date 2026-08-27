@@ -1,0 +1,20 @@
+{
+  "version": "0.1",
+  "status": "FROZEN_PRE_AUDITION_PACKAGE",
+  "package_freeze_head": "a2046134731cfe579a571a1c1a0d51389a105afa",
+  "pre_audition_matrix_run_id": 33119705936,
+  "historical_v4_fail_head": "3d247ef5696140b2b8f69764869fbb81e4aeb130",
+  "tune_ledger_sha256": "1bee94ac3d65ce6a01efd6ec2921f2cae82238ddbeaaab79fcee38dc4726bd31",
+  "machine_acceptance": {
+    "r_a_r_b_regression": "PASS",
+    "r_c_structural_preflight": "PASS",
+    "r_d_frozen_macro_family_diagnostics": "PASS",
+    "r_e_structural_preflight": "PASS",
+    "r_e_modal_target_full_thresholds": "PASS",
+    "aggregate_frozen_thresholds": "PASS",
+    "no_audition_evidence_before_freeze": "PASS"
+  },
+  "human_audition_performed": false,
+  "audition_audio_created_before_freeze": false,
+  "notes": "Frozen only after exact-head machine acceptance. Historical v4 failure remains evidence and is not rewritten. Later human-result evidence may be added, but protected DSP, fixtures, contracts, diagnostics, renderers and workflows must remain identical to package_freeze_head for audition materialisation."
+}
