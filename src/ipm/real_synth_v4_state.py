@@ -71,8 +71,8 @@ class _FX:
         # intended time-scale instead of collapsing in a few short loops.
         decay=max(1e-3,float(v.get("decay",.9))); matrix_gain=.92; loop_gain=math.exp(-(pd/self.sr)/decay); g=loop_gain/matrix_gain
         self.rl[self.pos]=l*rs+g*(.73*self.rlp[0]+.19*self.rlp[1]); self.rr[self.pos]=r*rs+g*(.73*self.rlp[1]+.19*self.rlp[0]); self.pos=(self.pos+1)%self.n
-        # SPACE is effect depth, so increased reverb send also moves the output
-        # modestly toward wet instead of stacking ambience on a permanently
-        # full-level dry path. With reverb wet=0 (R-C), dry is exactly unchanged.
-        wet_depth=_clip(rs*float(v.get("wet",0)),0,1); dry_gain=1-.5*wet_depth; rg=2.5
+        # SPACE is a true wet/dry effect-depth control. With reverb wet=0
+        # (R-C), dry is exactly unchanged; at full send the fixed bank wet
+        # amount determines how far the output moves toward the reverb tank.
+        wet_depth=_clip(rs*float(v.get("wet",0)),0,1); dry_gain=1-wet_depth; rg=2.5
         return dry_gain*l+c.get("wet",0)*cw_l+d.get("wet",0)*dw_l+rg*v.get("wet",0)*self.rlp[0], dry_gain*r+c.get("wet",0)*cw_r+d.get("wet",0)*dw_r+rg*v.get("wet",0)*self.rlp[1]
