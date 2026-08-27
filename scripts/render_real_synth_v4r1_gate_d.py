@@ -13,19 +13,18 @@ from pathlib import Path
 from ipm.real_synth_v4 import MACRO_NAMES, OfflineHostV4, ScheduledEventV4
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from real_synth_v4r1_freeze import require_frozen_package  # noqa: E402
 from real_synth_v4r1_pre_audition_package import (  # noqa: E402
     BLOCK_SIZE, R_D_CONTROL_PREROLL_SECONDS, R_D_NOTE_PITCH, R_D_NOTE_VELOCITY,
     R_D_VALUES, SAMPLE_RATE, r_d_bank, reference_patches,
 )
 from real_synth_v4r1_diagnostics import family_pass, metric_for  # noqa: E402
 
-FREEZE_PATH=Path("REAL_SYNTH_ENGINE_V4R1_PRE_AUDITION_FREEZE_v0_1.json")
 R_C_RESULT_PATH=Path("REAL_SYNTH_ENGINE_V4R1_GATE_C_RESULT_v0_1.json")
 
 
 def require_provenance(root:Path):
-    freeze=json.loads((root/FREEZE_PATH).read_text()); rc=json.loads((root/R_C_RESULT_PATH).read_text())
-    if freeze.get("status")!="FROZEN_PRE_AUDITION_PACKAGE": raise RuntimeError("package not frozen")
+    freeze=require_frozen_package(root); rc=json.loads((root/R_C_RESULT_PATH).read_text())
     if rc.get("status")!="PASS" or rc.get("owner_judgment")!="PASS": raise RuntimeError("R-C is not frozen PASS")
     if rc.get("package_freeze_head")!=freeze.get("package_freeze_head"): raise RuntimeError("R-C package mismatch")
     return freeze,rc
