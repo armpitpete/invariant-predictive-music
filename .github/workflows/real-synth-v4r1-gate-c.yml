@@ -2,6 +2,11 @@ name: RealSynthEngine v4R1 R-C
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - real-synth-v4r1-redesign
+    paths:
+      - REAL_SYNTH_ENGINE_V4R1_PRE_AUDITION_FREEZE_v0_1.json
 
 jobs:
   blind-family-render:
