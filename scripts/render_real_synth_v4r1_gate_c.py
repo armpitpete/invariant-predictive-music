@@ -18,19 +18,11 @@ from pathlib import Path
 from ipm.real_synth_v4 import OfflineHostV4, ScheduledEventV4
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from real_synth_v4r1_freeze import require_frozen_package  # noqa: E402
 from real_synth_v4r1_pre_audition_package import (  # noqa: E402
     BLOCK_SIZE, LEDGER_SHA256, SAMPLE_RATE, canonical_sha, load_frozen_ledger,
     r_c_bank, reference_patches,
 )
-
-FREEZE_PATH = Path("REAL_SYNTH_ENGINE_V4R1_PRE_AUDITION_FREEZE_v0_1.json")
-
-
-def require_freeze(root: Path):
-    d = json.loads((root/FREEZE_PATH).read_text())
-    if d.get("status") != "FROZEN_PRE_AUDITION_PACKAGE" or d.get("human_audition_performed") is not False:
-        raise RuntimeError("v4R1 pre-audition package is not frozen")
-    return d
 
 
 def events_from_ledger(payload):
@@ -45,7 +37,7 @@ def events_from_ledger(payload):
 
 
 def render(output_dir="real-synth-engine-v4r1-gate-c", private_dir="real-synth-engine-v4r1-gate-c-private"):
-    root=Path(__file__).resolve().parents[1]; freeze=require_freeze(root); ledger=load_frozen_ledger(root)
+    root=Path(__file__).resolve().parents[1]; freeze=require_frozen_package(root); ledger=load_frozen_ledger(root)
     if canonical_sha(ledger["tune_events"]) != LEDGER_SHA256: raise RuntimeError("ledger drift")
     patches=reference_patches(); events,total=events_from_ledger(ledger)
     nonce=secrets.token_bytes(32); order=list(patches); random.Random(int.from_bytes(nonce,"big")).shuffle(order)
