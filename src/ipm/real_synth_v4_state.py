@@ -63,10 +63,12 @@ class _FX:
         self.cl[self.pos]=l*cs+c.get("feedback",.05)*cw_l; self.cr[self.pos]=r*cs+c.get("feedback",.05)*cw_r; self.phase=(self.phase+c.get("rate",.25)/self.sr)%1
         dl=max(1,round(d.get("left",.25)*self.sr)); dr=max(1,round(d.get("right",.375)*self.sr)); dw_l=self.read(self.dl,dl); dw_r=self.read(self.dr,dr)
         self.dl[self.pos]=l*ds+d.get("feedback",.25)*dw_l+d.get("cross",.1)*dw_r; self.dr[self.pos]=r*ds+d.get("feedback",.25)*dw_r+d.get("cross",.1)*dw_l
-        pd=max(1,round(v.get("predelay",.015)*self.sr)); ql=self.read(self.rl,pd); qr=self.read(self.rr,pd); damp=v.get("damping",.45); self.rlp[0]+=(1-damp)*(ql-self.rlp[0]); self.rlp[1]+=(1-damp)*(qr-self.rlp[1]); g=math.exp(-1/max(1,v.get("decay",.9)*self.sr))
+        pd=max(1,round(v.get("predelay",.015)*self.sr)); ql=self.read(self.rl,pd); qr=self.read(self.rr,pd); damp=v.get("damping",.45); self.rlp[0]+=(1-damp)*(ql-self.rlp[0]); self.rlp[1]+=(1-damp)*(qr-self.rlp[1])
+        # Feedback returns once per predelay loop, not once per sample. Map the
+        # declared decay time onto that loop and compensate the fixed 0.92
+        # maximum eigenvalue of the stereo feedback matrix. The resulting loop
+        # eigenvalue remains <1, so the tank is stable while decay has the
+        # intended time-scale instead of collapsing in a few short loops.
+        decay=max(1e-3,float(v.get("decay",.9))); matrix_gain=.92; loop_gain=math.exp(-(pd/self.sr)/decay); g=loop_gain/matrix_gain
         self.rl[self.pos]=l*rs+g*(.73*self.rlp[0]+.19*self.rlp[1]); self.rr[self.pos]=r*rs+g*(.73*self.rlp[1]+.19*self.rlp[0]); self.pos=(self.pos+1)%self.n
-        # The compact tank is intentionally low-gain internally. Normalize its
-        # return so a 0..1 SPACE send has useful wet/dry authority without
-        # changing the frozen decay, damping or send mapping.
-        rg=3.0
-        return l+c.get("wet",0)*cw_l+d.get("wet",0)*dw_l+rg*v.get("wet",0)*self.rlp[0], r+c.get("wet",0)*cw_r+d.get("wet",0)*dw_r+rg*v.get("wet",0)*self.rlp[1]
+        return l+c.get("wet",0)*cw_l+d.get("wet",0)*dw_l+v.get("wet",0)*self.rlp[0], r+c.get("wet",0)*cw_r+d.get("wet",0)*dw_r+v.get("wet",0)*self.rlp[1]
