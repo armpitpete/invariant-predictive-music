@@ -71,4 +71,8 @@ class _FX:
         # intended time-scale instead of collapsing in a few short loops.
         decay=max(1e-3,float(v.get("decay",.9))); matrix_gain=.92; loop_gain=math.exp(-(pd/self.sr)/decay); g=loop_gain/matrix_gain
         self.rl[self.pos]=l*rs+g*(.73*self.rlp[0]+.19*self.rlp[1]); self.rr[self.pos]=r*rs+g*(.73*self.rlp[1]+.19*self.rlp[0]); self.pos=(self.pos+1)%self.n
-        return l+c.get("wet",0)*cw_l+d.get("wet",0)*dw_l+v.get("wet",0)*self.rlp[0], r+c.get("wet",0)*cw_r+d.get("wet",0)*dw_r+v.get("wet",0)*self.rlp[1]
+        # The compact two-line tank has a lower return density than a full
+        # reverb network. Normalize only its output; decay, damping, send depth
+        # and the stable internal feedback loop remain unchanged.
+        rg=2.5
+        return l+c.get("wet",0)*cw_l+d.get("wet",0)*dw_l+rg*v.get("wet",0)*self.rlp[0], r+c.get("wet",0)*cw_r+d.get("wet",0)*dw_r+rg*v.get("wet",0)*self.rlp[1]
