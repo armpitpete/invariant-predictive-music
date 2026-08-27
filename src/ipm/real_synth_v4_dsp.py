@@ -75,7 +75,10 @@ class _VoiceDSPMixin:
         for i,o in enumerate(modes):
             f=float(o["fixed_hz"]) if o.get("fixed_hz") is not None else _freq(v.current_pitch)*float(o.get("ratio",1)); f=min(self.sr*.45,f*2**(float(o.get("detune_cents",0))/1200))
             rank=i/denom
-            brightness_weight=max(0.,1+float(o.get("brightness_sensitivity",0))*(mac[0]-.5))
+            # Consume the patch sensitivity continuously and add a centred
+            # rank tilt. This changes spectral balance, not written pitch or
+            # event timing, and gives BRIGHTNESS genuine modal authority.
+            brightness_weight=max(0.,1+float(o.get("brightness_sensitivity",0))*(mac[0]-.5))*2.0**((mac[0]-.5)*rank*1.0)
             body_weight=2.0**((mac[1]-.5)*(1-2*rank)*1.6)
             character_base=.35+1.45*mac[4]; character_weight=max(.05,character_base**rank)
             z+=math.sin(2*math.pi*v.modal_phase[i])*v.modal_amp[i]*gs*(.75+.5*mac[0])*brightness_weight*body_weight*character_weight
