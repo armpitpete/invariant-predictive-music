@@ -1,9 +1,15 @@
 name: IPM v4R1 R-D materialise frozen audition
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - real-synth-v4r1-redesign
+    paths:
+      - .github/workflows/ipm-v4r1-rd-materialize.yml
+  pull_request:
+    branches:
+      - real-synth-v4-gate-d
     paths:
       - .github/workflows/ipm-v4r1-rd-materialize.yml
 
@@ -13,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: real-synth-v4r1-redesign
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
