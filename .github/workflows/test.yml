@@ -155,3 +155,41 @@ jobs:
           name: ipm-real-synth-engine-v4-gate-c-materialization
           path: gate-c-materialization/
           if-no-files-found: error
+
+  real-synth-engine-v4r1-gate-d-audition:
+    if: github.event_name == 'pull_request' && github.head_ref == 'real-synth-v4r1-redesign'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: python -m pip install -e '.[dev]'
+      - name: Verify frozen package and materialise R-D audition
+        run: python scripts/render_real_synth_v4r1_gate_d.py
+      - name: Verify unjudged exact frozen R-D package
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('real-synth-engine-v4r1-gate-d/acceptance.json')
+          d=json.loads(p.read_text())
+          assert d['status']=='READY_FOR_R_D_AUDITION_NOT_JUDGED'
+          assert d['package_freeze_head']=='a2046134731cfe579a571a1c1a0d51389a105afa'
+          assert d['human_audition_performed'] is False
+          assert d['judgments']=={}
+          assert all(
+              family['full_threshold_pass']
+              for macro in d['mechanical_metrics'].values()
+              for family in macro.values()
+          )
+          print('R-D audition package: frozen, mechanically accepted, unjudged')
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ipm-real-synth-engine-v4r1-gate-d
+          path: real-synth-engine-v4r1-gate-d/
+          if-no-files-found: error
