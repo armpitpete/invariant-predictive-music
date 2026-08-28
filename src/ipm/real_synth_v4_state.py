@@ -34,6 +34,7 @@ class _Voice:
     amp:_Env|None=None; env1:_Env|None=None; env2:_Env|None=None; current_pitch:float=60.; target_pitch:float=60.; glide_left:int=0; glide_step:float=0.
     va_phase:list[float]=field(default_factory=list); fm_phase:list[float]=field(default_factory=lambda:[0.]*4); fm_prev:list[float]=field(default_factory=lambda:[0.]*4)
     modal_phase:list[float]=field(default_factory=list); modal_amp:list[float]=field(default_factory=list); fi1:float=0.; fi2:float=0.; lfo_phase:list[float]=field(default_factory=lambda:[0.,0.])
+    macro_start:tuple[float,...]=field(default_factory=lambda:(.5,)*8)
     seed:int=0; noise_n:int=0; last_l:float=0.; last_r:float=0.; tail_l:float=0.; tail_r:float=0.; tail_left:int=0; tail_total:int=0
     @property
     def idle(self): return self.patch is None or (not self.held and self.amp is not None and self.amp.stage=="idle")
@@ -62,8 +63,16 @@ class _FX:
         self.cl[self.pos]=l*cs+c.get("feedback",.05)*cw_l; self.cr[self.pos]=r*cs+c.get("feedback",.05)*cw_r; self.phase=(self.phase+c.get("rate",.25)/self.sr)%1
         dl=max(1,round(d.get("left",.25)*self.sr)); dr=max(1,round(d.get("right",.375)*self.sr)); dw_l=self.read(self.dl,dl); dw_r=self.read(self.dr,dr)
         self.dl[self.pos]=l*ds+d.get("feedback",.25)*dw_l+d.get("cross",.1)*dw_r; self.dr[self.pos]=r*ds+d.get("feedback",.25)*dw_r+d.get("cross",.1)*dw_l
-        pd=max(1,round(v.get("predelay",.015)*self.sr)); ql=self.read(self.rl,pd); qr=self.read(self.rr,pd); damp=v.get("damping",.45); self.rlp[0]+=(1-damp)*(ql-self.rlp[0]); self.rlp[1]+=(1-damp)*(qr-self.rlp[1]); g=math.exp(-1/max(1,v.get("decay",.9)*self.sr))
+        pd=max(1,round(v.get("predelay",.015)*self.sr)); ql=self.read(self.rl,pd); qr=self.read(self.rr,pd); damp=v.get("damping",.45); self.rlp[0]+=(1-damp)*(ql-self.rlp[0]); self.rlp[1]+=(1-damp)*(qr-self.rlp[1])
+        # SPACE controls both amount and persistence. A fixed 1.35 s reverb is
+        # shorter than the 3.6-9 s modal resonances, so send-only SPACE cannot
+        # create meaningful extra late energy on that family. Scale the common
+        # tank decay from 0.5x to 4.5x with reverb send; the path stays shared
+        # across VA/FM/MODAL and the feedback eigenvalue remains below unity.
+        base_decay=max(1e-3,float(v.get("decay",.9))); decay=base_decay*(.5+4.0*_clip(rs,0,1)); matrix_gain=.92; loop_gain=math.exp(-(pd/self.sr)/decay); g=loop_gain/matrix_gain
         self.rl[self.pos]=l*rs+g*(.73*self.rlp[0]+.19*self.rlp[1]); self.rr[self.pos]=r*rs+g*(.73*self.rlp[1]+.19*self.rlp[0]); self.pos=(self.pos+1)%self.n
-        return l+c.get("wet",0)*cw_l+d.get("wet",0)*dw_l+v.get("wet",0)*self.rlp[0], r+c.get("wet",0)*cw_r+d.get("wet",0)*dw_r+v.get("wet",0)*self.rlp[1]
-
-
+        # SPACE is a true wet/dry effect-depth control. With reverb wet=0
+        # (R-C), dry is exactly unchanged; at full send the fixed bank wet
+        # amount determines how far the output moves toward the reverb tank.
+        wet_depth=_clip(rs*float(v.get("wet",0)),0,1); dry_gain=1-wet_depth; rg=2.5
+        return dry_gain*l+c.get("wet",0)*cw_l+d.get("wet",0)*dw_l+rg*v.get("wet",0)*self.rlp[0], dry_gain*r+c.get("wet",0)*cw_r+d.get("wet",0)*dw_r+rg*v.get("wet",0)*self.rlp[1]

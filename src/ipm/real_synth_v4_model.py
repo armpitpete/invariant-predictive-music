@@ -1,6 +1,7 @@
-"""RealSynthEngine v4 stateful technical core.
+"""RealSynthEngine v4/v4R1 stateful technical core.
 
 Frozen architecture parent: a53980fb6b9358aee985cf4bdccd61d63bb36365.
+v4R1 design freeze: 9189116cdf34937f1212d052378b36f5d4bd503f.
 The same block state machine is used by interactive calls and OfflineHostV4.
 No audition policy or A5/composition feedback is present here.
 """
@@ -12,11 +13,14 @@ from pathlib import Path
 from typing import Any, Literal, Sequence
 import numpy as np
 
-ENGINE_VERSION = "4.0"
+ENGINE_VERSION = "4R1"
 DESIGN_COMMIT = "a53980fb6b9358aee985cf4bdccd61d63bb36365"
+V4R1_DESIGN_FREEZE_COMMIT = "9189116cdf34937f1212d052378b36f5d4bd503f"
 DEFAULT_SAMPLE_RATE = 44_100
 SUPPORTED_BLOCK_SIZES = (64, 128, 256, 512)
 MACRO_NAMES = ("BRIGHTNESS","BODY","MOTION","ATTACK","CHARACTER","DRIVE","WIDTH","SPACE")
+MACRO_APPLICATION_POLICIES = {"continuous","new_notes_only","event_boundary"}
+DEFAULT_MACRO_APPLICATION = ("continuous","continuous","continuous","event_boundary","continuous","continuous","continuous","continuous")
 FM_ALGORITHMS = ("4>3>2>1","(4+3+2)>1","(4>3)+(2>1)","(4>3>1)+(2>1)","(4>2>1)+(3>1)","4>(3+2)>1","(4>1)+(3>1)+(2>1)","4+3+2+1")
 WAVEFORMS = {"sine","triangle","saw","square","pulse","noise"}
 FILTER_MODES = {"lowpass","highpass","bandpass","notch"}
@@ -69,12 +73,18 @@ class SynthPatchV4:
     lfos: tuple[dict[str,Any],dict[str,Any]]=field(default_factory=lambda:({"waveform":"sine","rate_hz":.25,"sync_beats":None,"modifier":"straight","phase":0.,"bipolar":True,"scope":"voice"},{"waveform":"triangle","rate_hz":.11,"sync_beats":None,"modifier":"straight","phase":.25,"bipolar":True,"scope":"voice"}))
     filter: dict[str,Any]=field(default_factory=lambda:{"mode":"lowpass","cutoff_hz":5000.,"resonance_q":.8,"key_tracking":.25,"drive":1.})
     routes: tuple[dict[str,Any],...]=(); macro_defaults: tuple[float,...]=(0.5,)*8
+    note_evolution_seconds: float=1.0
+    macro_application: tuple[str,...]=DEFAULT_MACRO_APPLICATION
     evolution: tuple[EvolutionCurveV4,...]=(); base_pan: float=0.; base_width: float=.25
     chorus_send: float=0.; delay_send: float=0.; reverb_send: float=0.
     def __post_init__(self):
         if not self.name or self.version!=4 or not 1<=self.polyphony<=32 or self.voice_mode not in VOICE_MODES: raise ValueError("patch identity/voice")
         if not 0<=self.portamento_seconds<=2 or self.portamento_mode not in {"always","legato_only"}: raise ValueError("portamento")
         if not 0<=len(self.va)<=3 or len(self.routes)>32 or len(self.macro_defaults)!=8 or any(not 0<=x<=1 for x in self.macro_defaults): raise ValueError("patch structure")
+        if not .05<=float(self.note_evolution_seconds)<=30.: raise ValueError("note evolution seconds")
+        if len(self.macro_application)!=8 or any(x not in MACRO_APPLICATION_POLICIES for x in self.macro_application): raise ValueError("macro application")
+        if self.macro_application[3]!="event_boundary" or any(x=="event_boundary" for i,x in enumerate(self.macro_application) if i!=3): raise ValueError("macro application class")
+        if any(r.get("source")=="macro4" for r in self.routes): raise ValueError("ATTACK is event-boundary only")
         if any(o.get("waveform") not in WAVEFORMS for o in self.va): raise ValueError("waveform")
         if self.fm.get("algorithm") not in FM_ALGORITHMS or len(self.fm.get("operators",[]))!=4: raise ValueError("fm")
         modes=self.modal.get("modes",[])
@@ -103,7 +113,8 @@ def patch_from_dict(d:dict[str,Any])->SynthPatchV4:
     d=copy.deepcopy(d)
     for key in ("amp_env","env1","env2"): d[key]=EnvelopeSpecV4(**d.get(key,{}))
     d["evolution"]=tuple(EvolutionCurveV4(x["scope"],x["target"],tuple(tuple(a) for a in x["anchors"])) for x in d.get("evolution",[]))
-    for key in ("va","lfos","routes","macro_defaults"): d[key]=tuple(d.get(key,()))
+    for key in ("va","lfos","routes","macro_defaults","macro_application"):
+        if key in d: d[key]=tuple(d[key])
     return SynthPatchV4(**d)
 def bank_to_dict(b:PatchBankV4)->dict[str,Any]: return {"version":b.version,"patches":{k:patch_to_dict(v) for k,v in b.patches.items()},"lane_map":dict(b.lane_map),"chorus":dict(b.chorus),"delay":dict(b.delay),"reverb":dict(b.reverb)}
 def bank_from_dict(d:dict[str,Any])->PatchBankV4: return PatchBankV4({k:patch_from_dict(v) for k,v in d["patches"].items()},dict(d["lane_map"]),int(d.get("version",4)),dict(d.get("chorus",{})),dict(d.get("delay",{})),dict(d.get("reverb",{})))
@@ -124,5 +135,3 @@ def migrate_v3_patch(v3:dict[str,Any])->SynthPatchV4:
     for i,key in enumerate(("lfo1","lfo2")):
         x=v3.get(key,{}); l.append({"waveform":x.get("waveform","sine" if i==0 else "triangle"),"rate_hz":float(x.get("rate_hz",.25 if i==0 else .11)),"sync_beats":None,"modifier":"straight","phase":float(x.get("phase",0.)),"bipolar":bool(x.get("bipolar",True)),"scope":"voice"})
     return SynthPatchV4(name=str(v3["name"]),polyphony=max(1,min(32,int(v3.get("unison_voices",1))*4)),va=va,amp_env=env("amp_env",EnvelopeSpecV4()),env1=env("filter_env",EnvelopeSpecV4(sustain=.25)),lfos=tuple(l),filter={"mode":f.get("mode","lowpass"),"cutoff_hz":float(f.get("cutoff_hz",4000.)),"resonance_q":float(f.get("resonance_q",.8)),"key_tracking":float(f.get("key_tracking",.35)),"drive":float(f.get("drive",1.))},routes=routes,base_pan=float(v3.get("base_pan",0.)),base_width=float(v3.get("stereo_width",.5)),chorus_send=float(sends.get("chorus",0.)),delay_send=float(sends.get("delay",0.)),reverb_send=float(sends.get("reverb",0.)))
-
-

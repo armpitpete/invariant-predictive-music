@@ -1,0 +1,42 @@
+{
+  "gate": "RealSynthEngine v4R1 R-C — synthesis-family regression",
+  "status": "PASS",
+  "owner_judgment": "PASS",
+  "judgment_date": "2026-08-28",
+  "judgment_date_precision": "day",
+  "human_audition_performed": true,
+  "question": "Do these sound like three genuinely different instruments whose identities come from three different synthesis families, rather than three presets of essentially the same voice?",
+  "allowed_judgments": [
+    "PASS",
+    "FAIL"
+  ],
+  "package_freeze_head": "a2046134731cfe579a571a1c1a0d51389a105afa",
+  "freeze_record_commit": "6b5a11270c85d32b5f41edcc3a0545e44d7fea8a",
+  "tune_event_ledger_sha256": "1bee94ac3d65ce6a01efd6ec2921f2cae82238ddbeaaab79fcee38dc4726bd31",
+  "blind_artifact": {
+    "name": "ipm-real-synth-engine-v4r1-gate-c-blind",
+    "artifact_id": 9666190221,
+    "artifact_digest": "sha256:b30f4f667eba6179db4f2adf28ffc65fe852c26e47b93445c76f994ecf8e6421",
+    "wav_sha256": {
+      "blind-1.wav": "baa7af57ea1b7bdf41bc87df43f7d5d36957f85742a1203fb01e10e59dae1188",
+      "blind-2.wav": "7ba2f320599f995db129636e570b9fa489edf123dd448ae749c3aa455838b6dd",
+      "blind-3.wav": "a1a80979e2a2a066ddf01881e8dbd43b68e0fcf84d1675196918cd4b47a4d876"
+    }
+  },
+  "private_mapping": {
+    "artifact_id": 9666190590,
+    "artifact_digest": "sha256:0612d7df936611049dca7ab1e9f7678e3c4eee7d3dcfe9f6e75d53970c885f42",
+    "mapping_file_sha256": "a5783c049d54e9b73d778381acf70732828d8d5488e474806939187decf3d14c",
+    "mapping_commitment_sha256": "40ae4e61bbd2fbe22c74d13bd8d3735470440884d3b7506e51eff1ae402713c2",
+    "commitment_verified_after_owner_judgment": true,
+    "opened_only_after_owner_judgment": true,
+    "mapping": {
+      "blind-1.wav": "MODAL",
+      "blind-2.wav": "VA",
+      "blind-3.wav": "FM"
+    }
+  },
+  "no_post_audition_parameter_tuning_before_judgment": true,
+  "frozen_later_fixtures_unchanged": true,
+  "next_gate": "R-D — macro/control authority"
+}
