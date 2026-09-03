@@ -48,6 +48,7 @@ jobs:
           name: ipm-synth-sound-acceptance-v1
           path: synth-sound-acceptance-v1/
           if-no-files-found: error
+          retention-days: 30
 
   synth-simple-material-interest-v2:
     if: github.event_name == 'pull_request' && github.head_ref == 'agent/synth-sound-acceptance-v2'
@@ -70,6 +71,7 @@ jobs:
           name: ipm-synth-simple-material-interest-v2
           path: synth-simple-material-interest-v2/
           if-no-files-found: error
+          retention-days: 30
 
   synth-sound-acceptance-v2:
     if: github.event_name == 'pull_request' && github.head_ref == 'agent/synth-sound-acceptance-v2-full-2'
@@ -95,6 +97,7 @@ jobs:
           name: ipm-synth-sound-acceptance-v2
           path: synth-sound-acceptance-v2/
           if-no-files-found: error
+          retention-days: 30
 
   real-synth-engine-v3-audition:
     if: github.event_name == 'pull_request' && github.head_ref == 'agent/real-synth-engine-v3-audition'
@@ -120,3 +123,4 @@ jobs:
           name: ipm-real-synth-engine-v3-audition
           path: real-synth-engine-v3-audition/
           if-no-files-found: error
+          retention-days: 30

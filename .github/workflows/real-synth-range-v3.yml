@@ -31,3 +31,4 @@ jobs:
           name: ipm-real-synth-engine-v3-range-2
           path: real-synth-engine-v3-range-2/
           if-no-files-found: error
+          retention-days: 30
