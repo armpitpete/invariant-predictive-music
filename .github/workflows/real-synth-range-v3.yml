@@ -10,7 +10,7 @@ permissions:
 jobs:
   range-audition:
     if: github.head_ref == 'agent/real-synth-engine-v3-range-2'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
