@@ -1,0 +1,10 @@
+{
+  "accepted_evidence": "An existing repository authority/status document must state both completed and total counts. Activity, files, commits, percentages without counts, readiness and publication state are not completion evidence.",
+  "code": "no_completion_evidence",
+  "detail": "No authority/status document contained an explicit completed/total count.",
+  "project_type": "software",
+  "registry": "config/portfolio-authority-registry.json",
+  "schema_version": 2,
+  "source_sha": "b2e36e5294a1fbbdc664607df9c1005343561ca3",
+  "status": "requires_authority"
+}
