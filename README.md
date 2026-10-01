@@ -36,6 +36,32 @@ The same high-level configuration can generate three experimental conditions:
 
 That makes the central claim testable rather than merely aesthetic.
 
+## Composition Framework v0.1
+
+Composition Framework v0.1 is an opt-in experimental layer above the existing
+IPM v0.2 composer. Framework mode defaults **off**, so ordinary IPM generation
+retains the accepted v0.2 behaviour.
+
+The current evidence gate connects structural function, negative-space shaping,
+an explicit obligation ledger and one bounded arrival transformation to real
+generated music. Timbral shaping and emotional-vocabulary execution are held
+back from the first A/B test to avoid confounding the structural result.
+
+Render the first matched 60–90 second framework/control pair with:
+
+```bash
+PYTHONPATH=src python scripts/render_composition_framework_first_ab_v0_1.py
+```
+
+The command writes matched MIDI/trace evidence plus a separate `blind/`
+folder containing only `render-1.wav`, `render-2.wav`, and the listening
+worksheet. The condition mapping is stored outside that folder and should not
+be opened before the listening judgment.
+
+See COMPOSITION_FRAMEWORK_V0_1.md and
+LISTENER_STUDY_COMPOSITION_FRAMEWORK_V0_1.md. The eight-profile renderer is a
+later generalisation harness, not the current acceptance gate.
+
 ## Musical controls
 
 Bass and Rhythm are instrument parameters, not hard-coded Study behaviour.

@@ -470,6 +470,30 @@ The current engine must run without calling any numbered Study module.
 
 ---
 
+## 21A. Composition Framework v0.1 integration
+
+Composition Framework v0.1 is an additive experimental layer above v0.2.
+
+It may shape subsidiary density, deterministic expressive rendering and
+bar-level timbral rendering according to seeded structural functions. It also
+records expectation, deviation, consequence, negative space and transformed
+repetition as framework-level state.
+
+It must not replace or silently retune the three Tune falsification conditions.
+Predictable/IPM/unstructured-surprise remain independently selectable.
+
+The framework uses six structural functions:
+Introduction, Recognition, Complication, Suspension, Arrival and Aftermath.
+No fixed ordering or fixed duration is mandatory.
+
+Framework traces must explicitly state that structural-significance and
+emotional labels are hypotheses/proxies, not measurements of listener emotion.
+Human emotional claims require the separate blinded listener protocol.
+
+The canonical framework contract is COMPOSITION_FRAMEWORK_V0_1.md.
+
+---
+
 ## 22. Acceptance boundary for v0.2
 
 Required implementation properties:

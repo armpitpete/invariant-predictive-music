@@ -1,0 +1,1649 @@
+{
+  "experiment": "first-structural-ab-v0.1",
+  "purpose": "Test one causal structural intervention before expanding timbre or emotional-vocabulary execution.",
+  "estimated_form_seconds": 66.20689655172414,
+  "sample_rate": 16000,
+  "checks": {
+    "same_seed": true,
+    "same_tempo": true,
+    "same_bar_count": true,
+    "same_source_pitch_onsets": true,
+    "same_lane_names": true,
+    "same_render_duration": true,
+    "control_engine_valid": true,
+    "framework_engine_valid": true,
+    "framework_trace_valid": true,
+    "audio_conditions_differ": true,
+    "actual_transformation_present": true,
+    "held_resolution_present": true,
+    "negative_space_increased_in_suspension": true,
+    "important_moments_have_space": true,
+    "obligations_accounted_for": true,
+    "timbre_held_fixed": true,
+    "random_expression_held_off": true
+  },
+  "passed": true,
+  "control": {
+    "trace": "experiments\\composition-framework-v0.1\\first-ab\\control.trace.json",
+    "midi": "experiments\\composition-framework-v0.1\\first-ab\\control.mid",
+    "wav": "experiments\\composition-framework-v0.1\\first-ab\\control.wav",
+    "wav_sha256": "0f9416e6af017e1f6b6198c66cb691db9b5e6cc71b895fac49198f003a81f33e",
+    "midi_sha256": "418d67f5fb03ca9f9cb4ca9af63ee00894735d0a1b94e3aff24200838d714283",
+    "wav_metadata": {
+      "frames": 1068590,
+      "sample_rate": 16000,
+      "channels": 2,
+      "sample_width": 2,
+      "duration_seconds": 66.786875
+    },
+    "validation": {
+      "passed": true,
+      "checks": {
+        "three_explicit_lanes": true,
+        "tune_in_lane": true,
+        "bass_in_lane": true,
+        "rhythm_in_lane": true,
+        "shared_scale": true,
+        "no_self_overlap": true,
+        "predictive_gate_traced": true,
+        "activity_governors_traced": true,
+        "subsidiary_silence_competes": true,
+        "vertical_floor": true,
+        "composition_framework_integrated": true
+      }
+    },
+    "framework": {
+      "version": "0.1",
+      "scope": "high-level-composition-framework",
+      "config": {
+        "enabled": false,
+        "primary_emotion": "tenderness",
+        "secondary_emotion": "uncertainty",
+        "carrier": "balanced",
+        "negative_space": 1.0,
+        "expressive_gesture": 0.0,
+        "transformation_strength": 0.8,
+        "timbral_strength": 0.0,
+        "consequence_horizon_bars": 3,
+        "structural_override": [
+          "introduction",
+          "recognition",
+          "complication",
+          "suspension",
+          "arrival",
+          "aftermath"
+        ],
+        "timbral_identity": "restrained-evolving"
+      },
+      "structural_plan": [
+        "introduction",
+        "introduction",
+        "introduction",
+        "recognition",
+        "recognition",
+        "recognition",
+        "complication",
+        "complication",
+        "suspension",
+        "suspension",
+        "suspension",
+        "arrival",
+        "arrival",
+        "arrival",
+        "aftermath",
+        "aftermath"
+      ],
+      "bar_states": [
+        {
+          "bar": 0,
+          "function": "introduction",
+          "motif_identity": "(5, (-1, 1, 1, -1), (2, 2, 1, 1, 2))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.08487207162360443,
+          "expectation_established": false,
+          "selected_branch": "expected",
+          "deviation": false,
+          "density": 0.140625,
+          "negative_space": 0.859375,
+          "structural_significance_proxy": 0.7511872147727401,
+          "intensity_proxy": 0.5732283464566928,
+          "consequence": null
+        },
+        {
+          "bar": 1,
+          "function": "introduction",
+          "motif_identity": "(5, (1, -1, 1, -1), (1, 1, 2, 2, 4))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.41873453777136,
+          "expectation_established": true,
+          "selected_branch": "expected",
+          "deviation": false,
+          "density": 0.3854166666666667,
+          "negative_space": 0.6145833333333333,
+          "structural_significance_proxy": 0.5363522744716472,
+          "intensity_proxy": 0.6047244094488189,
+          "consequence": null
+        },
+        {
+          "bar": 2,
+          "function": "introduction",
+          "motif_identity": "(5, (1, 1, 1, -1), (4, 2, 1, 1, 2))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.16609433917582653,
+          "expectation_established": false,
+          "selected_branch": "expected",
+          "deviation": false,
+          "density": 0.17708333333333334,
+          "negative_space": 0.8229166666666666,
+          "structural_significance_proxy": 0.7157552896809688,
+          "intensity_proxy": 0.6047244094488189,
+          "consequence": null
+        },
+        {
+          "bar": 3,
+          "function": "recognition",
+          "motif_identity": "(6, (0, -1, 1, 1, -1), (2, 1, 2, 1, 2, 4))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.1932977310531167,
+          "expectation_established": false,
+          "selected_branch": "revealing",
+          "deviation": false,
+          "density": 0.2760416666666667,
+          "negative_space": 0.7239583333333333,
+          "structural_significance_proxy": 0.7629212056589985,
+          "intensity_proxy": 0.6023622047244094,
+          "consequence": null
+        },
+        {
+          "bar": 4,
+          "function": "recognition",
+          "motif_identity": "(7, (0, -1, 1, -1, 1, -1), (4, 2, 2, 1, 1, 1, 1))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.22891163666887343,
+          "expectation_established": true,
+          "selected_branch": "expected",
+          "deviation": false,
+          "density": 0.20833333333333334,
+          "negative_space": 0.7916666666666666,
+          "structural_significance_proxy": 0.6496497172171728,
+          "intensity_proxy": 0.5973003374578177,
+          "consequence": null
+        },
+        {
+          "bar": 5,
+          "function": "recognition",
+          "motif_identity": "(10, (1, -1, 1, -1, 1, 1, -1, 1, 0), (1, 2, 1, 1, 1, 2, 2, 1, 1, 2))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.24955734461203638,
+          "expectation_established": true,
+          "selected_branch": "revealing",
+          "deviation": false,
+          "density": 0.4583333333333333,
+          "negative_space": 0.5416666666666667,
+          "structural_significance_proxy": 0.6709108933575482,
+          "intensity_proxy": 0.6346456692913385,
+          "consequence": null
+        },
+        {
+          "bar": 6,
+          "function": "complication",
+          "motif_identity": "(9, (1, 0, 1, 0, -1, 1, 0, 1), (2, 2, 1, 1, 4, 1, 1, 1, 1))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.2295958898536434,
+          "expectation_established": true,
+          "selected_branch": "expected",
+          "deviation": false,
+          "density": 0.3854166666666667,
+          "negative_space": 0.6145833333333333,
+          "structural_significance_proxy": 0.8502515758273304,
+          "intensity_proxy": 0.6351706036745406,
+          "consequence": null
+        },
+        {
+          "bar": 7,
+          "function": "complication",
+          "motif_identity": "(9, (1, -1, 1, -1, -1, 0, 1, 1), (1, 1, 2, 1, 1, 2, 1, 1, 4))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.1860006386051855,
+          "expectation_established": false,
+          "selected_branch": "revealing",
+          "deviation": true,
+          "density": 0.3020833333333333,
+          "negative_space": 0.6979166666666667,
+          "structural_significance_proxy": 0.956830848358182,
+          "intensity_proxy": 0.6351706036745406,
+          "consequence": {
+            "kind": "fulfilment",
+            "bar": 10,
+            "delay_bars": 3
+          }
+        },
+        {
+          "bar": 8,
+          "function": "suspension",
+          "motif_identity": "(9, (-1, 1, 1, -1, 0, -1, 1, 1), (1, 1, 4, 1, 1, 1, 1, 2, 2))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.12326980093269223,
+          "expectation_established": false,
+          "selected_branch": "revealing",
+          "deviation": true,
+          "density": 0.53125,
+          "negative_space": 0.46875,
+          "structural_significance_proxy": 1.0,
+          "intensity_proxy": 0.6351706036745406,
+          "consequence": {
+            "kind": "fulfilment",
+            "bar": 10,
+            "delay_bars": 2
+          }
+        },
+        {
+          "bar": 9,
+          "function": "suspension",
+          "motif_identity": "(11, (-1, 1, -1, 0, 1, 0, -1, 1, -1, 1), (2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.1147484173063701,
+          "expectation_established": false,
+          "selected_branch": "revealing",
+          "deviation": true,
+          "density": 0.5885416666666666,
+          "negative_space": 0.41145833333333337,
+          "structural_significance_proxy": 0.8281879924760253,
+          "intensity_proxy": 0.6320687186828919,
+          "consequence": {
+            "kind": "fulfilment",
+            "bar": 10,
+            "delay_bars": 1
+          }
+        },
+        {
+          "bar": 10,
+          "function": "suspension",
+          "motif_identity": "(9, (-1, 1, -1, 1, -1, -1, -1, 1), (2, 1, 1, 2, 2, 2, 2, 1, 1))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.21357309665001714,
+          "expectation_established": true,
+          "selected_branch": "expected",
+          "deviation": true,
+          "density": 0.3072916666666667,
+          "negative_space": 0.6927083333333333,
+          "structural_significance_proxy": 0.6159579402348648,
+          "intensity_proxy": 0.6377952755905512,
+          "consequence": {
+            "kind": "fulfilment",
+            "bar": 11,
+            "delay_bars": 1
+          }
+        },
+        {
+          "bar": 11,
+          "function": "arrival",
+          "motif_identity": "(11, (1, 0, -1, 1, -1, 1, 0, 1, -1, -1), (1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 2))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.38032073629286645,
+          "expectation_established": true,
+          "selected_branch": "revealing",
+          "deviation": false,
+          "density": 0.453125,
+          "negative_space": 0.546875,
+          "structural_significance_proxy": 0.8358574731659109,
+          "intensity_proxy": 0.6871868289191124,
+          "consequence": null
+        },
+        {
+          "bar": 12,
+          "function": "arrival",
+          "motif_identity": "(6, (-1, 1, -1, 0, -1), (1, 1, 1, 1, 5, 4))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.14130224192333518,
+          "expectation_established": false,
+          "selected_branch": "revealing",
+          "deviation": false,
+          "density": 0.453125,
+          "negative_space": 0.546875,
+          "structural_significance_proxy": 0.802219824579762,
+          "intensity_proxy": 0.5905511811023622,
+          "consequence": null
+        },
+        {
+          "bar": 13,
+          "function": "arrival",
+          "motif_identity": "(7, (0, -1, 1, 1, -1, -1), (2, 1, 1, 1, 1, 4, 4))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.25826368120538923,
+          "expectation_established": true,
+          "selected_branch": "expected",
+          "deviation": false,
+          "density": 0.24479166666666666,
+          "negative_space": 0.7552083333333334,
+          "structural_significance_proxy": 0.8898711976801509,
+          "intensity_proxy": 0.5894263217097863,
+          "consequence": null
+        },
+        {
+          "bar": 14,
+          "function": "aftermath",
+          "motif_identity": "(7, (-1, -1, 1, -1, 1, 1), (1, 1, 1, 2, 1, 4, 4))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.15529597882690271,
+          "expectation_established": false,
+          "selected_branch": "revealing",
+          "deviation": false,
+          "density": 0.3072916666666667,
+          "negative_space": 0.6927083333333333,
+          "structural_significance_proxy": 0.6669588580675931,
+          "intensity_proxy": 0.5894263217097863,
+          "consequence": null
+        },
+        {
+          "bar": 15,
+          "function": "aftermath",
+          "motif_identity": "(4, (-1, 0, -1), (5, 2, 2, 2))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.17194846929024257,
+          "expectation_established": false,
+          "selected_branch": "expected",
+          "deviation": false,
+          "density": 0.28125,
+          "negative_space": 0.71875,
+          "structural_significance_proxy": 0.765619243808104,
+          "intensity_proxy": 0.5511811023622047,
+          "consequence": null
+        }
+      ],
+      "directives": [
+        {
+          "bar": 0,
+          "function": "introduction",
+          "expressive": {
+            "function": "introduction",
+            "attack": "soft",
+            "note_length": "natural",
+            "vibrato": "late-subtle",
+            "portamento": "rare",
+            "timing": "settled",
+            "dynamic_shape": "restrained"
+          },
+          "timbre": {
+            "function": "introduction",
+            "identity": "restrained-evolving",
+            "envelope": "slow",
+            "spectrum": "narrow",
+            "filter_motion": "minimal",
+            "spatial_motion": "centered",
+            "texture": "sparse"
+          }
+        },
+        {
+          "bar": 1,
+          "function": "introduction",
+          "expressive": {
+            "function": "introduction",
+            "attack": "soft",
+            "note_length": "natural",
+            "vibrato": "late-subtle",
+            "portamento": "rare",
+            "timing": "settled",
+            "dynamic_shape": "restrained"
+          },
+          "timbre": {
+            "function": "introduction",
+            "identity": "restrained-evolving",
+            "envelope": "slow",
+            "spectrum": "narrow",
+            "filter_motion": "minimal",
+            "spatial_motion": "centered",
+            "texture": "sparse"
+          }
+        },
+        {
+          "bar": 2,
+          "function": "introduction",
+          "expressive": {
+            "function": "introduction",
+            "attack": "soft",
+            "note_length": "natural",
+            "vibrato": "late-subtle",
+            "portamento": "rare",
+            "timing": "settled",
+            "dynamic_shape": "restrained"
+          },
+          "timbre": {
+            "function": "introduction",
+            "identity": "restrained-evolving",
+            "envelope": "slow",
+            "spectrum": "narrow",
+            "filter_motion": "minimal",
+            "spatial_motion": "centered",
+            "texture": "sparse"
+          }
+        },
+        {
+          "bar": 3,
+          "function": "recognition",
+          "expressive": {
+            "function": "recognition",
+            "attack": "clear",
+            "note_length": "natural",
+            "vibrato": "stable",
+            "portamento": "minimal",
+            "timing": "steady",
+            "dynamic_shape": "stable"
+          },
+          "timbre": {
+            "function": "recognition",
+            "identity": "restrained-evolving",
+            "envelope": "stable",
+            "spectrum": "identity-band",
+            "filter_motion": "subtle",
+            "spatial_motion": "stable",
+            "texture": "recognisable"
+          }
+        },
+        {
+          "bar": 4,
+          "function": "recognition",
+          "expressive": {
+            "function": "recognition",
+            "attack": "clear",
+            "note_length": "natural",
+            "vibrato": "stable",
+            "portamento": "minimal",
+            "timing": "steady",
+            "dynamic_shape": "stable"
+          },
+          "timbre": {
+            "function": "recognition",
+            "identity": "restrained-evolving",
+            "envelope": "stable",
+            "spectrum": "identity-band",
+            "filter_motion": "subtle",
+            "spatial_motion": "stable",
+            "texture": "recognisable"
+          }
+        },
+        {
+          "bar": 5,
+          "function": "recognition",
+          "expressive": {
+            "function": "recognition",
+            "attack": "clear",
+            "note_length": "natural",
+            "vibrato": "stable",
+            "portamento": "minimal",
+            "timing": "steady",
+            "dynamic_shape": "stable"
+          },
+          "timbre": {
+            "function": "recognition",
+            "identity": "restrained-evolving",
+            "envelope": "stable",
+            "spectrum": "identity-band",
+            "filter_motion": "subtle",
+            "spatial_motion": "stable",
+            "texture": "recognisable"
+          }
+        },
+        {
+          "bar": 6,
+          "function": "complication",
+          "expressive": {
+            "function": "complication",
+            "attack": "firmer",
+            "note_length": "shorter",
+            "vibrato": "delayed",
+            "portamento": "selective",
+            "timing": "slightly-forward",
+            "dynamic_shape": "uneven"
+          },
+          "timbre": {
+            "function": "complication",
+            "identity": "restrained-evolving",
+            "envelope": "responsive",
+            "spectrum": "broader",
+            "filter_motion": "active",
+            "spatial_motion": "wider",
+            "texture": "layered"
+          }
+        },
+        {
+          "bar": 7,
+          "function": "complication",
+          "expressive": {
+            "function": "complication",
+            "attack": "firmer",
+            "note_length": "shorter",
+            "vibrato": "delayed",
+            "portamento": "selective",
+            "timing": "slightly-forward",
+            "dynamic_shape": "uneven"
+          },
+          "timbre": {
+            "function": "complication",
+            "identity": "restrained-evolving",
+            "envelope": "responsive",
+            "spectrum": "broader",
+            "filter_motion": "active",
+            "spatial_motion": "wider",
+            "texture": "layered"
+          }
+        },
+        {
+          "bar": 8,
+          "function": "suspension",
+          "expressive": {
+            "function": "suspension",
+            "attack": "soft",
+            "note_length": "held",
+            "vibrato": "late",
+            "portamento": "selective",
+            "timing": "held-back",
+            "dynamic_shape": "reduced"
+          },
+          "timbre": {
+            "function": "suspension",
+            "identity": "restrained-evolving",
+            "envelope": "slow",
+            "spectrum": "reduced",
+            "filter_motion": "closing",
+            "spatial_motion": "narrowing",
+            "texture": "thinned"
+          }
+        },
+        {
+          "bar": 9,
+          "function": "suspension",
+          "expressive": {
+            "function": "suspension",
+            "attack": "soft",
+            "note_length": "held",
+            "vibrato": "late",
+            "portamento": "selective",
+            "timing": "held-back",
+            "dynamic_shape": "reduced"
+          },
+          "timbre": {
+            "function": "suspension",
+            "identity": "restrained-evolving",
+            "envelope": "slow",
+            "spectrum": "reduced",
+            "filter_motion": "closing",
+            "spatial_motion": "narrowing",
+            "texture": "thinned"
+          }
+        },
+        {
+          "bar": 10,
+          "function": "suspension",
+          "expressive": {
+            "function": "suspension",
+            "attack": "soft",
+            "note_length": "held",
+            "vibrato": "late",
+            "portamento": "selective",
+            "timing": "held-back",
+            "dynamic_shape": "reduced"
+          },
+          "timbre": {
+            "function": "suspension",
+            "identity": "restrained-evolving",
+            "envelope": "slow",
+            "spectrum": "reduced",
+            "filter_motion": "closing",
+            "spatial_motion": "narrowing",
+            "texture": "thinned"
+          }
+        },
+        {
+          "bar": 11,
+          "function": "arrival",
+          "expressive": {
+            "function": "arrival",
+            "attack": "clear",
+            "note_length": "held",
+            "vibrato": "late-subtle",
+            "portamento": "selective",
+            "timing": "settled",
+            "dynamic_shape": "quiet-emphasis"
+          },
+          "timbre": {
+            "function": "arrival",
+            "identity": "restrained-evolving",
+            "envelope": "open",
+            "spectrum": "clear",
+            "filter_motion": "opening",
+            "spatial_motion": "wider",
+            "texture": "resolved-without-max-density"
+          }
+        },
+        {
+          "bar": 12,
+          "function": "arrival",
+          "expressive": {
+            "function": "arrival",
+            "attack": "clear",
+            "note_length": "held",
+            "vibrato": "late-subtle",
+            "portamento": "selective",
+            "timing": "settled",
+            "dynamic_shape": "quiet-emphasis"
+          },
+          "timbre": {
+            "function": "arrival",
+            "identity": "restrained-evolving",
+            "envelope": "open",
+            "spectrum": "clear",
+            "filter_motion": "opening",
+            "spatial_motion": "wider",
+            "texture": "resolved-without-max-density"
+          }
+        },
+        {
+          "bar": 13,
+          "function": "arrival",
+          "expressive": {
+            "function": "arrival",
+            "attack": "clear",
+            "note_length": "held",
+            "vibrato": "late-subtle",
+            "portamento": "selective",
+            "timing": "settled",
+            "dynamic_shape": "quiet-emphasis"
+          },
+          "timbre": {
+            "function": "arrival",
+            "identity": "restrained-evolving",
+            "envelope": "open",
+            "spectrum": "clear",
+            "filter_motion": "opening",
+            "spatial_motion": "wider",
+            "texture": "resolved-without-max-density"
+          }
+        },
+        {
+          "bar": 14,
+          "function": "aftermath",
+          "expressive": {
+            "function": "aftermath",
+            "attack": "soft",
+            "note_length": "released",
+            "vibrato": "fading",
+            "portamento": "rare",
+            "timing": "relaxed",
+            "dynamic_shape": "receding"
+          },
+          "timbre": {
+            "function": "aftermath",
+            "identity": "restrained-evolving",
+            "envelope": "soft",
+            "spectrum": "darkening",
+            "filter_motion": "settling",
+            "spatial_motion": "contracting",
+            "texture": "residual"
+          }
+        },
+        {
+          "bar": 15,
+          "function": "aftermath",
+          "expressive": {
+            "function": "aftermath",
+            "attack": "soft",
+            "note_length": "released",
+            "vibrato": "fading",
+            "portamento": "rare",
+            "timing": "relaxed",
+            "dynamic_shape": "receding"
+          },
+          "timbre": {
+            "function": "aftermath",
+            "identity": "restrained-evolving",
+            "envelope": "soft",
+            "spectrum": "darkening",
+            "filter_motion": "settling",
+            "spatial_motion": "contracting",
+            "texture": "residual"
+          }
+        }
+      ],
+      "metrics": {
+        "mean_prediction_strength": 0.20723666323696638,
+        "learnable_returns": 0,
+        "transformed_returns": 0,
+        "tune_transformed_returns": 0,
+        "explicit_pattern_returns": 0,
+        "deviations": 4,
+        "resolved_deviations": 4,
+        "intentional_abandonments": 0,
+        "unresolved_deviations": 0,
+        "consequence_coverage": 1.0,
+        "mean_negative_space": 0.65625,
+        "mean_suspension_space": 0.5243055555555555,
+        "intensity_significance_correlation": 0.250359803780954,
+        "distinct_structural_functions": 6,
+        "actual_transformations": 0
+      },
+      "evaluation": {
+        "learnable_material_present": true,
+        "expectation_forms": true,
+        "deviation_is_explicit": true,
+        "deviation_has_consequence": true,
+        "important_moments_have_space": false,
+        "expression_is_structurally_directed": true,
+        "timbre_is_structurally_directed": true,
+        "repetition_can_transform": true,
+        "intensity_is_not_significance": true,
+        "mixed_emotional_target_declared": true,
+        "form_is_not_single_fixed_template": true
+      },
+      "integration_validation": {
+        "passed": true,
+        "checks": {
+          "plan_covers_every_bar": true,
+          "directives_cover_every_bar": true,
+          "state_covers_every_bar": true,
+          "all_deviations_accounted_for": true,
+          "no_unresolved_major_deviations": true,
+          "obligation_ledger_complete": true
+        }
+      },
+      "epistemic_boundary": "Structural metrics and significance values are experimental proxies; they do not establish perceived emotion or listener preference.",
+      "human_validation_required": true,
+      "obligation_ledger": [
+        {
+          "obligation_id": "obligation-07",
+          "created_at_bar": 7,
+          "source_identity": "(9, (1, -1, 1, -1, -1, 0, 1, 1), (1, 1, 2, 1, 1, 2, 1, 1, 4))",
+          "expected_event": "return-to-established-behaviour-or-arrival",
+          "deviation_type": "structural-complication",
+          "importance": 0.956830848358182,
+          "resolution_window": "medium",
+          "status": "resolved",
+          "resolution_type": "fulfilment",
+          "resolved_at_bar": 10
+        },
+        {
+          "obligation_id": "obligation-08",
+          "created_at_bar": 8,
+          "source_identity": "(9, (-1, 1, 1, -1, 0, -1, 1, 1), (1, 1, 4, 1, 1, 1, 1, 2, 2))",
+          "expected_event": "return-to-established-behaviour-or-arrival",
+          "deviation_type": "structural-withholding",
+          "importance": 1.0,
+          "resolution_window": "medium",
+          "status": "resolved",
+          "resolution_type": "fulfilment",
+          "resolved_at_bar": 10
+        },
+        {
+          "obligation_id": "obligation-09",
+          "created_at_bar": 9,
+          "source_identity": "(11, (-1, 1, -1, 0, 1, 0, -1, 1, -1, 1), (2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1))",
+          "expected_event": "return-to-established-behaviour-or-arrival",
+          "deviation_type": "structural-withholding",
+          "importance": 0.8281879924760253,
+          "resolution_window": "medium",
+          "status": "resolved",
+          "resolution_type": "fulfilment",
+          "resolved_at_bar": 10
+        },
+        {
+          "obligation_id": "obligation-10",
+          "created_at_bar": 10,
+          "source_identity": "(9, (-1, 1, -1, 1, -1, -1, -1, 1), (2, 1, 1, 2, 2, 2, 2, 1, 1))",
+          "expected_event": "return-to-established-behaviour-or-arrival",
+          "deviation_type": "structural-withholding",
+          "importance": 0.6159579402348648,
+          "resolution_window": "medium",
+          "status": "resolved",
+          "resolution_type": "fulfilment",
+          "resolved_at_bar": 11
+        }
+      ],
+      "transformations": []
+    }
+  },
+  "framework": {
+    "trace": "experiments\\composition-framework-v0.1\\first-ab\\framework.trace.json",
+    "midi": "experiments\\composition-framework-v0.1\\first-ab\\framework.mid",
+    "wav": "experiments\\composition-framework-v0.1\\first-ab\\framework.wav",
+    "wav_sha256": "9d8ac85ad677a1ad42fd08444230d52136fd6feb86b1b15146b1780cebdd6046",
+    "midi_sha256": "aa212233f7f824d59da1a41f647be47228343ce742725f2f86bf187fed169b4d",
+    "wav_metadata": {
+      "frames": 1068590,
+      "sample_rate": 16000,
+      "channels": 2,
+      "sample_width": 2,
+      "duration_seconds": 66.786875
+    },
+    "validation": {
+      "passed": true,
+      "checks": {
+        "three_explicit_lanes": true,
+        "tune_in_lane": true,
+        "bass_in_lane": true,
+        "rhythm_in_lane": true,
+        "shared_scale": true,
+        "no_self_overlap": true,
+        "predictive_gate_traced": true,
+        "activity_governors_traced": true,
+        "subsidiary_silence_competes": true,
+        "vertical_floor": true,
+        "composition_framework_integrated": true
+      }
+    },
+    "framework": {
+      "version": "0.1",
+      "scope": "high-level-composition-framework",
+      "config": {
+        "enabled": true,
+        "primary_emotion": "tenderness",
+        "secondary_emotion": "uncertainty",
+        "carrier": "balanced",
+        "negative_space": 1.0,
+        "expressive_gesture": 0.0,
+        "transformation_strength": 0.8,
+        "timbral_strength": 0.0,
+        "consequence_horizon_bars": 3,
+        "structural_override": [
+          "introduction",
+          "recognition",
+          "complication",
+          "suspension",
+          "arrival",
+          "aftermath"
+        ],
+        "timbral_identity": "restrained-evolving"
+      },
+      "structural_plan": [
+        "introduction",
+        "introduction",
+        "introduction",
+        "recognition",
+        "recognition",
+        "recognition",
+        "complication",
+        "complication",
+        "suspension",
+        "suspension",
+        "suspension",
+        "arrival",
+        "arrival",
+        "arrival",
+        "aftermath",
+        "aftermath"
+      ],
+      "bar_states": [
+        {
+          "bar": 0,
+          "function": "introduction",
+          "motif_identity": "(5, (-1, 1, 1, -1), (2, 2, 1, 1, 2))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.08487207162360443,
+          "expectation_established": false,
+          "selected_branch": "expected",
+          "deviation": false,
+          "density": 0.140625,
+          "negative_space": 0.859375,
+          "structural_significance_proxy": 0.7511872147727401,
+          "intensity_proxy": 0.5732283464566928,
+          "consequence": null
+        },
+        {
+          "bar": 1,
+          "function": "introduction",
+          "motif_identity": "(5, (1, -1, 1, -1), (1, 1, 2, 2, 4))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.41873453777136,
+          "expectation_established": true,
+          "selected_branch": "expected",
+          "deviation": false,
+          "density": 0.3229166666666667,
+          "negative_space": 0.6770833333333333,
+          "structural_significance_proxy": 0.5363522744716472,
+          "intensity_proxy": 0.6047244094488189,
+          "consequence": null
+        },
+        {
+          "bar": 2,
+          "function": "introduction",
+          "motif_identity": "(5, (1, 1, 1, -1), (4, 2, 1, 1, 2))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.16609433917582653,
+          "expectation_established": false,
+          "selected_branch": "expected",
+          "deviation": false,
+          "density": 0.17708333333333334,
+          "negative_space": 0.8229166666666666,
+          "structural_significance_proxy": 0.7157552896809688,
+          "intensity_proxy": 0.6047244094488189,
+          "consequence": null
+        },
+        {
+          "bar": 3,
+          "function": "recognition",
+          "motif_identity": "(6, (0, -1, 1, 1, -1), (2, 1, 2, 1, 2, 4))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.1932977310531167,
+          "expectation_established": false,
+          "selected_branch": "revealing",
+          "deviation": false,
+          "density": 0.2760416666666667,
+          "negative_space": 0.7239583333333333,
+          "structural_significance_proxy": 0.7629212056589985,
+          "intensity_proxy": 0.6023622047244094,
+          "consequence": null
+        },
+        {
+          "bar": 4,
+          "function": "recognition",
+          "motif_identity": "(7, (0, -1, 1, -1, 1, -1), (4, 2, 2, 1, 1, 1, 1))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.22891163666887343,
+          "expectation_established": true,
+          "selected_branch": "expected",
+          "deviation": false,
+          "density": 0.20833333333333334,
+          "negative_space": 0.7916666666666666,
+          "structural_significance_proxy": 0.6496497172171728,
+          "intensity_proxy": 0.5973003374578177,
+          "consequence": null
+        },
+        {
+          "bar": 5,
+          "function": "recognition",
+          "motif_identity": "(10, (1, -1, 1, -1, 1, 1, -1, 1, 0), (1, 2, 1, 1, 1, 2, 2, 1, 1, 2))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.24955734461203638,
+          "expectation_established": true,
+          "selected_branch": "revealing",
+          "deviation": false,
+          "density": 0.4583333333333333,
+          "negative_space": 0.5416666666666667,
+          "structural_significance_proxy": 0.6709108933575482,
+          "intensity_proxy": 0.6346456692913385,
+          "consequence": null
+        },
+        {
+          "bar": 6,
+          "function": "complication",
+          "motif_identity": "(9, (1, 0, 1, 0, -1, 1, 0, 1), (2, 2, 1, 1, 4, 1, 1, 1, 1))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.2295958898536434,
+          "expectation_established": true,
+          "selected_branch": "expected",
+          "deviation": false,
+          "density": 0.3854166666666667,
+          "negative_space": 0.6145833333333333,
+          "structural_significance_proxy": 0.8502515758273304,
+          "intensity_proxy": 0.6351706036745406,
+          "consequence": null
+        },
+        {
+          "bar": 7,
+          "function": "complication",
+          "motif_identity": "(9, (1, -1, 1, -1, -1, 0, 1, 1), (1, 1, 2, 1, 1, 2, 1, 1, 4))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.1860006386051855,
+          "expectation_established": false,
+          "selected_branch": "revealing",
+          "deviation": true,
+          "density": 0.3020833333333333,
+          "negative_space": 0.6979166666666667,
+          "structural_significance_proxy": 0.956830848358182,
+          "intensity_proxy": 0.6351706036745406,
+          "consequence": {
+            "kind": "fulfilment",
+            "bar": 10,
+            "delay_bars": 3
+          }
+        },
+        {
+          "bar": 8,
+          "function": "suspension",
+          "motif_identity": "(9, (-1, 1, 1, -1, 0, -1, 1, 1), (1, 1, 4, 1, 1, 1, 1, 2, 2))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.12326980093269223,
+          "expectation_established": false,
+          "selected_branch": "revealing",
+          "deviation": true,
+          "density": 0.3854166666666667,
+          "negative_space": 0.6145833333333333,
+          "structural_significance_proxy": 1.0,
+          "intensity_proxy": 0.6351706036745406,
+          "consequence": {
+            "kind": "fulfilment",
+            "bar": 10,
+            "delay_bars": 2
+          }
+        },
+        {
+          "bar": 9,
+          "function": "suspension",
+          "motif_identity": "(11, (-1, 1, -1, 0, 1, 0, -1, 1, -1, 1), (2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.1147484173063701,
+          "expectation_established": false,
+          "selected_branch": "revealing",
+          "deviation": true,
+          "density": 0.515625,
+          "negative_space": 0.484375,
+          "structural_significance_proxy": 0.8281879924760253,
+          "intensity_proxy": 0.6320687186828919,
+          "consequence": {
+            "kind": "fulfilment",
+            "bar": 10,
+            "delay_bars": 1
+          }
+        },
+        {
+          "bar": 10,
+          "function": "suspension",
+          "motif_identity": "(9, (-1, 1, -1, 1, -1, -1, -1, 1), (2, 1, 1, 2, 2, 2, 2, 1, 1))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.21357309665001714,
+          "expectation_established": true,
+          "selected_branch": "expected",
+          "deviation": true,
+          "density": 0.24479166666666666,
+          "negative_space": 0.7552083333333334,
+          "structural_significance_proxy": 0.6159579402348648,
+          "intensity_proxy": 0.6377952755905512,
+          "consequence": {
+            "kind": "fulfilment",
+            "bar": 11,
+            "delay_bars": 1
+          }
+        },
+        {
+          "bar": 11,
+          "function": "arrival",
+          "motif_identity": "(11, (1, 0, -1, 1, -1, 1, 0, 1, -1, -1), (1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 2))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.38032073629286645,
+          "expectation_established": true,
+          "selected_branch": "revealing",
+          "deviation": false,
+          "density": 0.46041666666666664,
+          "negative_space": 0.5395833333333333,
+          "structural_significance_proxy": 0.8358574731659109,
+          "intensity_proxy": 0.6871868289191124,
+          "consequence": null
+        },
+        {
+          "bar": 12,
+          "function": "arrival",
+          "motif_identity": "(6, (-1, 1, -1, 0, -1), (1, 1, 1, 1, 5, 4))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.14130224192333518,
+          "expectation_established": false,
+          "selected_branch": "revealing",
+          "deviation": false,
+          "density": 0.453125,
+          "negative_space": 0.546875,
+          "structural_significance_proxy": 0.802219824579762,
+          "intensity_proxy": 0.5905511811023622,
+          "consequence": null
+        },
+        {
+          "bar": 13,
+          "function": "arrival",
+          "motif_identity": "(7, (0, -1, 1, 1, -1, -1), (2, 1, 1, 1, 1, 4, 4))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.25826368120538923,
+          "expectation_established": true,
+          "selected_branch": "expected",
+          "deviation": false,
+          "density": 0.24479166666666666,
+          "negative_space": 0.7552083333333334,
+          "structural_significance_proxy": 0.8898711976801509,
+          "intensity_proxy": 0.5894263217097863,
+          "consequence": null
+        },
+        {
+          "bar": 14,
+          "function": "aftermath",
+          "motif_identity": "(7, (-1, -1, 1, -1, 1, 1), (1, 1, 1, 2, 1, 4, 4))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.15529597882690271,
+          "expectation_established": false,
+          "selected_branch": "revealing",
+          "deviation": false,
+          "density": 0.24479166666666666,
+          "negative_space": 0.7552083333333334,
+          "structural_significance_proxy": 0.6669588580675931,
+          "intensity_proxy": 0.5894263217097863,
+          "consequence": null
+        },
+        {
+          "bar": 15,
+          "function": "aftermath",
+          "motif_identity": "(4, (-1, 0, -1), (5, 2, 2, 2))",
+          "recurrence_count": 0,
+          "transformed_return": false,
+          "prediction_strength": 0.17194846929024257,
+          "expectation_established": false,
+          "selected_branch": "expected",
+          "deviation": false,
+          "density": 0.21875,
+          "negative_space": 0.78125,
+          "structural_significance_proxy": 0.765619243808104,
+          "intensity_proxy": 0.5511811023622047,
+          "consequence": null
+        }
+      ],
+      "directives": [
+        {
+          "bar": 0,
+          "function": "introduction",
+          "expressive": {
+            "function": "introduction",
+            "attack": "soft",
+            "note_length": "natural",
+            "vibrato": "late-subtle",
+            "portamento": "rare",
+            "timing": "settled",
+            "dynamic_shape": "restrained"
+          },
+          "timbre": {
+            "function": "introduction",
+            "identity": "restrained-evolving",
+            "envelope": "slow",
+            "spectrum": "narrow",
+            "filter_motion": "minimal",
+            "spatial_motion": "centered",
+            "texture": "sparse"
+          }
+        },
+        {
+          "bar": 1,
+          "function": "introduction",
+          "expressive": {
+            "function": "introduction",
+            "attack": "soft",
+            "note_length": "natural",
+            "vibrato": "late-subtle",
+            "portamento": "rare",
+            "timing": "settled",
+            "dynamic_shape": "restrained"
+          },
+          "timbre": {
+            "function": "introduction",
+            "identity": "restrained-evolving",
+            "envelope": "slow",
+            "spectrum": "narrow",
+            "filter_motion": "minimal",
+            "spatial_motion": "centered",
+            "texture": "sparse"
+          }
+        },
+        {
+          "bar": 2,
+          "function": "introduction",
+          "expressive": {
+            "function": "introduction",
+            "attack": "soft",
+            "note_length": "natural",
+            "vibrato": "late-subtle",
+            "portamento": "rare",
+            "timing": "settled",
+            "dynamic_shape": "restrained"
+          },
+          "timbre": {
+            "function": "introduction",
+            "identity": "restrained-evolving",
+            "envelope": "slow",
+            "spectrum": "narrow",
+            "filter_motion": "minimal",
+            "spatial_motion": "centered",
+            "texture": "sparse"
+          }
+        },
+        {
+          "bar": 3,
+          "function": "recognition",
+          "expressive": {
+            "function": "recognition",
+            "attack": "clear",
+            "note_length": "natural",
+            "vibrato": "stable",
+            "portamento": "minimal",
+            "timing": "steady",
+            "dynamic_shape": "stable"
+          },
+          "timbre": {
+            "function": "recognition",
+            "identity": "restrained-evolving",
+            "envelope": "stable",
+            "spectrum": "identity-band",
+            "filter_motion": "subtle",
+            "spatial_motion": "stable",
+            "texture": "recognisable"
+          }
+        },
+        {
+          "bar": 4,
+          "function": "recognition",
+          "expressive": {
+            "function": "recognition",
+            "attack": "clear",
+            "note_length": "natural",
+            "vibrato": "stable",
+            "portamento": "minimal",
+            "timing": "steady",
+            "dynamic_shape": "stable"
+          },
+          "timbre": {
+            "function": "recognition",
+            "identity": "restrained-evolving",
+            "envelope": "stable",
+            "spectrum": "identity-band",
+            "filter_motion": "subtle",
+            "spatial_motion": "stable",
+            "texture": "recognisable"
+          }
+        },
+        {
+          "bar": 5,
+          "function": "recognition",
+          "expressive": {
+            "function": "recognition",
+            "attack": "clear",
+            "note_length": "natural",
+            "vibrato": "stable",
+            "portamento": "minimal",
+            "timing": "steady",
+            "dynamic_shape": "stable"
+          },
+          "timbre": {
+            "function": "recognition",
+            "identity": "restrained-evolving",
+            "envelope": "stable",
+            "spectrum": "identity-band",
+            "filter_motion": "subtle",
+            "spatial_motion": "stable",
+            "texture": "recognisable"
+          }
+        },
+        {
+          "bar": 6,
+          "function": "complication",
+          "expressive": {
+            "function": "complication",
+            "attack": "firmer",
+            "note_length": "shorter",
+            "vibrato": "delayed",
+            "portamento": "selective",
+            "timing": "slightly-forward",
+            "dynamic_shape": "uneven"
+          },
+          "timbre": {
+            "function": "complication",
+            "identity": "restrained-evolving",
+            "envelope": "responsive",
+            "spectrum": "broader",
+            "filter_motion": "active",
+            "spatial_motion": "wider",
+            "texture": "layered"
+          }
+        },
+        {
+          "bar": 7,
+          "function": "complication",
+          "expressive": {
+            "function": "complication",
+            "attack": "firmer",
+            "note_length": "shorter",
+            "vibrato": "delayed",
+            "portamento": "selective",
+            "timing": "slightly-forward",
+            "dynamic_shape": "uneven"
+          },
+          "timbre": {
+            "function": "complication",
+            "identity": "restrained-evolving",
+            "envelope": "responsive",
+            "spectrum": "broader",
+            "filter_motion": "active",
+            "spatial_motion": "wider",
+            "texture": "layered"
+          }
+        },
+        {
+          "bar": 8,
+          "function": "suspension",
+          "expressive": {
+            "function": "suspension",
+            "attack": "soft",
+            "note_length": "held",
+            "vibrato": "late",
+            "portamento": "selective",
+            "timing": "held-back",
+            "dynamic_shape": "reduced"
+          },
+          "timbre": {
+            "function": "suspension",
+            "identity": "restrained-evolving",
+            "envelope": "slow",
+            "spectrum": "reduced",
+            "filter_motion": "closing",
+            "spatial_motion": "narrowing",
+            "texture": "thinned"
+          }
+        },
+        {
+          "bar": 9,
+          "function": "suspension",
+          "expressive": {
+            "function": "suspension",
+            "attack": "soft",
+            "note_length": "held",
+            "vibrato": "late",
+            "portamento": "selective",
+            "timing": "held-back",
+            "dynamic_shape": "reduced"
+          },
+          "timbre": {
+            "function": "suspension",
+            "identity": "restrained-evolving",
+            "envelope": "slow",
+            "spectrum": "reduced",
+            "filter_motion": "closing",
+            "spatial_motion": "narrowing",
+            "texture": "thinned"
+          }
+        },
+        {
+          "bar": 10,
+          "function": "suspension",
+          "expressive": {
+            "function": "suspension",
+            "attack": "soft",
+            "note_length": "held",
+            "vibrato": "late",
+            "portamento": "selective",
+            "timing": "held-back",
+            "dynamic_shape": "reduced"
+          },
+          "timbre": {
+            "function": "suspension",
+            "identity": "restrained-evolving",
+            "envelope": "slow",
+            "spectrum": "reduced",
+            "filter_motion": "closing",
+            "spatial_motion": "narrowing",
+            "texture": "thinned"
+          }
+        },
+        {
+          "bar": 11,
+          "function": "arrival",
+          "expressive": {
+            "function": "arrival",
+            "attack": "clear",
+            "note_length": "held",
+            "vibrato": "late-subtle",
+            "portamento": "selective",
+            "timing": "settled",
+            "dynamic_shape": "quiet-emphasis"
+          },
+          "timbre": {
+            "function": "arrival",
+            "identity": "restrained-evolving",
+            "envelope": "open",
+            "spectrum": "clear",
+            "filter_motion": "opening",
+            "spatial_motion": "wider",
+            "texture": "resolved-without-max-density"
+          }
+        },
+        {
+          "bar": 12,
+          "function": "arrival",
+          "expressive": {
+            "function": "arrival",
+            "attack": "clear",
+            "note_length": "held",
+            "vibrato": "late-subtle",
+            "portamento": "selective",
+            "timing": "settled",
+            "dynamic_shape": "quiet-emphasis"
+          },
+          "timbre": {
+            "function": "arrival",
+            "identity": "restrained-evolving",
+            "envelope": "open",
+            "spectrum": "clear",
+            "filter_motion": "opening",
+            "spatial_motion": "wider",
+            "texture": "resolved-without-max-density"
+          }
+        },
+        {
+          "bar": 13,
+          "function": "arrival",
+          "expressive": {
+            "function": "arrival",
+            "attack": "clear",
+            "note_length": "held",
+            "vibrato": "late-subtle",
+            "portamento": "selective",
+            "timing": "settled",
+            "dynamic_shape": "quiet-emphasis"
+          },
+          "timbre": {
+            "function": "arrival",
+            "identity": "restrained-evolving",
+            "envelope": "open",
+            "spectrum": "clear",
+            "filter_motion": "opening",
+            "spatial_motion": "wider",
+            "texture": "resolved-without-max-density"
+          }
+        },
+        {
+          "bar": 14,
+          "function": "aftermath",
+          "expressive": {
+            "function": "aftermath",
+            "attack": "soft",
+            "note_length": "released",
+            "vibrato": "fading",
+            "portamento": "rare",
+            "timing": "relaxed",
+            "dynamic_shape": "receding"
+          },
+          "timbre": {
+            "function": "aftermath",
+            "identity": "restrained-evolving",
+            "envelope": "soft",
+            "spectrum": "darkening",
+            "filter_motion": "settling",
+            "spatial_motion": "contracting",
+            "texture": "residual"
+          }
+        },
+        {
+          "bar": 15,
+          "function": "aftermath",
+          "expressive": {
+            "function": "aftermath",
+            "attack": "soft",
+            "note_length": "released",
+            "vibrato": "fading",
+            "portamento": "rare",
+            "timing": "relaxed",
+            "dynamic_shape": "receding"
+          },
+          "timbre": {
+            "function": "aftermath",
+            "identity": "restrained-evolving",
+            "envelope": "soft",
+            "spectrum": "darkening",
+            "filter_motion": "settling",
+            "spatial_motion": "contracting",
+            "texture": "residual"
+          }
+        }
+      ],
+      "metrics": {
+        "mean_prediction_strength": 0.20723666323696638,
+        "learnable_returns": 0,
+        "transformed_returns": 0,
+        "tune_transformed_returns": 0,
+        "explicit_pattern_returns": 0,
+        "deviations": 4,
+        "resolved_deviations": 4,
+        "intentional_abandonments": 0,
+        "unresolved_deviations": 0,
+        "consequence_coverage": 1.0,
+        "mean_negative_space": 0.6850911458333333,
+        "mean_suspension_space": 0.6180555555555555,
+        "intensity_significance_correlation": 0.250359803780954,
+        "distinct_structural_functions": 6,
+        "actual_transformations": 1
+      },
+      "evaluation": {
+        "learnable_material_present": true,
+        "expectation_forms": true,
+        "deviation_is_explicit": true,
+        "deviation_has_consequence": true,
+        "important_moments_have_space": true,
+        "expression_is_structurally_directed": true,
+        "timbre_is_structurally_directed": true,
+        "repetition_can_transform": true,
+        "intensity_is_not_significance": true,
+        "mixed_emotional_target_declared": true,
+        "form_is_not_single_fixed_template": true
+      },
+      "integration_validation": {
+        "passed": true,
+        "checks": {
+          "plan_covers_every_bar": true,
+          "directives_cover_every_bar": true,
+          "state_covers_every_bar": true,
+          "all_deviations_accounted_for": true,
+          "no_unresolved_major_deviations": true,
+          "obligation_ledger_complete": true
+        }
+      },
+      "epistemic_boundary": "Structural metrics and significance values are experimental proxies; they do not establish perceived emotion or listener preference.",
+      "human_validation_required": true,
+      "obligation_ledger": [
+        {
+          "obligation_id": "obligation-07",
+          "created_at_bar": 7,
+          "source_identity": "(9, (1, -1, 1, -1, -1, 0, 1, 1), (1, 1, 2, 1, 1, 2, 1, 1, 4))",
+          "expected_event": "return-to-established-behaviour-or-arrival",
+          "deviation_type": "structural-complication",
+          "importance": 0.956830848358182,
+          "resolution_window": "medium",
+          "status": "resolved",
+          "resolution_type": "fulfilment",
+          "resolved_at_bar": 10
+        },
+        {
+          "obligation_id": "obligation-08",
+          "created_at_bar": 8,
+          "source_identity": "(9, (-1, 1, 1, -1, 0, -1, 1, 1), (1, 1, 4, 1, 1, 1, 1, 2, 2))",
+          "expected_event": "return-to-established-behaviour-or-arrival",
+          "deviation_type": "structural-withholding",
+          "importance": 1.0,
+          "resolution_window": "medium",
+          "status": "resolved",
+          "resolution_type": "fulfilment",
+          "resolved_at_bar": 10
+        },
+        {
+          "obligation_id": "obligation-09",
+          "created_at_bar": 9,
+          "source_identity": "(11, (-1, 1, -1, 0, 1, 0, -1, 1, -1, 1), (2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1))",
+          "expected_event": "return-to-established-behaviour-or-arrival",
+          "deviation_type": "structural-withholding",
+          "importance": 0.8281879924760253,
+          "resolution_window": "medium",
+          "status": "resolved",
+          "resolution_type": "fulfilment",
+          "resolved_at_bar": 10
+        },
+        {
+          "obligation_id": "obligation-10",
+          "created_at_bar": 10,
+          "source_identity": "(9, (-1, 1, -1, 1, -1, -1, -1, 1), (2, 1, 1, 2, 2, 2, 2, 1, 1))",
+          "expected_event": "return-to-established-behaviour-or-arrival",
+          "deviation_type": "structural-withholding",
+          "importance": 0.6159579402348648,
+          "resolution_window": "medium",
+          "status": "resolved",
+          "resolution_type": "fulfilment",
+          "resolved_at_bar": 11
+        }
+      ],
+      "transformations": [
+        {
+          "bar": 11,
+          "voice": "TUNE",
+          "operation": "held-resolution-duration-extension",
+          "source": {
+            "onset": [
+              47,
+              1
+            ],
+            "duration": [
+              7,
+              16
+            ],
+            "pitch": 60
+          },
+          "result": {
+            "onset": [
+              47,
+              1
+            ],
+            "duration": [
+              21,
+              40
+            ],
+            "pitch": 60
+          },
+          "identity_preserved": true
+        }
+      ]
+    }
+  },
+  "metric_deltas": {
+    "mean_negative_space": 0.028841145833333304,
+    "mean_suspension_space": 0.09375,
+    "actual_transformations": 1
+  },
+  "claim_boundary": "PASS proves a controlled implementation difference only; it does not prove improved emotional effect."
+}

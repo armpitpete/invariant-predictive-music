@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest-tmp*/
+.pytest_cache/
+experiments/**/*.wav
+experiments/**/private-condition-map.json

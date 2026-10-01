@@ -5,6 +5,7 @@ from fractions import Fraction
 from pathlib import Path
 from types import SimpleNamespace
 
+from ipm.composition_framework import CompositionFrameworkConfig
 from ipm.synth_engine import (
     DEFAULT_SAMPLE_RATE,
     SYNTH_ENGINE_VERSION,
@@ -81,3 +82,40 @@ def test_synth_can_render_silence_without_invalid_pcm(tmp_path: Path) -> None:
         assert wav.getnchannels() == 2
         frames = wav.readframes(wav.getnframes())
     assert set(frames) <= {0}
+
+
+def test_framework_structural_timbre_is_audible_without_changing_notes(
+    tmp_path: Path,
+) -> None:
+    voices = (
+        SimpleNamespace(name="TUNE", events=(_event(64, 0, 2, 80),)),
+        SimpleNamespace(name="BASS", events=()),
+        SimpleNamespace(name="RHYTHM", events=()),
+    )
+    enabled = SimpleNamespace(
+        config=SimpleNamespace(
+            tempo_bpm=120,
+            bars=1,
+            beats_per_bar=4,
+            framework=CompositionFrameworkConfig(enabled=True, timbral_strength=1.0),
+        ),
+        voices=voices,
+        trace={"composition_framework": {"structural_plan": ["suspension"]}},
+    )
+    disabled = SimpleNamespace(
+        config=SimpleNamespace(
+            tempo_bpm=120,
+            bars=1,
+            beats_per_bar=4,
+            framework=CompositionFrameworkConfig(enabled=False),
+        ),
+        voices=voices,
+        trace={"composition_framework": {"structural_plan": ["suspension"]}},
+    )
+    active_path = render_synth_wav(
+        enabled, tmp_path / "framework.wav", sample_rate=8_000
+    )
+    control_path = render_synth_wav(
+        disabled, tmp_path / "control.wav", sample_rate=8_000
+    )
+    assert active_path.read_bytes() != control_path.read_bytes()

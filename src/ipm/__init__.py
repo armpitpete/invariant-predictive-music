@@ -15,6 +15,7 @@ from .engine import (
     compose_experiment_bundle,
     write_files,
 )
+from .composition_framework import CompositionFrameworkConfig, StructuralFunction
 from .countertime import (
     TimedCandidateScore,
     TimedDecision,
@@ -92,6 +93,7 @@ __all__ = [
     "CandidateDecision",
     "CandidateScore",
     "CountervoicePolicy",
+    "CompositionFrameworkConfig",
     "EuclideanPattern",
     "ExperimentMode",
     "FEMALE_LEAD_C4_B4",
@@ -111,6 +113,7 @@ __all__ = [
     "RhythmicPartition",
     "SeededRandom",
     "SonoritySlice",
+    "StructuralFunction",
     "StructuralPhase",
     "StudyResult",
     "SubsidiaryCandidate",

@@ -17,6 +17,18 @@ from math import e, exp, log2
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
+from .composition_framework import (
+    CompositionFrameworkConfig,
+    StructuralFunction,
+    apply_framework_transformation,
+    apply_structural_expression,
+    build_framework_trace,
+    build_obligation_ledger,
+    build_structural_plan,
+    framework_activity_probability,
+    framework_config_json,
+    structural_function_for_bar,
+)
 from .lanes import BASS_LANE, RHYTHM_LANE, TUNE_LANE, LaneSpec, ScaleWorld
 from .midi import render_midi
 from .micro_rhythm import realise_micro_bar
@@ -99,6 +111,9 @@ class InstrumentConfig:
     bass: BassControls = field(default_factory=BassControls)
     rhythm: RhythmControls = field(default_factory=RhythmControls)
     pattern_locks: tuple[PatternLockSpec, ...] = ()
+    framework: CompositionFrameworkConfig = field(
+        default_factory=CompositionFrameworkConfig
+    )
 
     def __post_init__(self) -> None:
         if self.tempo_bpm <= 0:
@@ -195,17 +210,31 @@ _ACTIVITY_EXPONENTS: dict[str, dict[str, float]] = {
 }
 
 
-def _activity_probability(activity: float, *, phase: str, lane: LaneSpec) -> float:
-    """Map a 0..1 activity knob to a phase-shaped opportunity probability.
+def _activity_probability(
+    activity: float,
+    *,
+    phase: str,
+    lane: LaneSpec,
+    function: StructuralFunction | None = None,
+    framework_enabled: bool = False,
+    framework_negative_space: float = 0.55,
+) -> float:
+    """Map activity to a phase- and optionally framework-shaped probability.
 
-    The endpoint semantics stay exact: activity 0 means no opportunities and
-    activity 1 means every opportunity. Exponents below one encourage entries
-    in development/climax; exponents above one thin openings/endings.
+    Exact endpoint semantics remain permanent: 0 means no opportunities and
+    1 means every opportunity.
     """
 
-    if activity in {0.0, 1.0}:
-        return activity
-    return activity ** _ACTIVITY_EXPONENTS[lane.name][phase]
+    exponent = _ACTIVITY_EXPONENTS[lane.name][phase]
+    if function is None:
+        return activity if activity in {0.0, 1.0} else activity ** exponent
+    return framework_activity_probability(
+        activity,
+        exponent,
+        function,
+        enabled=framework_enabled,
+        negative_space_strength=framework_negative_space,
+    )
 
 
 def _softmax_probabilities(
@@ -619,6 +648,9 @@ def _compose_bass(
 
     for bar in range(config.bars):
         phase = _phase_for_bar(bar, config.bars)
+        structural_function = structural_function_for_bar(
+            config.framework, bar, config.bars, seed=config.seed
+        )
         pattern = _bass_pattern(config.bass, phase=phase, rng=pattern_rng)
         cursor = Fraction(bar * config.beats_per_bar)
         decisions: list[dict[str, Any]] = []
@@ -629,6 +661,9 @@ def _compose_bass(
                 config.bass.activity,
                 phase=phase,
                 lane=BASS_LANE,
+                function=structural_function,
+                framework_enabled=config.framework.enabled,
+                framework_negative_space=config.framework.negative_space,
             )
             opportunity = activity_rng.random() < opportunity_probability
             silence_score = _bass_silence_score(span)
@@ -835,10 +870,16 @@ def _compose_rhythm(
 
     for bar in range(config.bars):
         phase = _phase_for_bar(bar, config.bars)
+        structural_function = structural_function_for_bar(
+            config.framework, bar, config.bars, seed=config.seed
+        )
         opportunity_probability = _activity_probability(
             config.rhythm.activity,
             phase=phase,
             lane=RHYTHM_LANE,
+            function=structural_function,
+            framework_enabled=config.framework.enabled,
+            framework_negative_space=config.framework.negative_space,
         )
         opportunity = activity_rng.random() < opportunity_probability
         silence_score = _rhythm_silence_score()
@@ -1200,6 +1241,25 @@ def compose(config: InstrumentConfig | None = None) -> InstrumentResult:
         world=world,
     )
 
+    framework_plan = build_structural_plan(
+        config.bars,
+        config.framework,
+        seed=config.seed,
+    )
+    tune, bass, rhythm = apply_structural_expression(
+        (tune, bass, rhythm),
+        framework_plan,
+        config.framework,
+        beats_per_bar=config.beats_per_bar,
+    )
+    transformed_voices, framework_transformations = apply_framework_transformation(
+        (tune, bass, rhythm),
+        framework_plan,
+        config.framework,
+        beats_per_bar=config.beats_per_bar,
+    )
+    tune, bass, rhythm = transformed_voices
+
     texture = score_texture((tune, bass, rhythm))
     occupancy = _texture_occupancy(tune, bass, rhythm)
     bass_decisions = [
@@ -1207,6 +1267,32 @@ def compose(config: InstrumentConfig | None = None) -> InstrumentResult:
         for bar in bass_trace
         for decision in bar["decisions"]
     ]
+    framework_trace = build_framework_trace(
+        config.framework,
+        seed=config.seed,
+        beats_per_bar=config.beats_per_bar,
+        bars=config.bars,
+        tune_trace=tune_trace,
+        voices=(tune, bass, rhythm),
+        pattern_lock_trace=lock_trace,
+    )
+    framework_obligations = build_obligation_ledger(
+        framework_trace["bar_states"],
+        horizon_bars=config.framework.consequence_horizon_bars,
+    )
+    framework_trace["obligation_ledger"] = [
+        asdict(obligation) for obligation in framework_obligations
+    ]
+    framework_trace["transformations"] = list(framework_transformations)
+    framework_trace["metrics"]["actual_transformations"] = len(
+        framework_transformations
+    )
+    framework_trace["integration_validation"]["checks"][
+        "obligation_ledger_complete"
+    ] = len(framework_obligations) == framework_trace["metrics"]["deviations"]
+    framework_trace["integration_validation"]["passed"] = all(
+        framework_trace["integration_validation"]["checks"].values()
+    )
 
     checks = {
         "three_explicit_lanes": [voice.name for voice in (tune, bass, rhythm)]
@@ -1260,6 +1346,9 @@ def compose(config: InstrumentConfig | None = None) -> InstrumentResult:
             )
         ),
         "vertical_floor": texture.minimum >= 0.30,
+        "composition_framework_integrated": (
+            framework_trace["integration_validation"]["passed"]
+        ),
     }
 
     trace = {
@@ -1270,6 +1359,7 @@ def compose(config: InstrumentConfig | None = None) -> InstrumentResult:
             "tonic_midi": config.tonic_midi,
             "scale": "Aeolian",
             "experiment_mode": config.mode.value,
+            "composition_framework": "0.1",
         },
         "config": {
             "seed": config.seed,
@@ -1278,11 +1368,13 @@ def compose(config: InstrumentConfig | None = None) -> InstrumentResult:
             "bass": asdict(config.bass),
             "rhythm": asdict(config.rhythm),
             "pattern_locks": [asdict(lock) for lock in config.pattern_locks],
+            "framework": framework_config_json(config.framework),
         },
         "tune_decisions": tune_trace,
         "bass_decisions": bass_trace,
         "rhythm_decisions": rhythm_trace,
         "pattern_locks": lock_trace,
+        "composition_framework": framework_trace,
         "voices": {
             "TUNE": [_event_json(event) for event in tune.events],
             "BASS": [_event_json(event) for event in bass.events],
@@ -1344,6 +1436,7 @@ def compose_experiment_bundle(
                 bass=base.bass,
                 rhythm=base.rhythm,
                 pattern_locks=base.pattern_locks,
+                framework=base.framework,
             )
         )
         for mode in ExperimentMode

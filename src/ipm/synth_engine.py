@@ -10,7 +10,7 @@ from __future__ import annotations
 import math
 import wave
 from array import array
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -56,6 +56,16 @@ class SynthPreset:
             raise ValueError("at least one oscillator partial is required")
         if not 0.0 <= self.space_send <= 1.0:
             raise ValueError("space_send must be in 0..1")
+
+
+_FRAMEWORK_TIMBRE_MODIFIERS: dict[str, tuple[float, float, float, float, float, float]] = {
+    "introduction": (1.15, 1.05, 0.85, 0.80, 0.85, 0.80),
+    "recognition": (1.00, 1.00, 1.00, 1.00, 1.00, 1.00),
+    "complication": (0.85, 0.90, 1.15, 1.15, 1.15, 1.10),
+    "suspension": (1.25, 1.10, 0.68, 0.70, 0.75, 0.80),
+    "arrival": (0.95, 1.15, 1.08, 1.05, 1.10, 1.05),
+    "aftermath": (1.20, 1.25, 0.75, 0.78, 0.90, 0.75),
+}
 
 
 SYNTH_PRESETS: dict[str, SynthPreset] = {
@@ -111,9 +121,9 @@ class SynthRenderInfo:
 
 
 def synth_manifest(sample_rate: int = DEFAULT_SAMPLE_RATE) -> dict[str, Any]:
-    """Return the exact fixed synthesis contract used for a render."""
+    """Return the exact synthesis contract used for a render."""
 
-    return asdict(
+    manifest = asdict(
         SynthRenderInfo(
             engine_version=SYNTH_ENGINE_VERSION,
             sample_rate=sample_rate,
@@ -126,6 +136,50 @@ def synth_manifest(sample_rate: int = DEFAULT_SAMPLE_RATE) -> dict[str, Any]:
             ),
             presets={name: asdict(preset) for name, preset in SYNTH_PRESETS.items()},
         )
+    )
+    manifest["framework_timbre_modifiers"] = {
+        name: list(values)
+        for name, values in _FRAMEWORK_TIMBRE_MODIFIERS.items()
+    }
+    return manifest
+
+
+def _framework_preset(
+    result: InstrumentResult,
+    event: Any,
+    preset: SynthPreset,
+) -> SynthPreset:
+    """Apply bar-level timbral form while preserving each lane's core identity."""
+
+    framework = getattr(getattr(result, "config", None), "framework", None)
+    if framework is None or not getattr(framework, "enabled", False):
+        return preset
+    trace = getattr(result, "trace", None)
+    if not isinstance(trace, dict):
+        return preset
+    plan = trace.get("composition_framework", {}).get("structural_plan", ())
+    if not plan:
+        return preset
+    beats_per_bar = getattr(result.config, "beats_per_bar", 4)
+    bar = min(len(plan) - 1, int(event.onset // beats_per_bar))
+    modifiers = _FRAMEWORK_TIMBRE_MODIFIERS.get(plan[bar])
+    if modifiers is None:
+        return preset
+    strength = float(getattr(framework, "timbral_strength", 0.0))
+    modifiers = tuple(1.0 + (value - 1.0) * strength for value in modifiers)
+    attack, release, cutoff, spectrum, pan, vibrato = modifiers
+    partials = tuple(
+        (ratio, weight if ratio == 1.0 else weight * spectrum)
+        for ratio, weight in preset.partials
+    )
+    return replace(
+        preset,
+        attack=preset.attack * attack,
+        release=preset.release * release,
+        cutoff_hz=preset.cutoff_hz * cutoff,
+        partials=partials,
+        pan=max(-1.0, min(1.0, preset.pan * pan)),
+        vibrato_cents=preset.vibrato_cents * vibrato,
     )
 
 
@@ -320,6 +374,7 @@ def render_synth_wav(
                 + float(event.onset) * 151.0
                 + ordinal * 97.0
             ) % _TABLE_SIZE
+            event_preset = _framework_preset(result, event, preset)
             _render_note(
                 left,
                 right,
@@ -327,7 +382,7 @@ def render_synth_wav(
                 hold_seconds=hold_seconds,
                 frequency=_midi_frequency(event.pitch),
                 velocity=event.velocity,
-                preset=preset,
+                preset=event_preset,
                 sample_rate=sample_rate,
                 phase_seed=phase_seed,
             )
