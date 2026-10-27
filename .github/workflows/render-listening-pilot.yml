@@ -122,4 +122,4 @@ jobs:
         with:
           name: ipm-listening-pilot-v2
           path: listening-pilot
-          retention-days: 3
+          retention-days: 30
