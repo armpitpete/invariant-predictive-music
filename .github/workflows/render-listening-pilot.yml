@@ -2,6 +2,19 @@ name: render-listening-pilot
 
 on:
   workflow_dispatch:
+    inputs:
+      preserve_full_bundle:
+        description: "Retain full pilot only after independent review of exact digest"
+        type: boolean
+        default: false
+      reviewed_content_sha256:
+        description: "64-character SHA-256 content digest printed by prior gate run"
+        type: string
+        required: false
+      evidence_reference:
+        description: "Link or reference identifying the independent editorial/research acceptance"
+        type: string
+        required: false
   pull_request:
     paths:
       - "EXPERIMENT.md"
@@ -14,6 +27,7 @@ on:
       - "src/ipm/midi.py"
       - "src/ipm/sequential_bar.py"
       - "pyproject.toml"
+      - "scripts/listening_artifact_retention_gate.py"
       - ".github/workflows/render-listening-pilot.yml"
 
 permissions:
@@ -88,7 +102,24 @@ jobs:
           find listening-pilot/researcher/audio-components -type f -name '*.mid' -print0 \
             | sort -z | xargs -0 sha256sum \
             > listening-pilot/researcher/audio-component-sha256.txt
-      - uses: actions/upload-artifact@v4
+      - name: Decide whether evidence warrants a large upload
+        id: retention
+        env:
+          EVENT_KIND: ${{ github.event_name }}
+          REQUEST_FULL: ${{ inputs.preserve_full_bundle || false }}
+          REVIEWED_DIGEST: ${{ inputs.reviewed_content_sha256 || '' }}
+          EVIDENCE_REF: ${{ inputs.evidence_reference || '' }}
+        run: |
+          python scripts/listening_artifact_retention_gate.py \
+            --dir listening-pilot \
+            --event "$EVENT_KIND" \
+            --request-full "$REQUEST_FULL" \
+            --expected-sha256 "$REVIEWED_DIGEST" \
+            --evidence-ref "$EVIDENCE_REF"
+      - name: Upload only explicitly approved exact-content research evidence
+        if: steps.retention.outputs.decision == 'PRESERVE'
+        uses: actions/upload-artifact@v4
         with:
           name: ipm-listening-pilot-v2
           path: listening-pilot
+          retention-days: 3
